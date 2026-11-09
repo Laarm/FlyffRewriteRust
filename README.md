@@ -18,16 +18,60 @@ Captures du projet avec les ressources V15 chargées.
 
 ![Vue de Flarine avec les PNJ, le personnage et son inventaire ouvert](docs/images/flarine-inventory.png)
 
-## Ce que contient le projet
+## Avancement et travail restant
 
-- Serveur de jeu, sessions, comptes, personnages et transport WebSocket/Protocol Buffers.
-- Simulation partagée : déplacements au sol et en vol, collisions, combat, compétences et règles de jeu.
-- Systèmes de jeu : inventaire, échanges, boutiques, groupes, guildes, quêtes, PNJ, familiers et événements.
-- Persistance SQLite, migrations, sauvegardes et outils d'administration.
-- Scripts de dialogue Lua 5.3 et conversion des ressources pour le navigateur.
-- Client web 3D, interface de jeu et console d'administration.
+État établi à partir des sources le **9 novembre 2026**. Une case cochée dans « Implémenté » indique que le code du système est présent ; elle ne garantit ni sa validation complète en jeu ni une parité totale avec Flyff V15. Cette liste synthétise l'état du dépôt et ne remplace pas les documents de conception historiques.
 
-La présence d'un système dans cette liste décrit le code disponible, pas son niveau de validation en production.
+### Implémenté dans les sources
+
+- [x] Serveur Rust, HTTP, sessions et transport WebSocket / Protocol Buffers.
+- [x] Comptes, connexion, création et sélection des personnages.
+- [x] Chargement et conversion des ressources V15, client web 3D et interface de jeu.
+- [x] Simulation partagée en Rust / WASM : déplacements au sol et en vol, collisions et règles de jeu.
+- [x] Monstres, IA, combat, compétences, buffs et statistiques.
+- [x] Inventaire, équipements, échanges, boutiques, banque, courrier et améliorations d'objets.
+- [x] Chat, groupes, messagerie, guildes, couples et mentorat.
+- [x] Dialogues Lua 5.3, scripts PNJ et moteur de quêtes avec objectifs et récompenses.
+- [x] Systèmes de familiers, logements, instances, sièges, Lord, taxes, Secret Room, Rainbow Race et quiz.
+- [x] Persistance SQLite, migrations et outils de sauvegarde.
+- [x] Console d'administration, gestion des joueurs et journal d'audit, avec les limites indiquées ci-dessous.
+- [x] Outillage de développement, génération, compilation web et préparation de la distribution Linux.
+
+### Fonctions à terminer ou à arbitrer
+
+- [ ] Implémenter la commande `replay`, la commande `grant` en ligne de commande et les exports encore indisponibles ; l'export `gamedata-json` existe déjà.
+- [ ] Activer le pilotage du mode maintenance depuis l'administration.
+- [ ] Terminer les neuf panneaux d'administration du contenu : événements, Lord, taxes, Secret Room, sièges, Rainbow Race, quiz, instances et logements. Leurs routes répondent encore « fonctionnalité indisponible », même lorsque le système de jeu correspondant existe.
+- [ ] Traiter les 15 commandes GM marquées différées, notamment météo, musique/sons, listes de joueurs et maintenance, ou documenter leur exclusion définitive.
+- [ ] Finaliser les helpers des quêtes de boss de guilde/groupe, dont Wormon, actuellement différés.
+- [ ] Vérifier et compléter le contenu des quêtes à partir des ressources V15 fournies séparément. Le petit catalogue synthétique du dépôt ne constitue pas une campagne V15 complète.
+- [ ] Implémenter le TLS natif si cette option est retenue ; actuellement, HTTPS nécessite une terminaison TLS par reverse proxy.
+- [ ] Clarifier le périmètre des options réservées, notamment le second mot de passe, et de la compression WebSocket non prise en charge.
+- [ ] Actualiser les références aux anciens tests et documents absents, et revoir les contenus synthétiques conservés pour ne garder que les compléments utiles au jeu.
+
+Les points ci-dessus sont notamment vérifiables dans la [CLI](crates/flyff-server/src/cli.rs), le [raccordement de la commande grant](crates/flyff-server/src/wiring.rs), le [mode maintenance](crates/flyff-server/src/admin/api/server/maintenance.rs), les [panneaux de contenu](crates/flyff-server/src/admin/api/content.rs), le [catalogue GM](crates/flyff-game/src/gm/table.rs) et les [quêtes Wormon](crates/flyff-game/src/quest/wormon.rs).
+
+### Validation avant une distribution stable
+
+Ces cases restent ouvertes tant qu'une recette complète et reproductible n'est pas documentée.
+
+- [ ] Construire et vérifier toute la chaîne : module WASM, bundle web et distribution Linux avec client embarqué.
+- [ ] Vérifier une installation vierge avec un dossier `Resource/` V15 externe et une configuration générique.
+- [ ] Valider les parcours complets : création de personnage, combat, progression, inventaire, échanges, quêtes et reconnexion.
+- [ ] Vérifier les sauvegardes, restaurations et migrations avec des données représentatives.
+- [ ] Évaluer la stabilité sur la durée, les performances avec plusieurs joueurs et la compatibilité des navigateurs.
+- [ ] Comparer les comportements et le rendu au jeu V15 pour relever et corriger les écarts.
+
+Les vérifications déjà effectuées lors de la préparation du dépôt couvrent la compilation de contrôle Rust, le formatage, TypeScript et un lint ciblé. La vérification TypeScript utilisait les déclarations de l'API WASM, sans reconstruire le module : elle ne clôt donc pas la validation de la chaîne complète.
+
+### Préparation du dépôt public
+
+- [x] Publier les sources sur GitHub avec un README d'installation et de compilation.
+- [x] Exclure les ressources originales et préciser qu'une V15 doit être fournie séparément.
+- [x] Retirer les suites de tests, configurations privées et données d'exploitation de la publication.
+- [x] Ajouter les captures d'écran du jeu au README.
+
+Les ressources originales, les suites de tests publiques et les configurations privées restent volontairement hors du périmètre de cette distribution. Les validations restantes n'impliquent pas de les ajouter au dépôt.
 
 ## Prérequis
 
