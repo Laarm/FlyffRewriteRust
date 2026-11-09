@@ -6,6 +6,18 @@ Le projet vise une distribution Linux sous la forme d'un exécutable `flyff` emb
 
 **Projet en développement.** Ce dépôt contient une implémentation étendue, mais ne constitue pas une version finale ni une garantie de parité complète avec le jeu original.
 
+## Aperçu en jeu
+
+Captures du projet avec les ressources V15 chargées.
+
+**Flarine : personnages, monstres et effets de compétences.**
+
+![Personnages et Aibatts près de Flarine, avec des effets de compétences et l'interface de jeu](docs/images/flarine-gameplay.png)
+
+**Flarine : environnement, PNJ et inventaire du personnage.**
+
+![Vue de Flarine avec les PNJ, le personnage et son inventaire ouvert](docs/images/flarine-inventory.png)
+
 ## Ce que contient le projet
 
 - Serveur de jeu, sessions, comptes, personnages et transport WebSocket/Protocol Buffers.

@@ -1,4 +1,6 @@
-# Generated source files larger than 1 MiB; no game-resource archives.
+# Source files and documentation screenshots larger than 1 MiB; no game-resource archives.
 files = [
   "crates/flyff-common/src/defs/all.rs",
+  "docs/images/flarine-gameplay.png",
+  "docs/images/flarine-inventory.png",
 ]
