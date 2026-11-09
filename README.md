@@ -1,139 +1,139 @@
 # FlyffRewriteRust
 
-Réécriture de Flyff V15 en **Rust**, avec un serveur de jeu, un serveur HTTP et un client jouable dans le navigateur. Le client utilise **TypeScript, React, three.js et WebAssembly** ; les règles et la simulation partagées sont implémentées en Rust.
+A **Rust** rewrite of Flyff V15, with a game server, an HTTP server, and a playable browser client. The client uses **TypeScript, React, three.js, and WebAssembly**; shared game rules and simulation are implemented in Rust.
 
-Le projet vise une distribution Linux sous la forme d'un exécutable `flyff` embarquant le client web. **Les ressources originales ne sont pas incluses. Il faut se munir séparément d'une version V15 de Flyff et fournir son dossier `Resource/`.**
+The project targets a Linux distribution built around a single `flyff` executable with an embedded web client. **Original assets are not included. You must obtain a V15 version of Flyff separately and provide its `Resource/` directory.**
 
-**Projet en développement.** Ce dépôt contient une implémentation étendue, mais ne constitue pas une version finale ni une garantie de parité complète avec le jeu original.
+**Work in progress.** This repository contains an extensive implementation, but it is not a final release and does not guarantee full parity with the original game.
 
-## Aperçu en jeu
+## Gameplay preview
 
-Captures du projet avec les ressources V15 chargées.
+Screenshots of the project with V15 assets loaded.
 
-**Flarine : personnages, monstres et effets de compétences.**
+**Flarine: characters, monsters, and skill effects.**
 
-![Personnages et Aibatts près de Flarine, avec des effets de compétences et l'interface de jeu](docs/images/flarine-gameplay.png)
+![Characters and Aibatts near Flarine, with skill effects and the game interface](docs/images/flarine-gameplay.png)
 
-**Flarine : environnement, PNJ et inventaire du personnage.**
+**Flarine: environment, NPCs, and character inventory.**
 
-![Vue de Flarine avec les PNJ, le personnage et son inventaire ouvert](docs/images/flarine-inventory.png)
+![View of Flarine with NPCs, the character, and the inventory window open](docs/images/flarine-inventory.png)
 
-## Avancement et travail restant
+## Progress and remaining work
 
-État établi à partir des sources le **9 novembre 2026**. Une case cochée dans « Implémenté » indique que le code du système est présent ; elle ne garantit ni sa validation complète en jeu ni une parité totale avec Flyff V15. Cette liste synthétise l'état du dépôt et ne remplace pas les documents de conception historiques.
+Status based on the source code as of **November 9, 2026**. A checked item under “Implemented” means the system's code is present; it does not guarantee complete in-game validation or full parity with Flyff V15. This checklist summarizes the repository's current state and does not replace the historical design documents.
 
-### Implémenté dans les sources
+### Implemented in the source code
 
-- [x] Serveur Rust, HTTP, sessions et transport WebSocket / Protocol Buffers.
-- [x] Comptes, connexion, création et sélection des personnages.
-- [x] Chargement et conversion des ressources V15, client web 3D et interface de jeu.
-- [x] Simulation partagée en Rust / WASM : déplacements au sol et en vol, collisions et règles de jeu.
-- [x] Monstres, IA, combat, compétences, buffs et statistiques.
-- [x] Inventaire, équipements, échanges, boutiques, banque, courrier et améliorations d'objets.
-- [x] Chat, groupes, messagerie, guildes, couples et mentorat.
-- [x] Dialogues Lua 5.3, scripts PNJ et moteur de quêtes avec objectifs et récompenses.
-- [x] Systèmes de familiers, logements, instances, sièges, Lord, taxes, Secret Room, Rainbow Race et quiz.
-- [x] Persistance SQLite, migrations et outils de sauvegarde.
-- [x] Console d'administration, gestion des joueurs et journal d'audit, avec les limites indiquées ci-dessous.
-- [x] Outillage de développement, génération, compilation web et préparation de la distribution Linux.
+- [x] Rust server, HTTP, sessions, and WebSocket / Protocol Buffers transport.
+- [x] Accounts, login, character creation, and character selection.
+- [x] V15 asset loading and conversion, 3D web client, and game interface.
+- [x] Shared Rust / WASM simulation: ground movement, flight, collisions, and game rules.
+- [x] Monsters, AI, combat, skills, buffs, and stats.
+- [x] Inventory, equipment, trading, shops, banking, mail, and item upgrades.
+- [x] Chat, parties, messenger, guilds, couples, and mentoring.
+- [x] Lua 5.3 dialogue, NPC scripts, and a quest engine with objectives and rewards.
+- [x] Systems for pets, housing, instances, sieges, Lord, taxes, Secret Room, Rainbow Race, and quizzes.
+- [x] SQLite persistence, migrations, and backup tools.
+- [x] Administration console, player management, and audit log, subject to the limitations below.
+- [x] Tools for development, code generation, web builds, and Linux distribution packaging.
 
-### Fonctions à terminer ou à arbitrer
+### Features to complete or decide on
 
-- [ ] Implémenter la commande `replay`, la commande `grant` en ligne de commande et les exports encore indisponibles ; l'export `gamedata-json` existe déjà.
-- [ ] Activer le pilotage du mode maintenance depuis l'administration.
-- [ ] Terminer les neuf panneaux d'administration du contenu : événements, Lord, taxes, Secret Room, sièges, Rainbow Race, quiz, instances et logements. Leurs routes répondent encore « fonctionnalité indisponible », même lorsque le système de jeu correspondant existe.
-- [ ] Traiter les 15 commandes GM marquées différées, notamment météo, musique/sons, listes de joueurs et maintenance, ou documenter leur exclusion définitive.
-- [ ] Finaliser les helpers des quêtes de boss de guilde/groupe, dont Wormon, actuellement différés.
-- [ ] Vérifier et compléter le contenu des quêtes à partir des ressources V15 fournies séparément. Le petit catalogue synthétique du dépôt ne constitue pas une campagne V15 complète.
-- [ ] Implémenter le TLS natif si cette option est retenue ; actuellement, HTTPS nécessite une terminaison TLS par reverse proxy.
-- [ ] Clarifier le périmètre des options réservées, notamment le second mot de passe, et de la compression WebSocket non prise en charge.
-- [ ] Actualiser les références aux anciens tests et documents absents, et revoir les contenus synthétiques conservés pour ne garder que les compléments utiles au jeu.
+- [ ] Implement the `replay` command, the CLI `grant` command, and the remaining unavailable exports; the `gamedata-json` export already exists.
+- [ ] Enable maintenance mode control through the administration interface.
+- [ ] Complete the nine content administration panels: events, Lord, taxes, Secret Room, sieges, Rainbow Race, quizzes, instances, and housing. Their routes still return “feature unavailable,” even when the corresponding game system exists.
+- [ ] Address the 15 GM commands marked as deferred, including weather, music/sounds, player lists, and maintenance, or document their permanent exclusion.
+- [ ] Complete the currently deferred guild/party boss quest helpers, including Wormon.
+- [ ] Review and complete quest content using the separately supplied V15 assets. The repository's small synthetic quest set is not a complete V15 campaign.
+- [ ] Implement native TLS if that option is retained; HTTPS currently requires TLS termination through a reverse proxy.
+- [ ] Clarify the scope of reserved options, including the second password, and unsupported WebSocket compression.
+- [ ] Update references to old tests and missing documents, and review the retained synthetic content to keep only additions useful to the game.
 
-Les points ci-dessus sont notamment vérifiables dans la [CLI](crates/flyff-server/src/cli.rs), le [raccordement de la commande grant](crates/flyff-server/src/wiring.rs), le [mode maintenance](crates/flyff-server/src/admin/api/server/maintenance.rs), les [panneaux de contenu](crates/flyff-server/src/admin/api/content.rs), le [catalogue GM](crates/flyff-game/src/gm/table.rs) et les [quêtes Wormon](crates/flyff-game/src/quest/wormon.rs).
+These items can be checked in the [CLI](crates/flyff-server/src/cli.rs), [grant command wiring](crates/flyff-server/src/wiring.rs), [maintenance mode](crates/flyff-server/src/admin/api/server/maintenance.rs), [content panels](crates/flyff-server/src/admin/api/content.rs), [GM command catalog](crates/flyff-game/src/gm/table.rs), and [Wormon quests](crates/flyff-game/src/quest/wormon.rs).
 
-### Validation avant une distribution stable
+### Validation before a stable release
 
-Ces cases restent ouvertes tant qu'une recette complète et reproductible n'est pas documentée.
+These items remain unchecked until a complete, reproducible acceptance process has been documented.
 
-- [ ] Construire et vérifier toute la chaîne : module WASM, bundle web et distribution Linux avec client embarqué.
-- [ ] Vérifier une installation vierge avec un dossier `Resource/` V15 externe et une configuration générique.
-- [ ] Valider les parcours complets : création de personnage, combat, progression, inventaire, échanges, quêtes et reconnexion.
-- [ ] Vérifier les sauvegardes, restaurations et migrations avec des données représentatives.
-- [ ] Évaluer la stabilité sur la durée, les performances avec plusieurs joueurs et la compatibilité des navigateurs.
-- [ ] Comparer les comportements et le rendu au jeu V15 pour relever et corriger les écarts.
+- [ ] Build and verify the entire pipeline: WASM module, web bundle, and Linux distribution with the embedded client.
+- [ ] Verify a fresh installation using an external V15 `Resource/` directory and a generic configuration.
+- [ ] Validate complete gameplay flows: character creation, combat, progression, inventory, trading, quests, and reconnection.
+- [ ] Verify backups, restores, and migrations with representative data.
+- [ ] Assess long-running stability, multiplayer performance, and browser compatibility.
+- [ ] Compare behavior and rendering with the V15 game to identify and fix discrepancies.
 
-Les vérifications déjà effectuées lors de la préparation du dépôt couvrent la compilation de contrôle Rust, le formatage, TypeScript et un lint ciblé. La vérification TypeScript utilisait les déclarations de l'API WASM, sans reconstruire le module : elle ne clôt donc pas la validation de la chaîne complète.
+Checks already performed while preparing the repository cover Rust compilation checks, formatting, TypeScript, and targeted linting. The TypeScript check used WASM API declarations without rebuilding the module, so it does not complete validation of the entire pipeline.
 
-### Préparation du dépôt public
+### Public repository preparation
 
-- [x] Publier les sources sur GitHub avec un README d'installation et de compilation.
-- [x] Exclure les ressources originales et préciser qu'une V15 doit être fournie séparément.
-- [x] Retirer les suites de tests, configurations privées et données d'exploitation de la publication.
-- [x] Ajouter les captures d'écran du jeu au README.
+- [x] Publish the sources on GitHub with installation and build instructions in the README.
+- [x] Exclude original assets and explain that V15 resources must be supplied separately.
+- [x] Remove test suites, private configurations, and operational data from the published files.
+- [x] Add gameplay screenshots to the README.
 
-Les ressources originales, les suites de tests publiques et les configurations privées restent volontairement hors du périmètre de cette distribution. Les validations restantes n'impliquent pas de les ajouter au dépôt.
+Original assets, public test suites, and private configurations are intentionally outside the scope of this distribution. The remaining validation work does not require adding them to the repository.
 
-## Prérequis
+## Prerequisites
 
-| Composant | Version / usage |
+| Component | Version / purpose |
 | --- | --- |
-| Rust via rustup | **1.99.0**, fixé dans `rust-toolchain.toml` |
-| Node.js | **24.x** ; `.node-version` indique la version de référence |
-| pnpm | **12.11.2**, fixé dans `web/package.json` |
-| Ressources Flyff V15 | Une version V15 fournie séparément, avec son dossier `Resource/` |
-| Compilateur C et outils de compilation | SQLite, Lua et certaines dépendances natives |
-| Cible Rust `wasm32-unknown-unknown` | Module WebAssembly du client |
-| Outils de génération | Versions fixées dans `xtask/src/tools.rs` ; `cargo xtask tools check` les vérifie |
-| Linux x86-64 + `musl-gcc` | Construction de la distribution statique Linux |
+| Rust via rustup | **1.99.0**, pinned in `rust-toolchain.toml` |
+| Node.js | **24.x**; `.node-version` specifies the reference version |
+| pnpm | **12.11.2**, pinned in `web/package.json` |
+| Flyff V15 assets | A separately supplied V15 version with its `Resource/` directory |
+| C compiler and build tools | SQLite, Lua, and some native dependencies |
+| Rust target `wasm32-unknown-unknown` | Client WebAssembly module |
+| Code generation tools | Versions pinned in `xtask/src/tools.rs`; verified by `cargo xtask tools check` |
+| Linux x86-64 + `musl-gcc` | Building the static Linux distribution |
 
-Le pipeline de distribution cible Linux x86-64. Pour construire ce paquet depuis macOS ou Windows, utiliser un environnement Linux adapté.
+The distribution pipeline targets Linux x86-64. To build this package from macOS or Windows, use a suitable Linux environment.
 
-## Installation et démarrage
+## Installation and startup
 
 ```bash
 git clone https://github.com/Laarm/FlyffRewriteRust.git
 cd FlyffRewriteRust
 
-# Installe la toolchain et les composants fixés par le dépôt.
+# Install the toolchain and components pinned by the repository.
 rustup show
 
-# Avec Corepack installé : active pnpm à la version du package.json.
+# With Corepack installed: enable the pnpm version specified in package.json.
 corepack enable
 pnpm --dir web install --frozen-lockfile
 
-# Installe les outils auxiliaires, puis vérifie l'environnement.
+# Install auxiliary tools, then check the environment.
 cargo xtask tools install
 cargo xtask doctor
 ```
 
-Certaines dépendances système doivent être installées séparément. Sur Debian/Ubuntu, `cargo xtask tools install --apt` peut prendre en charge les paquets système prévus par l'outil.
+Some system dependencies must be installed separately. On Debian/Ubuntu, `cargo xtask tools install --apt` can install the system packages supported by the tool.
 
-### Ressources du jeu
+### Game assets
 
-**Munissez-vous d'une version V15 de Flyff** : le dossier original `Resource/` est nécessaire pour démarrer un monde. Le dépôt ne fournit ni client original, ni archive V15, ni ressources originales. Les ressources d'une autre version ne sont pas garanties compatibles.
+**Obtain a V15 version of Flyff**: the original `Resource/` directory is required to start a world. This repository does not provide the original client, a V15 archive, or original assets. Assets from other versions are not guaranteed to be compatible.
 
-Conservez votre dossier `Resource/` en dehors du dépôt et configurez son emplacement avant de lancer le serveur :
+Keep your `Resource/` directory outside the repository and configure its location before starting the server:
 
 ```bash
 export FLYFF_RESOURCE="/path/to/Flyff V15/Resource"
 ```
 
-`FLYFF_SOURCE` est facultatif pour jouer : il désigne les anciennes sources C++ et sert à certains générateurs. Les sources générées nécessaires à la compilation sont déjà présentes.
+`FLYFF_SOURCE` is optional for playing: it points to the legacy C++ sources and is used by some generators. Generated sources required for compilation are already included.
 
 ```bash
-# Facultatif : uniquement pour les outils qui en ont besoin.
+# Optional: only needed by tools that require it.
 export FLYFF_SOURCE="/path/to/Flyff V15/Source"
 ```
 
-### Serveur et client en développement
+### Development server and client
 
 ```bash
 cargo xtask dev --resource "$FLYFF_RESOURCE"
 ```
 
-Cette commande prépare le module WASM, lance le serveur sur `127.0.0.1:8080`, le client Vite sur **http://localhost:5173/** et la recompilation du module WASM. L'état local est placé dans `.dev/`.
+This command prepares the WASM module, starts the server at `127.0.0.1:8080`, starts the Vite client at **http://localhost:5173/**, and enables WASM module rebuilds. Local state is stored in `.dev/`.
 
-Pour lancer uniquement le serveur :
+To start only the server:
 
 ```bash
 cargo run --locked -p flyff-server -- serve \
@@ -142,76 +142,76 @@ cargo run --locked -p flyff-server -- serve \
   --bind 127.0.0.1:8080
 ```
 
-Le lancement du serveur seul ne construit pas le client web. Pour servir un client déjà construit, ajouter `--web-dir web/dist`.
+Starting the server alone does not build the web client. To serve an existing client build, add `--web-dir web/dist`.
 
-### Configuration et administration
+### Configuration and administration
 
-Le serveur utilise `flyff.toml` dans son dossier d'exécution. Le modèle commenté se trouve dans [`crates/flyff-server/assets/flyff.toml.example`](crates/flyff-server/assets/flyff.toml.example).
+The server uses `flyff.toml` in its runtime directory. An annotated template is available at [`crates/flyff-server/assets/flyff.toml.example`](crates/flyff-server/assets/flyff.toml.example).
 
 ```bash
 cargo run --locked -p flyff-server -- --help
 cargo run --locked -p flyff-server -- config default
 ```
 
-Les variables `FLYFF__SECTION__KEY` permettent de remplacer des paramètres, par exemple `FLYFF__NET__BIND=127.0.0.1:8080`. La console d'administration est disponible à `/admin` lorsque le client web est servi ; son accès dépend de la configuration et de l'authentification du serveur.
+Environment variables named `FLYFF__SECTION__KEY` can override settings, for example `FLYFF__NET__BIND=127.0.0.1:8080`. The administration console is available at `/admin` when the web client is served; access depends on server configuration and authentication.
 
-Conserver les configurations d'exploitation, comptes, sauvegardes, jetons d'administration et certificats hors du dépôt. Le `.gitignore` couvre les emplacements usuels.
+Keep deployment configurations, accounts, backups, administration tokens, and certificates outside the repository. The `.gitignore` covers common locations.
 
-## Compilation
+## Building
 
 ```bash
-# Serveur natif
+# Native server
 cargo build --locked --release -p flyff-server
 
-# Client web : WASM, vérification TypeScript et bundle Vite
+# Web client: WASM, TypeScript checks, and Vite bundle
 cargo xtask build-web
 
-# Paquet Linux x86-64 avec client embarqué, depuis un environnement Linux adapté
+# Linux x86-64 package with embedded client, built in a suitable Linux environment
 cargo xtask dist --out dist/flyff
 ```
 
-Le paquet contient l'exécutable, les scripts PNJ, un exemple de configuration et les notices de dépendances. Fournir le dossier `Resource/` séparément au serveur. Les sorties `target/`, `web/dist/` et `dist/` sont exclues de Git.
+The package contains the executable, NPC scripts, a sample configuration, and dependency notices. Supply the `Resource/` directory to the server separately. Build outputs in `target/`, `web/dist/`, and `dist/` are excluded from Git.
 
-## Vérification
+## Verification
 
 ```bash
 cargo fmt --all -- --check
 cargo check --workspace --locked
 
-# Construire le module WASM avant les vérifications web.
+# Build the WASM module before running web checks.
 cargo xtask build-wasm --dev
 pnpm --dir web typecheck
 pnpm --dir web lint
 ```
 
-Cette distribution contient uniquement les sources du jeu et l’outillage nécessaire à leur compilation et à la génération des données. Les suites de tests, fixtures, pages de démonstration, outils de suivi interne et configurations privées en sont exclus. Des commentaires du code renvoient encore à des documents de conception historiques non fournis.
+This distribution contains only the game sources and the tools needed to build them and generate data. Test suites, fixtures, demo pages, internal tracking tools, and private configurations are excluded. Some code comments still reference historical design documents that are not included.
 
-## Organisation
+## Repository layout
 
-| Dossier | Contenu |
+| Directory | Contents |
 | --- | --- |
-| `crates/flyff-server` | Exécutable, HTTP/WebSocket, configuration, administration |
-| `crates/flyff-game` | Monde, entités et systèmes de gameplay |
-| `crates/flyff-sim`, `crates/flyff-rules` | Simulation et règles partagées |
-| `crates/flyff-db` | SQLite, migrations et persistance |
-| `crates/flyff-lua` | Exécution des scripts Lua |
-| `crates/flyff-assets`, `crates/flyff-data`, `crates/flyff-formats`, `crates/flyff-vfs`, `crates/flyff-script` | Chargement et conversion des données du jeu |
-| `crates/flyff-common`, `crates/flyff-proto`, `crates/flyff-wasm` | Types communs, protocole et interface WASM |
-| `web/` | Client navigateur, interface et administration |
-| `content/` | Scripts PNJ, compléments de quêtes et exemple de quiz |
-| `proto/`, `schemas/` | Protocole réseau et schémas de données |
-| `xtask/`, `tools/` | Compilation, génération et vérification |
+| `crates/flyff-server` | Executable, HTTP/WebSocket, configuration, administration |
+| `crates/flyff-game` | World, entities, and gameplay systems |
+| `crates/flyff-sim`, `crates/flyff-rules` | Shared simulation and rules |
+| `crates/flyff-db` | SQLite, migrations, and persistence |
+| `crates/flyff-lua` | Lua script execution |
+| `crates/flyff-assets`, `crates/flyff-data`, `crates/flyff-formats`, `crates/flyff-vfs`, `crates/flyff-script` | Game data loading and conversion |
+| `crates/flyff-common`, `crates/flyff-proto`, `crates/flyff-wasm` | Shared types, protocol, and WASM interface |
+| `web/` | Browser client, interface, and administration |
+| `content/` | NPC scripts, supplemental quests, and sample quiz |
+| `proto/`, `schemas/` | Network protocol and data schemas |
+| `xtask/`, `tools/` | Building, generation, and verification |
 
-Les fichiers générés du protocole, des constantes et des schémas sont conservés : ils sont nécessaires à la compilation. Les configurations génériques de compilation et le modèle de configuration du serveur sont inclus ; aucune configuration d’exploitation privée n’est fournie.
+Generated protocol, constant, and schema files are retained because they are required for compilation. Generic build configurations and the server configuration template are included; no private deployment configuration is provided.
 
-## Contributions
+## Contributing
 
-Ouvrez une issue ou une pull request sur [Laarm/FlyffRewriteRust](https://github.com/Laarm/FlyffRewriteRust). Décrivez le comportement concerné, les étapes de reproduction et les vérifications effectuées. Conservez les fichiers de verrouillage des dépendances.
+Open an issue or pull request on [Laarm/FlyffRewriteRust](https://github.com/Laarm/FlyffRewriteRust). Describe the behavior involved, reproduction steps, and checks performed. Keep dependency lockfiles.
 
-Ne joignez pas de base de joueurs, journal contenant des données personnelles, secret d'exploitation ou archive des ressources originales.
+Do not attach player databases, logs containing personal data, deployment secrets, or archives of original assets.
 
-## Licence
+## License
 
-Le dépôt utilise la licence **Apache 2.0**, déjà définie sur le dépôt GitHub : voir [LICENSE](LICENSE). Les composants tiers conservent leurs propres licences, notamment [la police DejaVu](web/src/static/fonts/LICENSE-DejaVu.txt).
+The repository uses the **Apache 2.0** license already established on GitHub: see [LICENSE](LICENSE). Third-party components retain their own licenses, including the [DejaVu font](web/src/static/fonts/LICENSE-DejaVu.txt).
 
-Flyff et ses ressources originales appartiennent à leurs ayants droit respectifs. Ce projet est indépendant ; la licence du dépôt n'accorde aucun droit sur les ressources originales fournies séparément.
+Flyff and its original assets belong to their respective rights holders. This is an independent project; the repository's license grants no rights to the original assets supplied separately.
