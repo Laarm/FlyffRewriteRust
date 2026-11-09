@@ -1,0 +1,622 @@
+// Party messages (Plan/11 section 4.2, WP-PROTO-21; tag block 640-671). Transcribed from ref/08 section 13.1,
+// ref/03 section 9, ref/07a section 16, ref/07c sections 30.4-30.5, ref/09a section 5.7, ref/09b section 7 and
+// Plan/21 section 4. Parties live only in memory (KQ-21). Every C2S message acts for the session character
+// (VR-001): the legacy leading leader / own-id fields are dropped. Error codes of ErrorParty (MsgHdr.h): ERROR_NOLEADER
+// 200, FULLPARTY 201, NOPARTY 202, DIFFRENTPARTY 203, DIFFERNTUSERNAME 204, NOTPARTYPOINT 205, NOTPARTYSKILL 206,
+// NOTTARGET 207, NOTMAMBER 208, SAMLEADER 209. Party modes (SetPartyMode.mode): LINKATTACK 0, FORTUNECIRCLE 1,
+// STRETCHING 2, GIFTBOX 3, PARSKILL 4. Party skills (PartySkillUse.skill): CALL 1, BLITZ 2, RETREAT 3, SPHERECIRCLE 4,
+// LINKATTACK 5, FORTUNECIRCLE 6, STRETCHING 7, GIFTBOX 8.
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+import "flyff/v1/common.proto";
+import "flyff/v1/social_types.proto";
+
+// legacy MEMBERREQUEST 0xFFFFFF17 (C2S): invite a player to the party, or to form an advanced one (ref/07a
+// section 16.1, Plan/21 section 4.2). The sender is the leader. Answer: PartyRequest to the invitee, or
+// PartyRequestCancel to the sender (offline target mode 4, already in a party mode 1, invites off mode 3).
+message MemberRequest {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF17
+    name: "MEMBERREQUEST"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // dropped: uLeaderid (u32; FIX, VR-001: the session character is the leader)
+  // the invited player (character id)
+  uint32 member_id = 1 [(flyff.legacy_type) = "u32 uMemberid"];
+  // true = the invitation is for an advanced (named) party
+  bool troupe = 2 [(flyff.legacy_type) = "BOOL bTroup"];
+}
+
+// legacy MEMBERREQUESTCANCLE 0xFFFFFF18 (C2S): decline a party invitation (ref/07a section 16.2, Plan/21
+// section 4.2). Needs a live invitation from that leader (FIX VR-001: the original forwarded anyone's cancel).
+// Answer: PartyRequestCancel to the leader.
+message MemberRequestCancel {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF18
+    name: "MEMBERREQUESTCANCLE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // the inviting leader (character id)
+  uint32 leader_id = 1 [(flyff.legacy_type) = "u32 uLeaderid"];
+  // dropped: uMemberid (u32; FIX, VR-001: the session character is the invitee)
+  // reason shown to the leader: 0 declined, 1 already in a party, 3 invitations off, 4 other server; other
+  // values count as 0
+  sint32 mode = 2 [(flyff.legacy_type) = "i32 nMode"];
+}
+
+// legacy ADDPARTYMEMBER 0xFFFFFF11 (C2S): accept a party invitation, or join a party from the finder list
+// (ref/03 section 9.1, Plan/21 section 4.2). Needs a live invitation from the leader, or a leader whose allow-
+// join flag is set (VR-040). Answer: PartyMember to every online member; ErrorParty to the leader (203 already
+// in a party, 200 not the leader, 201 full).
+message AddPartyMember {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF11
+    name: "ADDPARTYMEMBER"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // the leader of the party to join
+  uint32 leader_id = 1 [(flyff.legacy_type) = "u32 idLeader"];
+  // dropped: lvlL, jobL, sexL (i32, i32, u32), idMember, lvlM, jobM, sexM (u32, i32, i32, u32): the player
+  // data comes from the session
+}
+
+// legacy REMOVEPARTYMEMBER 0xFFFFFF12 (C2S): leave the party (own id) or kick a member (the leader only)
+// (ref/03 section 9.1, Plan/21 section 4.3). Answer: PartyMember to the remaining members and the removed one.
+message RemovePartyMember {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF12
+    name: "REMOVEPARTYMEMBER"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // dropped: _idLeader (u32, read and ignored by the original)
+  // the member to remove; the sender's own id leaves the party
+  uint32 member_id = 1 [(flyff.legacy_type) = "u32 idMember"];
+}
+
+// legacy CHANGETROUP 0xFFFFFF19 (C2S): the leader turns a normal party of level 10 into an advanced party and
+// names it (ref/03 section 9.1, Plan/21 section 4.4). The name is required and validated (FIX VR-052; the
+// original read an uninitialised buffer when it was absent). Answers: ErrorParty 204 when the name is taken,
+// else PartyChangeTroup and PartyChangeName to the members.
+message ChangeTroup {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF19
+    name: "CHANGETROUP"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // dropped: _id (u32) and sendName (i32): the session identifies the leader and the name is always present
+  // the party name; the name rules (at most 16 characters) are a handler check
+  string name = 1 [
+    (flyff.legacy_type) = "str<=32",
+    (flyff.max_len) = 32
+  ];
+}
+
+// legacy CHANPARTYNAME 0xFFFFFF1A (C2S): the leader of an advanced party renames it (ref/03 section 9.1,
+// Plan/21 section 4.4). Answers: ErrorParty 204 when the name is taken, else PartyChangeName to the members.
+message ChanPartyName {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF1A
+    name: "CHANPARTYNAME"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // dropped: _id (u32, the session identifies the leader)
+  // the new party name
+  string name = 1 [
+    (flyff.legacy_type) = "str<=32",
+    (flyff.max_len) = 32
+  ];
+}
+
+// legacy PARTYCHANGEITEMMODE 0xFFFFFF20 (C2S): the leader sets the item share mode (ref/03 section 9.1,
+// Plan/21 section 4.7). Answer: PartyChangeItemModeNtf to the members.
+message PartyChangeItemModeReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF20
+    name: "PARTYCHANGEITEMMODE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // dropped: _id (u32, the session identifies the leader)
+  // 0 finder, 1 round robin, 2 leader, 3 random; other values are refused (VR-004)
+  sint32 mode = 1 [(flyff.legacy_type) = "i32 mode"];
+}
+
+// legacy PARTYCHANGEEXPMODE 0xFFFFFF21 (C2S): the leader of an advanced party sets the experience share mode
+// (ref/03 section 9.1, Plan/21 section 4.7). Answer: PartyChangeExpModeNtf to the members.
+message PartyChangeExpModeReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF21
+    name: "PARTYCHANGEEXPMODE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // dropped: _id (u32, the session identifies the leader)
+  // 0 by level, 1 by contribution; 2 and every other value are refused (PL-086, VR-004)
+  sint32 mode = 1 [(flyff.legacy_type) = "i32 mode"];
+}
+
+// legacy PARTYCHANGELEADER 0xFFFFFF2F (C2S): the leader hands the party over to a member (ref/03 section 9.1,
+// Plan/21 section 4.3). Answers: ErrorParty 209 for the leader himself, 208 for a non-member; else
+// AddPartyChangeLeader to the members.
+message PartyChangeLeader {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF2F
+    name: "PARTYCHANGELEADER"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // dropped: _idLeader (u32, the session identifies the leader)
+  // the new leader (character id)
+  uint32 new_leader = 1 [(flyff.legacy_type) = "u32 newLeader"];
+}
+
+// legacy PARTYSKILLUSE 0xFFFFFF1B (C2S): the leader of an advanced party uses a party skill (ref/07a section
+// 16.3, Plan/21 section 4.8). Answers: the skill's own messages (PartySkillCall, PartySkillBlitz,
+// PartySkillRetreat, PartySkillSphereCircle, SetPartyMode), PartyExp after the cost, or ErrorParty 205, 206 or
+// 207.
+message PartySkillUse {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF1B
+    name: "PARTYSKILLUSE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // dropped: uLeaderid (u32, ignored by the original; the session identifies the leader)
+  // party skill id 1..8 (see the file header)
+  sint32 skill = 1 [(flyff.legacy_type) = "i32 nSkill"];
+}
+
+// legacy JOIN_PARTY_REQ 0xAA000008 (C2S, custom __PARTY_FIND): ask for the list of parties that recruit
+// (ref/07c section 30.4, Plan/21 section 4.10). No payload. Answer: PartyFinderRefresh.
+message JoinPartyReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xAA000008
+    name: "JOIN_PARTY_REQ"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+}
+
+// legacy PARTYALLOWJOIN 0xAA000009 (C2S, custom __PARTY_FIND): the leader sets whether the party recruits
+// (ref/07c section 30.5, Plan/21 section 4.10). Answer: PartyAllowJoinNtf to the leader and the members.
+message PartyAllowJoinReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xAA000009
+    name: "PARTYALLOWJOIN"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // non-zero = the party recruits
+  sint32 mode = 1 [(flyff.legacy_type) = "i32 nMode"];
+}
+
+// legacy SETNAVIPOINT 0x00FF0018 (C2S): share a minimap marker with the party (ref/07b section 9.3, Plan/21
+// section 4.9). Answer: SetNaviPointNtf.
+message SetNaviPointReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF0018
+    name: "SETNAVIPOINT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // the marked world position
+  Vec3 pos = 1 [(flyff.legacy_type) = "vec3 Pos"];
+  // 0 (legacy NULL_ID) = every online party member, else only the sender and that player, who must be in the
+  // sender's view (VR-051)
+  uint32 target = 2 [(flyff.legacy_type) = "u32 objidTarget"];
+}
+
+// legacy PARTYCHANGEITEMMODE 0x008F (S2C); obj_id: 0 (self). The item share mode of the party changed (ref/08
+// section 13.1, ref/09a section 5.7).
+message PartyChangeItemModeNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8F
+    name: "PARTYCHANGEITEMMODE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // 0 finder, 1 round robin, 2 leader, 3 random
+  sint32 mode = 1 [(flyff.legacy_type) = "i32"];
+}
+
+// legacy PARTYCHANGEEXPMODE 0x0090 (S2C); obj_id: 0 (self). The experience share mode of the party changed
+// (ref/08 section 13.1, ref/09a section 5.7).
+message PartyChangeExpModeNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x90
+    name: "PARTYCHANGEEXPMODE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // 0 by level, 1 by contribution
+  sint32 mode = 1 [(flyff.legacy_type) = "i32"];
+}
+
+// legacy ADDPARTYCHANGELEADER 0x0079 (S2C); obj_id: 0 (self). The leader changed: the new leader takes member
+// slot 0 and the client clears the party buff icons and skill cooldowns (ref/08 section 13.1, ref/09a section
+// 5.7).
+message AddPartyChangeLeader {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x79
+    name: "ADDPARTYCHANGELEADER"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // the new leader (character id)
+  uint32 new_leader = 1 [(flyff.legacy_type) = "u32 newLeaderId"];
+}
+
+// legacy PARTYALLOWJOIN 0x8902 (S2C, custom __PARTY_FIND); obj_id: 0 (self). Whether the leader recruits
+// (ref/07c section 30.5, Plan/21 section 4.10).
+message PartyAllowJoinNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8902
+    name: "PARTYALLOWJOIN"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // true = the party recruits
+  bool allow = 1 [(flyff.legacy_type) = "BOOL bAllowJoin"];
+}
+
+// legacy PARTYFINDER_REFRESH 0x8901 (S2C, custom __PARTY_FIND); obj_id: 0 (self). The parties that recruit,
+// answer of JoinPartyReq (ref/08 section 13.1, ref/07c section 30.4, Plan/21 section 4.10). FIX (Plan/11a):
+// the legacy count could differ from the list length; the count is dropped and the list length is the count.
+message PartyFinderRefresh {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8901
+    name: "PARTYFINDER_REFRESH"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // dropped: count (i32; the list length)
+  // one entry per recruiting party, in party id order
+  repeated PartyFinderEntry entries = 1 [(flyff.legacy_type) = "n x party"];
+
+  // One recruiting party.
+  message PartyFinderEntry {
+    uint32 party_id = 1 [(flyff.legacy_type) = "u32 partyId"];
+    // the party name when longer than 3 characters, else the text of TID_APP_PARTY
+    string name = 2 [(flyff.legacy_type) = "str"];
+    sint32 member_count = 3 [(flyff.legacy_type) = "i32 members"];
+    sint32 level = 4 [(flyff.legacy_type) = "i32 level"];
+    sint32 point = 5 [(flyff.legacy_type) = "i32 point"];
+    uint32 leader_id = 6 [(flyff.legacy_type) = "u32 leaderId"];
+    string leader_name = 7 [(flyff.legacy_type) = "str"];
+    // the member names joined as "a, b, c, " (with the trailing ", ")
+    string member_list = 8 [(flyff.legacy_type) = "str"];
+    // mode LINKATTACK is running
+    bool link_attack = 9 [(flyff.legacy_type) = "bool"];
+    // mode FORTUNECIRCLE is running
+    bool fortune_circle = 10 [(flyff.legacy_type) = "bool"];
+    // mode GIFTBOX is running
+    bool gift_box = 11 [(flyff.legacy_type) = "bool"];
+    // the leader has the party-skill-full item mode (SM_PARTYSKILL1/15/30)
+    bool skill_full = 12 [(flyff.legacy_type) = "bool"];
+    // the leader has a party EXP-up buff
+    bool exp_up = 13 [(flyff.legacy_type) = "bool"];
+    // the leader has a party skill-up buff
+    bool skill_up = 14 [(flyff.legacy_type) = "bool"];
+  }
+}
+
+// legacy PARTYMEMBER 0x0082 (S2C); obj_id: 0 (self). A member joined or left, or the party was dissolved; also
+// part of the join batch (ref/08 section 13.1, ref/09a section 5.7, Plan/21 sections 4.2 and 4.3). The legacy
+// `i32 n` before the party record is the member count and is dropped: the record is present or absent.
+message PartyMember {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x82
+    name: "PARTYMEMBER"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // the member that joined or left (0 on login)
+  uint32 changed = 1 [(flyff.legacy_type) = "u32 uPlayerId"];
+  // name of the leader
+  string leader_name = 2 [(flyff.legacy_type) = "str<=42"];
+  // name of the changed member
+  string member_name = 3 [(flyff.legacy_type) = "str<=42"];
+  // dropped: n (i32, the member count of the party record)
+  // the party record; absent = the receiver is no longer in a party (left: party exit text, dissolved: destroy
+  // text)
+  PartyInfo party = 4 [(flyff.legacy_type) = "CParty::Serialize iff n != 0"];
+}
+
+// legacy PARTYREQEST 0x0083 (S2C); obj_id: 0 (self). A party invitation for the receiver (ref/08 section 13.1,
+// ref/07a section 16.1, Plan/21 section 4.2).
+message PartyRequest {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x83
+    name: "PARTYREQEST"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  uint32 leader_id = 1 [(flyff.legacy_type) = "u32 leaderId"];
+  sint32 leader_level = 2 [(flyff.legacy_type) = "i32 leaderLevel"];
+  sint32 leader_job = 3 [(flyff.legacy_type) = "i32 leaderJob"];
+  uint32 leader_sex = 4 [(flyff.legacy_type) = "u8 leaderSex"];
+  // the invited player (the receiver)
+  uint32 member_id = 5 [(flyff.legacy_type) = "u32 memberId"];
+  sint32 member_level = 6 [(flyff.legacy_type) = "i32 memberLevel"];
+  sint32 member_job = 7 [(flyff.legacy_type) = "i32 memberJob"];
+  uint32 member_sex = 8 [(flyff.legacy_type) = "u8 memberSex"];
+  string leader_name = 9 [(flyff.legacy_type) = "str<=42 leaderName"];
+  // true = the invitation is for an advanced party
+  bool troupe = 10 [(flyff.legacy_type) = "BOOL bTroupe"];
+}
+
+// legacy PARTYREQESTCANCEL 0x0084 (S2C); obj_id: 0 (self). The invitation failed or was declined (ref/08
+// section 13.1, ref/09a section 5.7).
+message PartyRequestCancel {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x84
+    name: "PARTYREQESTCANCEL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  uint32 leader_id = 1 [(flyff.legacy_type) = "u32 leaderId"];
+  uint32 member_id = 2 [(flyff.legacy_type) = "u32 memberId"];
+  // 0 declined, 1 in another party or already in your party, 2 failed to enter, 3 the player refuses
+  // invitations, 4 on another server
+  sint32 mode = 3 [(flyff.legacy_type) = "i32 mode"];
+}
+
+// legacy PARTYEXP 0x0085 (S2C); obj_id: 0 (self). Party experience, level and points after a kill or a skill
+// cost (ref/08 section 13.1, ref/09a section 5.7, Plan/21 section 4.5).
+message PartyExp {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x85
+    name: "PARTYEXP"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  sint32 exp = 1 [(flyff.legacy_type) = "i32"];
+  sint32 level = 2 [(flyff.legacy_type) = "i32"];
+  sint32 point = 3 [(flyff.legacy_type) = "i32"];
+}
+
+// legacy PARTYCHANGETROUP 0x0088 (S2C); obj_id: 0 (self). The party became an advanced party (ref/08 section
+// 13.1, ref/09a section 5.7).
+message PartyChangeTroup {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x88
+    name: "PARTYCHANGETROUP"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // the party name
+  string name = 1 [(flyff.legacy_type) = "str<=33"];
+}
+
+// legacy PARTYCHANGENAME 0x0089 (S2C); obj_id: 0 (self). The party was renamed (ref/08 section 13.1, ref/09a
+// section 5.7).
+message PartyChangeName {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x89
+    name: "PARTYCHANGENAME"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // the party name
+  string name = 1 [(flyff.legacy_type) = "str<=33"];
+}
+
+// legacy PARTYSKILL_CALL 0x008A (S2C); obj_id: 0 (self). Party skill Call: the effect points toward the leader
+// (ref/08 section 13.1, Plan/21 section 4.8).
+message PartySkillCall {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8A
+    name: "PARTYSKILL_CALL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  Vec3 leader_pos = 1 [(flyff.legacy_type) = "vec3 leaderPos"];
+}
+
+// legacy PARTYSKILL_BLITZ 0x008B (S2C); obj_id: 0 (self). Party skill Blitz: the target of the leader (ref/08
+// section 13.1, Plan/21 section 4.8).
+message PartySkillBlitz {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8B
+    name: "PARTYSKILL_BLITZ"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // object id of the leader's target
+  uint32 target = 1 [(flyff.legacy_type) = "u32 targetObjId"];
+}
+
+// legacy PARTYSKILL_RETREAT 0x008C (S2C); obj_id: the member the effect is shown on. Party skill Retreat
+// (ref/08 section 13.1, Plan/21 section 4.8). No payload.
+message PartySkillRetreat {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8C
+    name: "PARTYSKILL_RETREAT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+}
+
+// legacy PARTYSKILL_SPHERECIRCLE 0x008E (S2C); obj_id: the leader's target. Party skill Sphere Circle (ref/08
+// section 13.1, Plan/21 section 4.8). No payload.
+message PartySkillSphereCircle {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8E
+    name: "PARTYSKILL_SPHERECIRCLE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+}
+
+// legacy SETPARTYMODE 0x008D (S2C); obj_id: 0 (self). A party mode timer started, ran out or was reset (ref/08
+// section 13.1, ref/09a section 5.7, Plan/21 section 4.8).
+message SetPartyMode {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8D
+    name: "SETPARTYMODE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // party mode 0..4 (see the file header)
+  sint32 mode = 1 [(flyff.legacy_type) = "i32 mode"];
+  // remaining mode time in milliseconds
+  uint32 time_ms = 2 [(flyff.legacy_type) = "u32 skillTime"];
+  // true = the mode is running
+  bool on = 3 [(flyff.legacy_type) = "BOOL bOn"];
+  // party points after the cost; 0 when the mode is off
+  sint32 point = 4 [(flyff.legacy_type) = "i32 point (only iff bOn)"];
+}
+
+// legacy SET_PARTY_MEMBER_PARAM 0x0091 (S2C); obj_id: 0 (self). A member parameter changed; the only parameter
+// is PP_REMOVE, the offline flag (ref/08 section 13.1, ref/09a section 5.7, Plan/21 section 4.3).
+message SetPartyMemberParam {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x91
+    name: "SET_PARTY_MEMBER_PARAM"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32 idPlayer"];
+  // 0 = PP_REMOVE
+  uint32 param = 2 [(flyff.legacy_type) = "u8 nParam"];
+  // PP_REMOVE: 1 = offline, 0 = online again
+  sint32 value = 3 [(flyff.legacy_type) = "i32 nVal"];
+}
+
+// legacy ADDPARTYNAME 0x0068 (S2C); obj_id: 0 (self). The stored advanced-party name of the character, in the
+// join batch (ref/08 section 13.1, ref/09a section 5.7, Plan/21 section 3.5).
+message AddPartyName {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x68
+    name: "ADDPARTYNAME"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // the last used party name; "" = none
+  string name = 1 [(flyff.legacy_type) = "str<=33"];
+}
+
+// legacy PARTYMAPINFO 0x003C (S2C); obj_id: 0 (self). The position of a party member out of sight, for the
+// minimap (ref/08 section 13.1, ref/09a section 5.7, Plan/21 section 4.9).
+message PartyMapInfo {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x3C
+    name: "PARTYMAPINFO"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // index in the party member list
+  sint32 member_index = 1 [(flyff.legacy_type) = "i32 nPartyIndex"];
+  Vec3 pos = 2 [(flyff.legacy_type) = "vec3"];
+}
+
+// legacy ERRORPARTY: SNAPSHOTTYPE 0x0081 and PACKETTYPE 0xFFFFFF10 (S2C, merged); obj_id: 0 (self). A party
+// request was refused (ref/08 section 13.1, ref/03 section 9.2, ref/09a section 5.7, Plan/21 section 2.5).
+message ErrorParty {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x81
+    name: "ERRORPARTY"
+  };
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF10
+    name: "ERRORPARTY"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // ERROR_NOLEADER 200 .. ERROR_SAMLEADER 209 (see the file header)
+  uint32 code = 1 [(flyff.legacy_type) = "u32"];
+  // the party skill that found no target (ERROR_NOTTARGET); 0 for every other code
+  uint32 skill = 2 [(flyff.legacy_type) = "u32 dwSkill (only iff code == 207)"];
+}
+
+// legacy SETNAVIPOINT 0x00C6 (S2C); obj_id: the player who marked. A party minimap marker (ref/08 section 14,
+// ref/09b section 3.4, Plan/21 section 4.9); the client keeps it for about 3.3 s.
+message SetNaviPointNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xC6
+    name: "SETNAVIPOINT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  Vec3 pos = 1 [(flyff.legacy_type) = "vec3 Pos"];
+  // name of the player who marked
+  string sender_name = 2 [(flyff.legacy_type) = "str<=64"];
+}

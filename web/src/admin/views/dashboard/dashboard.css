@@ -1,0 +1,153 @@
+/* The dashboard (Plan/25 section 9.1, 9.2): charts, meters, the bar of the overview. Colours are the tokens of styles/tokens.css. */
+.adm-dashboard__bar {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.adm-spacer {
+  flex: 1;
+}
+
+.adm-quick {
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.adm-banner-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 2px var(--s-2);
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.adm-banner-link:hover {
+  text-decoration: underline;
+}
+
+.adm-dashboard__note {
+  margin: 0;
+}
+
+.adm-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--s-3);
+}
+
+.adm-chart {
+  margin: 0;
+  padding: var(--s-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.adm-chart__title {
+  margin-bottom: var(--s-1);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.adm-chart__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: pan-y;
+}
+
+.adm-chart__empty {
+  margin: var(--s-4) 0;
+}
+
+.adm-chart__grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.adm-chart__tick {
+  fill: var(--text-muted);
+  font-size: 10px;
+}
+
+.adm-chart__line {
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.adm-chart__line--1 {
+  stroke: var(--accent);
+}
+
+.adm-chart__line--2 {
+  stroke: var(--warn);
+  stroke-dasharray: 6 3;
+}
+
+.adm-chart__line--3 {
+  stroke: var(--ok);
+  stroke-dasharray: 2 3;
+}
+
+.adm-chart__cursor {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+
+.adm-chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-4);
+  margin: var(--s-1) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+}
+
+.adm-chart__key {
+  display: inline-block;
+  width: 18px;
+  height: 0;
+  margin-right: var(--s-1);
+  vertical-align: middle;
+  border-top: 2px solid var(--accent);
+}
+
+.adm-chart__key--2 {
+  border-top: 2px dashed var(--warn);
+}
+
+.adm-chart__key--3 {
+  border-top: 2px dotted var(--ok);
+}
+
+.adm-meter {
+  height: 8px;
+  margin-top: var(--s-2);
+  border-radius: 4px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.adm-meter__fill {
+  height: 100%;
+  background: var(--accent);
+}
+
+.adm-meter__fill.is-high {
+  background: var(--danger);
+}
+
+.adm-h3 {
+  margin: var(--s-4) 0 var(--s-2);
+  font-size: var(--fs-lg);
+}

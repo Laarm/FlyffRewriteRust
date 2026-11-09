@@ -1,0 +1,701 @@
+// Guild siege ("guild combat") and guild combat 1:1 messages (Plan/11 section 4.2, WP-PROTO-23; tag block 752-783).
+// Transcribed from ref/08 section 13.4, ref/07b section 17, ref/07c section 13, ref/09a sections 5.10 and 7,
+// _Network/MsgHdr.h (GC_* sub-types) and Plan/21 sections 7 and 8. The S2C `GuildCombat` is the multiplexed
+// SNAPSHOTTYPE_GUILDCOMBAT: one message with an inner oneof, field number = legacy sub-type + 1 (Plan/11 section
+// 5.2), one nested message per sub-type named after the constant (GC_WINGUILD -> GcWinGuild). Siege states
+// (GcGcState.state): OPEN 0, CLOSE 1, WAR 2, COMPLET_CLOSE 3, GM_CLOSE 4; war states (war_state): NOTENTER 100,
+// NOTENTER_COUNT 101, ENTER 102, MAINTENANCE 103, WAR_WAR 104, WAR_CLOSE 105, WAR_CLOSE_WAIT 106, WAR_TELEPORT 107.
+// GC1:1 manager states: CLOSE 0, OPEN 1, ENTRANCE 2, WAR 3; arena states CLOSE 100, WAIT 101, WAR 102, FINISH 103,
+// CLOSE_WAIT 104. Every C2S message acts for the session character (VR-001).
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+
+// legacy IN_GUILDCOMBAT 0xF000D022 (C2S): the guild master opens the siege application window or bids (ref/07b
+// section 17, ref/09a section 7, Plan/21 section 7.3). The legacy `u8 nState` selects the payload; the field
+// number is nState + 1. The master only. Answers: GuildCombat (GC_IN_WINDOW), GuildCombat (GC_IN_COMPLETE) and
+// GC_ISREQUEST.
+message InGuildCombat {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000D022
+    name: "IN_GUILDCOMBAT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  oneof sub {
+    // GC_IN_WINDOW 1
+    GcInWindow gc_in_window = 2;
+    // GC_IN_APP 2
+    GcInApp gc_in_app = 3;
+  }
+
+  message GcInWindow {}
+
+  message GcInApp {
+    // the bid in penya: at least the minimum, higher than the previous bid, at most 2147483647
+    uint32 penya = 1 [(flyff.legacy_type) = "u32 dwPenya"];
+  }
+}
+
+// legacy OUT_GUILDCOMBAT 0xF000D023 (C2S): the master withdraws the siege application while applications are
+// open (ref/07b section 17, Plan/21 section 7.3). No payload. Answer: GC_ISREQUEST, and the refund by mail.
+message OutGuildCombat {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000D023
+    name: "OUT_GUILDCOMBAT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+}
+
+// legacy JOIN_GUILDCOMBAT 0xF000D024 (C2S): enter the siege map at the entry NPC (ref/07b section 17, Plan/21
+// section 7.4). No payload.
+message JoinGuildCombat {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000D024
+    name: "JOIN_GUILDCOMBAT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+}
+
+// legacy SELECTPLAYER_GUILDCOMBAT 0xF000D027 (C2S): open the line-up editor (window = true) or submit the
+// line-up (ref/07b section 17, ref/09a section 7, Plan/21 section 7.4). The master or a kingpin, while the
+// line-up is open; every id must be a guild member (FIX VR-049). Answer: GuildCombat (GC_SELECTPLAYER,
+// GC_GUILDSTATUS, GC_WARPLAYERLIST).
+message SelectPlayerGuildCombat {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000D027
+    name: "SELECTPLAYER_GUILDCOMBAT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // true = only open the editor (defender and ids are absent); false = submit the line-up
+  bool window = 1 [(flyff.legacy_type) = "BOOL bWindow"];
+  // the defender (character id); must be in the list
+  uint32 defender = 2 [(flyff.legacy_type) = "u32 uidDefender (iff !bWindow)"];
+  // the selected players (character ids), at most the configured maximum (10); the count is the list length
+  repeated uint32 ids = 3 [
+    (flyff.legacy_type) = "i32 n + n x u32 (iff !bWindow)",
+    (flyff.max_len) = 80
+  ];
+}
+
+// legacy REQUEST_STATUS 0xF000D028 (C2S): ask for the list of applying guilds (ref/07b section 17, Plan/21
+// section 7.3). No payload. Answer: GuildCombat (GC_REQUEST_STATUS).
+message RequestStatus {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000D028
+    name: "REQUEST_STATUS"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+}
+
+// legacy SELECTMAP_GUILDCOMBAT 0xF000D02B (C2S): choose the entry gate (ref/07b section 17, Plan/21 section
+// 7.4). Values other than 0, 1, 2, 3 and 99 (random) count as 99 (FIX; the original did not check the range).
+message SelectMapGuildCombat {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000D02B
+    name: "SELECTMAP_GUILDCOMBAT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // entry gate 0..3, or 99 = random
+  sint32 map = 1 [(flyff.legacy_type) = "i32 nMap"];
+}
+
+// legacy GETPENYAGUILD_GUILDCOMBAT 0xF000D02D (C2S): the master claims the guild's prize or refund (ref/07b
+// section 17, Plan/21 section 7.6). No payload. Answer: GuildCombat (GC_GETPENYAGUILD).
+message GetPenyaGuildGuildCombat {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000D02D
+    name: "GETPENYAGUILD_GUILDCOMBAT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+}
+
+// legacy GETPENYAPLAYER_GUILDCOMBAT 0xF000D02E (C2S): the best player claims the prize (ref/07b section 17,
+// Plan/21 section 7.6). No payload. Answer: GuildCombat (GC_GETPENYAPLAYER).
+message GetPenyaPlayerGuildCombat {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000D02E
+    name: "GETPENYAPLAYER_GUILDCOMBAT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+}
+
+// legacy TELE_GUILDCOMBAT 0xF000D030 (C2S): leave the siege map for Madrigal (ref/07b section 17, Plan/21
+// section 7.4). No payload.
+message TeleGuildCombat {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000D030
+    name: "TELE_GUILDCOMBAT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+}
+
+// legacy PLAYERPOINT_GUILDCOMBAT 0xF000D031 (C2S): ask for the cross-siege player ranking (ref/07b section 17,
+// Plan/21 section 7.6). No payload. Answer: GuildCombat (GC_PLAYERPOINT).
+message PlayerPointGuildCombat {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000D031
+    name: "PLAYERPOINT_GUILDCOMBAT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+}
+
+// legacy GC1TO1_TENDEROPENWND 0xF000F700 (C2S): open the 1:1 tender window (ref/07c section 13, Plan/21
+// section 8.3). The master of a guild of level 20 or more while tenders are open. No payload. Answer:
+// Gc1to1TenderOpenWndNtf.
+message Gc1to1TenderOpenWndReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F700
+    name: "GC1TO1_TENDEROPENWND"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy GC1TO1_TENDERVIEW 0xF000F701 (C2S): see the tender ranking (ref/07c section 13, Plan/21 section 8.3).
+// No payload. Answer: Gc1to1TenderViewNtf.
+message Gc1to1TenderViewReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F701
+    name: "GC1TO1_TENDERVIEW"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy GC1TO1_TENDER 0xF000F702 (C2S): tender penya for the 1:1 guild combat (ref/07c section 13, Plan/21
+// section 8.3). At least the minimum; a re-tender must be higher and pays the difference.
+message Gc1to1Tender {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F702
+    name: "GC1TO1_TENDER"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M7";
+  // the tender in penya
+  sint32 penya = 1 [(flyff.legacy_type) = "i32 nPenya"];
+}
+
+// legacy GC1TO1_TENDERCANCEL 0xF000F703 (C2S): withdraw the tender; 80 percent come back into the master's
+// purse (ref/07c section 13, Plan/21 section 8.3). No payload.
+message Gc1to1TenderCancel {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F703
+    name: "GC1TO1_TENDERCANCEL"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy GC1TO1_TENDERFAILED 0xF000F709 (C2S): the master of a guild that was not admitted claims the 98
+// percent refund (ref/07c section 13, Plan/21 section 8.3). No payload.
+message Gc1to1TenderFailed {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F709
+    name: "GC1TO1_TENDERFAILED"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy GC1TO1_MEMBERLINEUPOPENWND 0xF000F705 (C2S): open the 1:1 line-up window (ref/07c section 13, Plan/21
+// section 8.4). The master or a kingpin of a tendering guild while the line-up is open. No payload. Answer:
+// Gc1to1MemberLineUpOpenWndNtf.
+message Gc1to1MemberLineUpOpenWndReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F705
+    name: "GC1TO1_MEMBERLINEUPOPENWND"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy GC1TO1_MEMBERLINEUP 0xF000F706 (C2S): submit the 1:1 line-up (ref/07c section 13, Plan/21 section
+// 8.4). Between the minimum and maximum player count; every id a guild member (FIX).
+message Gc1to1MemberLineUp {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F706
+    name: "GC1TO1_MEMBERLINEUP"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M7";
+  // the line-up (character ids); the count is the list length
+  repeated uint32 ids = 1 [
+    (flyff.legacy_type) = "i32 n + n x u32 idPlayer",
+    (flyff.max_len) = 32
+  ];
+}
+
+// legacy GC1TO1_TELEPORTTONPC 0xF000F707 (C2S): go to the 1:1 NPC in Madrigal during the entrance phase
+// (ref/07c section 13, Plan/21 section 8.5). No payload.
+message Gc1to1TeleportToNpc {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F707
+    name: "GC1TO1_TELEPORTTONPC"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy GC1TO1_TELEPORTTOSTAGE 0xF000F708 (C2S): go to the waiting area of the assigned arena during the
+// entrance phase (ref/07c section 13, Plan/21 section 8.5). No payload.
+message Gc1to1TeleportToStage {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F708
+    name: "GC1TO1_TELEPORTTOSTAGE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy GUILDCOMBAT 0x00B8 (S2C); obj_id: 0 (NULL_ID) except GcUserState (the mover). The siege multiplexer
+// (ref/08 section 13.4, ref/09a section 5.10, Plan/21 section 7). The legacy `u8 sub` selects the payload; the
+// field number is sub + 1. Boxed in ServerMsg.
+message GuildCombat {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xB8
+    name: "GUILDCOMBAT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  oneof sub {
+    // GC_WINGUILD 0
+    GcWinGuild gc_win_guild = 1;
+    // GC_IN_WINDOW 1
+    GcInWindow gc_in_window = 2;
+    // GC_IN_COMPLETE 3
+    GcInComplete gc_in_complete = 4;
+    // GC_REQUEST_STATUS 4
+    GcRequestStatus gc_request_status = 5;
+    // GC_SELECTPLAYER 5
+    GcSelectPlayer gc_select_player = 6;
+    // GC_SELECTWARPOS 6
+    GcSelectWarPos gc_select_war_pos = 7;
+    // GC_BESTPLAYER 7
+    GcBestPlayer gc_best_player = 8;
+    // GC_ISREQUEST 8
+    GcIsRequest gc_is_request = 9;
+    // GC_USERSTATE 16
+    GcUserState gc_user_state = 17;
+    // GC_WARPLAYERLIST 17
+    GcWarPlayerList gc_war_player_list = 18;
+    // GC_GUILDSTATUS 32
+    GcGuildStatus gc_guild_status = 33;
+    // GC_GUILDPRECEDENCE 33
+    GcGuildPrecedence gc_guild_precedence = 34;
+    // GC_PLAYERPRECEDENCE 34
+    GcPlayerPrecedence gc_player_precedence = 35;
+    // GC_GCSTATE 48
+    GcGcState gc_gc_state = 49;
+    // GC_NEXTTIMESTATE 49
+    GcNextTimeState gc_next_time_state = 50;
+    // GC_ENTERTIME 50
+    GcEnterTime gc_enter_time = 51;
+    // GC_DIAGMESSAGE 51
+    GcDiagMessage gc_diag_message = 52;
+    // GC_TELE 52
+    GcTele gc_tele = 53;
+    // GC_LOG 53
+    GcLog gc_log = 54;
+    // GC_LOG_REALTIME 54
+    GcLogRealtime gc_log_realtime = 55;
+    // GC_GETPENYAGUILD 64
+    GcGetPenyaGuild gc_get_penya_guild = 65;
+    // GC_GETPENYAPLAYER 65
+    GcGetPenyaPlayer gc_get_penya_player = 66;
+    // GC_PLAYERPOINT 66
+    GcPlayerPoint gc_player_point = 67;
+  }
+
+  // One admitted guild of GC_WARPLAYERLIST.
+  message GcWarGuild {
+    uint32 defender = 1 [(flyff.legacy_type) = "u32 uidDefender"];
+    // dropped: n (i32, the list length)
+    repeated GcWarPlayer players = 2 [(flyff.legacy_type) = "n x {u32, i32}"];
+  }
+
+  // One selected player of a guild.
+  message GcWarPlayer {
+    uint32 id_player = 1 [(flyff.legacy_type) = "u32 uidPlayer"];
+    // true = fighting (1), false = waiting (0)
+    bool fighting = 2 [(flyff.legacy_type) = "i32 status"];
+  }
+
+  // A player and his remaining lives.
+  message GcLifeEntry {
+    uint32 id_player = 1 [(flyff.legacy_type) = "u32 uidPlayer"];
+    sint32 lives = 2 [(flyff.legacy_type) = "i32 nLife"];
+  }
+
+  // A guild's points, or a hidden entry.
+  message GcGuildPoint {
+    // false = the guild has no selected player; the next fields are absent
+    bool send = 1 [(flyff.legacy_type) = "BOOL bSend"];
+    // "Not Guild" for a vanished guild
+    string guild_name = 2 [(flyff.legacy_type) = "str<=128 (iff bSend)"];
+    sint32 point = 3 [(flyff.legacy_type) = "i32 (iff bSend)"];
+  }
+
+  // The player points of one guild.
+  message GcPlayerPoints {
+    // dropped: n (i32, the list length)
+    repeated GcPlayerPointEntry players = 1 [(flyff.legacy_type) = "n x {u32 idPlayer, i32 point}"];
+  }
+
+  // A player with points.
+  message GcPlayerPointEntry {
+    uint32 id_player = 1 [(flyff.legacy_type) = "u32 idPlayer"];
+    // used by GC_PLAYERPOINT only; 0 in GC_PLAYERPRECEDENCE
+    sint32 job = 2 [(flyff.legacy_type) = "i32 nJob"];
+    sint32 point = 3 [(flyff.legacy_type) = "i32 nPoint"];
+  }
+
+  // One kill of the siege log.
+  message GcLogEntry {
+    uint32 guild_attack = 1 [(flyff.legacy_type) = "u32 uidGuildAttack"];
+    uint32 guild_defence = 2 [(flyff.legacy_type) = "u32 uidGuildDefence"];
+    uint32 player_attack = 3 [(flyff.legacy_type) = "u32 uidPlayerAttack"];
+    uint32 player_defence = 4 [(flyff.legacy_type) = "u32 uidPlayerDefence"];
+    sint32 point = 5 [(flyff.legacy_type) = "i32 nPoint"];
+    bool kill_other_guild = 6 [(flyff.legacy_type) = "BOOL bKillDiffernceGuild"];
+    bool master = 7 [(flyff.legacy_type) = "BOOL bMaster"];
+    bool defender = 8 [(flyff.legacy_type) = "BOOL bDefender"];
+    bool last_life = 9 [(flyff.legacy_type) = "BOOL bLastLife"];
+  }
+
+  message GcWinGuild {
+    sint32 combat_index = 1 [(flyff.legacy_type) = "i32 combatIndex"];
+    // the winning guild of the last siege
+    uint32 win_guild = 2 [(flyff.legacy_type) = "u32 winGuildId"];
+    // consecutive wins
+    sint32 win_count = 3 [(flyff.legacy_type) = "i32 winCount"];
+  }
+
+  message GcInWindow {
+    // total of the admitted bids
+    sint64 prize = 1 [
+      (flyff.legacy_type) = "i64 prizePenya",
+      (flyff.js_safe_number) = true
+    ];
+    // the guild's current bid, 0 = none
+    uint32 my_bid = 2 [(flyff.legacy_type) = "u32 requestPenya"];
+    // the minimum bid
+    uint32 min_bid = 3 [(flyff.legacy_type) = "u32 minRequestPenya"];
+  }
+
+  // the bid was accepted (Plan/21 section 7.3); defined in MsgHdr.h, its client handler is commented out in
+  // V15
+  message GcInComplete {}
+
+  message GcRequestStatus {
+    // seconds until the next siege opens
+    sint32 seconds_to_next = 1 [(flyff.legacy_type) = "i32 tNext"];
+    sint64 prize = 2 [
+      (flyff.legacy_type) = "i64 prizePenya",
+      (flyff.js_safe_number) = true
+    ];
+    // dropped: n (i32, the list length)
+    // applying guilds in rank order; "NotGuild" for a vanished guild
+    repeated string guild_names = 3 [(flyff.legacy_type) = "n x str<=128"];
+    uint32 my_bid = 4 [(flyff.legacy_type) = "u32 myRequestPenya"];
+  }
+
+  message GcSelectPlayer {
+    // players that can be selected (10)
+    sint32 max_join_member = 1 [(flyff.legacy_type) = "i32 maxJoinMember"];
+    // simultaneous fighters (10)
+    sint32 max_war_player = 2 [(flyff.legacy_type) = "i32 maxWarPlayer"];
+    // true = the guild is admitted; the next fields follow
+    bool request_war = 3 [(flyff.legacy_type) = "BOOL bRequestWar"];
+    // true = open the editor with the stored line-up; false = the line-up was saved
+    bool window = 4 [(flyff.legacy_type) = "BOOL bWindow (iff bRequestWar)"];
+    // the stored defender
+    uint32 defender = 5 [(flyff.legacy_type) = "u32 uidDefender (iff bWindow)"];
+    // dropped: n (i32, the list length)
+    // the stored line-up (character ids)
+    repeated uint32 ids = 6 [(flyff.legacy_type) = "n x u32 (iff bWindow)"];
+  }
+
+  message GcSelectWarPos {
+    // the stored entry gate, 99 = random
+    sint32 map = 1 [(flyff.legacy_type) = "i32 nMap"];
+    // seconds to choose the gate
+    sint32 join_time_s = 2 [(flyff.legacy_type) = "i32 nJoinWarTime"];
+  }
+
+  message GcBestPlayer {
+    // the best player (MVP) of the last siege
+    uint32 id_player = 1 [(flyff.legacy_type) = "u32"];
+  }
+
+  message GcIsRequest {
+    // true = the guild has an active bid
+    bool request = 1 [(flyff.legacy_type) = "BOOL bRequest"];
+  }
+
+  message GcUserState {
+    // the player's object id (also the ServerMsg obj_id)
+    uint32 mover_obj_id = 1 [(flyff.legacy_type) = "OBJID idPlayer"];
+    // guild combat state: 0 none, 1 fighting, 2 standby
+    sint32 state = 2 [(flyff.legacy_type) = "i32 state"];
+  }
+
+  message GcWarPlayerList {
+    // dropped: nGuild (i32, the list length)
+    // one entry per admitted guild in rank order
+    repeated GcWarGuild guilds = 1 [(flyff.legacy_type) = "n x {defender, players}"];
+  }
+
+  message GcGuildStatus {
+    // simultaneous fighters when waiting players remain, else 0; the client marks the entry with this index
+    sint32 max_war_player = 1 [(flyff.legacy_type) = "i32"];
+    // dropped: n (i32, the list length)
+    // the guild's players: fighters first, then the waiting ones, then the eliminated
+    repeated GcLifeEntry players = 2 [(flyff.legacy_type) = "n x {u32 idPlayer, i32 nLife}"];
+  }
+
+  message GcGuildPrecedence {
+    // dropped: n (i32, the list length)
+    // one entry per admitted guild
+    repeated GcGuildPoint entries = 1 [(flyff.legacy_type) = "n x {BOOL bSend, [str, i32]}"];
+  }
+
+  message GcPlayerPrecedence {
+    // dropped: nGuilds (i32, the list length)
+    // one entry per admitted guild
+    repeated GcPlayerPoints guilds = 1 [(flyff.legacy_type) = "n x {i32 n, n x {u32, i32}}"];
+  }
+
+  message GcGcState {
+    // siege state (see the file header)
+    sint32 state = 1 [(flyff.legacy_type) = "i32 nState"];
+    // war state (see the file header)
+    sint32 war_state = 2 [(flyff.legacy_type) = "OBJID nWarState"];
+  }
+
+  message GcNextTimeState {
+    // milliseconds until the next state
+    uint32 time_ms = 1 [(flyff.legacy_type) = "DWORD dwTime"];
+    // the war state that follows
+    uint32 state = 2 [(flyff.legacy_type) = "DWORD dwState"];
+  }
+
+  message GcEnterTime {
+    // milliseconds left to enter the siege map
+    uint32 time_ms = 1 [(flyff.legacy_type) = "DWORD dwTime"];
+  }
+
+  message GcDiagMessage {
+    // text of an information box
+    string text = 1 [(flyff.legacy_type) = "str<=511"];
+  }
+
+  message GcTele {
+    // text of an information box with a leave button
+    string text = 1 [(flyff.legacy_type) = "str<=511"];
+  }
+
+  message GcLog {
+    // dropped: n (u32, the list length)
+    // the kill log of the siege
+    repeated GcLogEntry entries = 1 [(flyff.legacy_type) = "n x GCGETPOINT"];
+  }
+
+  message GcLogRealtime {
+    uint32 guild_attack = 1 [(flyff.legacy_type) = "u32 guildAtk"];
+    uint32 guild_defence = 2 [(flyff.legacy_type) = "u32 guildDef"];
+    string attacker_name = 3 [(flyff.legacy_type) = "str<=64"];
+    string defender_name = 4 [(flyff.legacy_type) = "str<=64"];
+    uint32 player_attack = 5 [(flyff.legacy_type) = "u32 playerAtk"];
+    uint32 player_defence = 6 [(flyff.legacy_type) = "u32 playerDef"];
+    // points the kill earned
+    sint32 point = 7 [(flyff.legacy_type) = "i32 nPoint"];
+    // bonus reason: killed a different guild (never set, KQ-20)
+    bool kill_other_guild = 8 [(flyff.legacy_type) = "BOOL bKillDiffernceGuild"];
+    // bonus reason: the attacker is a guild master
+    bool master = 9 [(flyff.legacy_type) = "BOOL bMaster"];
+    // bonus reason: the victim is the defender
+    bool defender = 10 [(flyff.legacy_type) = "BOOL bDefender"];
+    // bonus reason: the attacker is on his last life
+    bool last_life = 11 [(flyff.legacy_type) = "BOOL bLastLife"];
+  }
+
+  message GcGetPenyaGuild {
+    // 0 prize, 1 refund, 2 nothing to claim, 3 overflow
+    sint32 result = 1 [(flyff.legacy_type) = "i32"];
+    sint64 penya = 2 [
+      (flyff.legacy_type) = "i64",
+      (flyff.js_safe_number) = true
+    ];
+  }
+
+  message GcGetPenyaPlayer {
+    // 0 prize, 1 not the best player, 2 overflow
+    sint32 result = 1 [(flyff.legacy_type) = "i32"];
+    sint64 penya = 2 [
+      (flyff.legacy_type) = "i64",
+      (flyff.js_safe_number) = true
+    ];
+  }
+
+  message GcPlayerPoint {
+    // dropped: n (u32, the list length)
+    // the cross-siege ranking
+    repeated GcPlayerPointEntry entries = 1 [(flyff.legacy_type) = "n x {u32, i32, i32}"];
+  }
+}
+
+// legacy GC1TO1_TENDEROPENWND 0x0126 (S2C); obj_id: 0 (NULL_ID). The 1:1 tender window (ref/08 section 13.4,
+// Plan/21 section 8.3).
+message Gc1to1TenderOpenWndNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x126
+    name: "GC1TO1_TENDEROPENWND"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M7";
+  // the guild's current tender, 0 = none
+  sint32 my_penya = 1 [(flyff.legacy_type) = "i32 nPenya"];
+  // the minimum tender
+  sint32 join_penya = 2 [(flyff.legacy_type) = "i32 m_nJoinPenya"];
+}
+
+// legacy GC1TO1_TENDERVIEW 0x0127 (S2C); obj_id: 0 (NULL_ID). The 1:1 tender ranking (ref/08 section 13.4,
+// Plan/21 section 8.3).
+message Gc1to1TenderViewNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x127
+    name: "GC1TO1_TENDERVIEW"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M7";
+  // the guild's tender
+  sint32 penya = 1 [(flyff.legacy_type) = "i32 nPenya"];
+  // the guild's rank among the tenders
+  sint32 ranking = 2 [(flyff.legacy_type) = "i32 nRanking"];
+  // seconds until the tenders close
+  sint32 remain_s = 3 [(flyff.legacy_type) = "time_t t"];
+  // dropped: n (u32, the list length)
+  // tendering guilds in rank order
+  repeated uint32 guilds = 4 [(flyff.legacy_type) = "n x u32 ulGuildId"];
+}
+
+// legacy GC1TO1_MEMBERLINEUPOPENWND 0x0128 (S2C); obj_id: 0 (NULL_ID). The 1:1 line-up window (ref/08 section
+// 13.4, Plan/21 section 8.4).
+message Gc1to1MemberLineUpOpenWndNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x128
+    name: "GC1TO1_MEMBERLINEUPOPENWND"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M7";
+  sint32 min_level = 1 [(flyff.legacy_type) = "i32 m_nMinJoinPlayerLevel"];
+  sint32 min_players = 2 [(flyff.legacy_type) = "i32 m_nMinJoinPlayer"];
+  sint32 max_players = 3 [(flyff.legacy_type) = "i32 m_nMaxJoinPlayer"];
+  // dropped: n (u32, the list length)
+  // the stored line-up (character ids)
+  repeated uint32 ids = 4 [(flyff.legacy_type) = "n x u32"];
+}
+
+// legacy GC1TO1_NOWSTATE 0x0125 (S2C); obj_id: 0 (NULL_ID). The 1:1 state for the members, with tails that
+// depend on the state (ref/08 section 13.4, Plan/21 section 8.5).
+message Gc1to1NowState {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x125
+    name: "GC1TO1_NOWSTATE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M7";
+  // manager state 0..3 or arena state 100..104 (see the file header)
+  sint32 state = 1 [(flyff.legacy_type) = "i32 nState"];
+  // milliseconds left in the state
+  sint32 time_ms = 2 [(flyff.legacy_type) = "i32 nTime"];
+  // dropped: n (i32, the list length)
+  // the recipient guild's line-up (character ids, fight order; User.cpp:3533-3544)
+  repeated uint32 members = 3 [(flyff.legacy_type) = "n x u32 memberId (iff state == ENTRANCE 2)"];
+  // the opposing guild
+  uint32 enemy_guild = 4 [(flyff.legacy_type) = "u32 (iff state == ENTRANCE 2)"];
+  // round counter of the arena
+  sint32 prog_count = 5 [(flyff.legacy_type) = "i32 nProgCount (iff state == WAIT 101)"];
+}
+
+// legacy GC1TO1_WARRESULT 0x0129 (S2C); obj_id: 0 (NULL_ID). The result of a 1:1 round (ref/08 section 13.4,
+// Plan/21 section 8.5) in the view of the RECIPIENT (User.cpp:3564-3571, GuildCombat1to1.cpp:186-199): the fields
+// describe the recipient's own guild first, the opposing guild second.
+message Gc1to1WarResult {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x129
+    name: "GC1TO1_WARRESULT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M7";
+  // the recipient guild's last round result: READY 200, WAR 201 (the round begins), WIN 202, LOSE 203, DRAW 204
+  sint32 state = 1 [(flyff.legacy_type) = "i32 m_nState"];
+  // the recipient guild's k-th fighter of the round; 0 beyond its line-up (the original sent NULL_ID)
+  uint32 id_player = 2 [(flyff.legacy_type) = "u32 uIdPlayer"];
+  // round wins of the recipient's guild (0 at the start of a round)
+  sint32 win_count0 = 3 [(flyff.legacy_type) = "i32 nWinCount0"];
+  // round wins of the opposing guild (0 at the start of a round)
+  sint32 win_count1 = 4 [(flyff.legacy_type) = "i32 nWinCount1"];
+}

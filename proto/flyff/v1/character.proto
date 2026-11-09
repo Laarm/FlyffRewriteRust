@@ -1,0 +1,633 @@
+// Character messages (Plan/11 section 4.2, WP-PROTO-11; tag block 144-191 plus the hot tag 7). Transcribed from
+// ref/08 section 9.1, ref/07a section 9, ref/07b section 7, ref/07c section 12, ref/09a section 5.6, ref/09b
+// section 3.4 and Plan/16 section 17 (the message catalogue of the owning document). Stat formulas and the
+// level-up / job-change / restat message order are Plan/16; this file only fixes the shapes.
+//
+// Conventions of this file: `obj_id: 0 (self)` means the legacy header held the receiver's own id (or NULL_ID)
+// and the server sends 0 (Plan/11 section 3.2); `obj_id: the mover` messages are object-centric. DST_* ids are the
+// numeric values of Resource/defineAttribute.h, SM_* the 26 premium slots of _Network/CmnHdr.h (BANK15 0, BANK30 1,
+// PARTYSKILL15 2, PARTYSKILL30 3, SHOUT15 4, SHOUT30 5, MAINTAIN_MP 6, MAINTAIN_FP 7, MAX_HP 8, MAX_HP50 9,
+// ACTPOINT 10, STR_DOWN 11, STA_DOWN 12, DEX_DOWN 13, INT_DOWN 14, ATTACK_UP 15, RESIST_ATTACK_LEFT 16,
+// RESIST_ATTACK_RIGHT 17, RESIST_DEFENSE 18, ESCAPE 19, REVIVAL 20, VELOCIJUMP 21, PARTYSKILL1 22, ATTACK_UP1 23,
+// SHOUT001 24, BANK001 25).
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+import "flyff/v1/mover_types.proto";
+
+// legacy SETPOINTPARAM 0x001E (S2C); obj_id: the mover. Absolute HP/MP/FP/gold value (ref/08 section 9.1).
+// Damage does not use it (each client subtracts the Damage amount); heals, regeneration, potions, revival and
+// the forced resync after level-up, job change and restat do (PL-083). DST_GOLD goes to the owner only
+// (PL-075).
+message SetPointParam {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x1E
+    name: "SETPOINTPARAM"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M3";
+  // DST_HP, DST_MP, DST_FP or DST_GOLD (Resource defineAttribute.h numeric value)
+  sint32 dst = 1 [(flyff.legacy_type) = "i32"];
+  sint32 value = 2 [(flyff.legacy_type) = "i32"];
+}
+
+// legacy SETEXPERIENCE 0x0012 (S2C); obj_id: 0 (self). After every EXP gain, level-up and death penalty
+// (ref/08 section 9.1; the legacy writes skillLevel before skillPoint, kept).
+message SetExperience {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x12
+    name: "SETEXPERIENCE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M3";
+  sint64 exp = 1 [
+    (flyff.legacy_type) = "i64",
+    (flyff.js_safe_number) = true
+  ];
+  // widened from u16
+  uint32 level = 2 [(flyff.legacy_type) = "u16"];
+  // the total skill level (Plan/16 section 8.4)
+  sint32 skill_level = 3 [(flyff.legacy_type) = "i32"];
+  sint32 skill_point = 4 [(flyff.legacy_type) = "i32"];
+  // always the real values (the legacy -1 / 0xFFFF "unchanged" sentinels are not produced)
+  sint64 death_exp = 5 [
+    (flyff.legacy_type) = "i64",
+    (flyff.js_safe_number) = true
+  ];
+  uint32 death_level = 6 [(flyff.legacy_type) = "u16"];
+}
+
+// legacy SETLEVEL 0x0011 (S2C); obj_id: the player. Sent to near minus self: the others play the level-up effect.
+message SetLevel {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x11
+    name: "SETLEVEL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M3";
+  // widened from u16
+  uint32 level = 1 [(flyff.legacy_type) = "u16"];
+}
+
+// legacy ADDGAMEJOIN 0x0078 (S2C); obj_id: 0 (self). Join batch step 10: the saved play time (Plan/16 section
+// 3.7, ref/08 section 6.1) and, added, the welcome lines (Plan/11 section 8.6, `gameplay.welcome_messages`).
+message AddGameJoin {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x78
+    name: "ADDGAMEJOIN"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M2";
+  // characters.play_time_s as loaded (the client shows it in the character tooltip)
+  uint32 saved_play_time_s = 1 [(flyff.legacy_type) = "u32"];
+  // F-059 welcome lines (added)
+  repeated string welcome_messages = 100;
+}
+
+// legacy INC_STAT_LEVEL 0x00FF00C4 (C2S): spend one stat point (ref/07a section 9.1). VR-004: only 100..103
+// are accepted. The server answers SetStatLevel to near only when a point was actually spent (the legacy
+// broadcast even on refusal), Plan/16 section 7.2.
+message IncStatLevel {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00C4
+    name: "INC_STAT_LEVEL"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M3";
+  // 100 STR, 101 STA, 102 DEX, 103 INT; anything else is ignored
+  sint32 stat_id = 1 [(flyff.legacy_type) = "i8 chID"];
+}
+
+// legacy MODIFY_STATUS 0xF000F501 (C2S): the status window "apply" button, several stat points at once
+// (ref/07c section 12.1). VR-087: every value >= 0, the sum is > 0 and <= the remaining stat points (summed
+// in i64); otherwise ignored. The reply is SetState to self only.
+message ModifyStatus {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F501
+    name: "MODIFY_STATUS"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M3";
+  sint32 str = 1 [(flyff.legacy_type) = "i32"];
+  sint32 sta = 2 [(flyff.legacy_type) = "i32"];
+  sint32 dex = 3 [(flyff.legacy_type) = "i32"];
+  // `int` is a keyword in several target languages
+  // buf:lint:ignore FIELD_LOWER_SNAKE_CASE
+  sint32 int_ = 4 [(flyff.legacy_type) = "i32"];
+}
+
+// legacy UPDATE_JOB 0xAA000001 (C2S; custom __FAST_JOBCHANGE): fast job change at levels 15, 60 and 120/129.
+// Strictly validated against the table of Plan/16 section 11.4 and ignored when features.fast_jobchange is
+// off.
+message UpdateJob {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xAA000001
+    name: "UPDATE_JOB"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M5";
+  // target job (defineJob.h: VAGRANT 0, experts 1-5, pros 6-15, masters 16-23, heroes 24-31)
+  sint32 job = 1 [(flyff.legacy_type) = "i32 nJob"];
+  // dropped: the unused trailing i32 level that the V15 client also writes (ref/09b section 4.1); the
+  // server reads only nJob
+}
+
+// legacy STATEMODE 0xFFFFFF7A (C2S): cancel the casting of a timed item use (ref/07b section 7.2). Acted on
+// only when the mover has the state_mode bit set and flag is STATEMODE_BASEMOTION_CANCEL.
+message StateModeReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF7A
+    name: "STATEMODE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M4";
+  // the client sends STATE_BASEMOTION_MODE 0x4
+  uint32 state_mode = 1 [(flyff.legacy_type) = "u32 dwStateMode"];
+  // STATEMODE_BASEMOTION_ON 0, OFF 1, CANCEL 2; only CANCEL is acted on
+  uint32 flag = 2 [(flyff.legacy_type) = "u8 nFlag"];
+}
+
+// legacy MODE 0xFFFFFF7B (C2S): auto-PK and PvP-refusal toggles of the option window (ref/07b section 7.3).
+// Renamed from MODE (Plan/11 section 5.1 rule 6). The server always answers ModifyMode to near.
+message ChangeMode {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF7B
+    name: "MODE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M5";
+  // read and ignored by the server
+  uint32 mode = 1 [(flyff.legacy_type) = "u32 dwMode"];
+  // 0 set FREEPK_MODE (0x1000), 1 clear it, 2 set PVPCONFIRM_MODE (0x2000, refuse PvP), 3 clear it; any
+  // other value changes nothing
+  sint32 flag = 2 [(flyff.legacy_type) = "i32 nFlag"];
+}
+
+// legacy TUTORIAL_STATE 0x8FFF000E (C2S): the guide window advanced. VR-004: 0 <= state <= guide_max_seq,
+// otherwise ignored. The server answers SetTutorialState to self.
+message TutorialState {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x8FFF000E
+    name: "TUTORIAL_STATE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M3";
+  sint32 state = 1 [(flyff.legacy_type) = "i32 nState"];
+  // dropped: szState (the md5 tamper token of the legacy client, AC-13)
+}
+
+// legacy EXP_STOP 0xAA000010 (C2S; custom): toggles MODE_EXPUP_STOP (0x00040000) of the mode word. No
+// payload. The server answers with a literal Text line and ModifyMode (Plan/16 section 8.5).
+message ExpStop {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xAA000010
+    name: "EXP_STOP"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M3";
+}
+
+// legacy HIDE_COAT 0xAA000007 (C2S; custom __HIDE_FASHION): hide or show one fashion part. Ignored when the
+// position is out of range or the value is unchanged; the server answers HideCoatNtf to near.
+message HideCoatReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xAA000007
+    name: "HIDE_COAT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M4";
+  // 0 HAT, 1 CLOTH, 2 GLOVE, 3 BOOTS, 4 CLOAK; outside 0..4 is ignored
+  sint32 position = 1 [(flyff.legacy_type) = "i32 nPosition"];
+  bool hide = 2 [(flyff.legacy_type) = "BOOL bHide"];
+}
+
+// legacy OPTION_ENABLE_RENDER_MASK 0x8FFF0010 (C2S): show or hide the own mask/hat item to others. Flips
+// MODE_OPTION_DONT_RENDER_MASK (0x01000000) and answers ModifyMode to near (ref/07b section 7.4).
+message OptionEnableRenderMask {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x8FFF0010
+    name: "OPTION_ENABLE_RENDER_MASK"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M4";
+  // true clears the DONT_RENDER_MASK bit, false sets it
+  bool enable = 1 [(flyff.legacy_type) = "BOOL bEnable"];
+}
+
+// legacy QUERYEQUIPSETTING 0xF000D00A (C2S): allow or deny others to inspect the own equipment. Flips
+// EQUIP_DENIAL_MODE (0x20000) and answers ModifyMode to near (ref/07b section 7.4).
+message QueryEquipSetting {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000D00A
+    name: "QUERYEQUIPSETTING"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M4";
+  // true clears the EQUIP_DENIAL bit, false sets it
+  bool allow = 1 [(flyff.legacy_type) = "BOOL bAllow"];
+}
+
+// legacy SETDESTPARAM 0x001C (S2C); obj_id: the mover. A buff or item stat was applied (ref/08 section 9.1,
+// Plan/16 section 4.7). Audience: near including self. The browser replays it on its DST replica.
+message SetDestParam {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x1C
+    name: "SETDESTPARAM"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M3";
+  // DST_* id
+  sint32 dst = 1 [(flyff.legacy_type) = "i32"];
+  // adjustment added to the DST
+  sint32 adj = 2 [(flyff.legacy_type) = "i32"];
+  // change value; NULL_CHGPARAM 0x7FFFFFFF verbatim when unset
+  sint32 chg = 3 [(flyff.legacy_type) = "i32"];
+}
+
+// legacy RESETDESTPARAM 0x001D (S2C); obj_id: the mover. The adjustment of a removed buff or item stat is
+// taken back (every DST except DST_SPEED, which uses ResetDestParamSync). Audience: near including self.
+message ResetDestParam {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x1D
+    name: "RESETDESTPARAM"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M3";
+  // DST_* id
+  sint32 dst = 1 [(flyff.legacy_type) = "i32"];
+  // adjustment subtracted from the DST
+  sint32 adj = 2 [(flyff.legacy_type) = "i32"];
+}
+
+// legacy RESETDESTPARAM_SYNC 0x9800 (S2C); obj_id: the mover. Like ResetDestParam but for DST_SPEED only
+// (__SPEED_SYNC_0108): it also carries the resulting absolute value so the speed cannot drift (Plan/16
+// F-113).
+message ResetDestParamSync {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9800
+    name: "RESETDESTPARAM_SYNC"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M3";
+  // DST_SPEED
+  sint32 dst = 1 [(flyff.legacy_type) = "i32"];
+  // adjustment subtracted from the DST
+  sint32 adj = 2 [(flyff.legacy_type) = "i32"];
+  // the resulting absolute adjustment value after the reset
+  sint32 total = 3 [(flyff.legacy_type) = "i32 nParameterValue"];
+}
+
+// legacy SETFXP 0x0029 (S2C); obj_id: 0 (self). Flight experience gained (ref/08 section 9.1). Both values
+// widened from u16 (Plan/11 section 5.3).
+message SetFxp {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x29
+    name: "SETFXP"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M5";
+  uint32 fxp = 1 [(flyff.legacy_type) = "u16"];
+  uint32 flight_level = 2 [(flyff.legacy_type) = "u16"];
+}
+
+// legacy SETFLIGHTLEVEL 0x002A (S2C); obj_id: the player. Flight level up; audience near minus self (the
+// owner learns it from SetFxp). Widened from u16.
+message SetFlightLevel {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x2A
+    name: "SETFLIGHTLEVEL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M5";
+  uint32 flight_level = 1 [(flyff.legacy_type) = "u16"];
+}
+
+// legacy SET_GROWTH_LEARNING_POINT 0x00A6 (S2C); obj_id: 0 (self). The remaining stat points (GP) changed:
+// level up, restat, GM (ref/08 section 9.1).
+message SetGrowthLearningPoint {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xA6
+    name: "SET_GROWTH_LEARNING_POINT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M3";
+  // remaining stat points
+  sint32 remain_gp = 1 [(flyff.legacy_type) = "i32 nRemainGP"];
+  // always 0; the client ignores it
+  sint32 remain_lp = 2 [(flyff.legacy_type) = "i32"];
+}
+
+// legacy SET_STAT_LEVEL 0x00A4 (S2C); obj_id: the player. One stat point was spent (answer of IncStatLevel).
+// Audience: near including self; the owner also shows the TID_GAME_STRUP.. chat line.
+message SetStatLevel {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xA4
+    name: "SET_STAT_LEVEL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M3";
+  // 100 STR, 101 STA, 102 DEX, 103 INT
+  sint32 stat_id = 1 [(flyff.legacy_type) = "i8 chID"];
+  // the new base value of the stat
+  sint32 value = 2 [(flyff.legacy_type) = "i32 nValue"];
+  // remaining stat points
+  sint32 remain_gp = 3 [(flyff.legacy_type) = "i32"];
+}
+
+// legacy SETSTATE 0x006A (S2C); obj_id: 0 (self). Full stat refresh: ModifyStatus answer, level up, restat,
+// GM. The client also sets HP/MP/FP to their maxima (ref/09b section 3.4).
+message SetState {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x6A
+    name: "SETSTATE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M3";
+  sint32 str = 1 [(flyff.legacy_type) = "i32"];
+  sint32 sta = 2 [(flyff.legacy_type) = "i32"];
+  sint32 dex = 3 [(flyff.legacy_type) = "i32"];
+  // `int` is a keyword in several target languages
+  // buf:lint:ignore FIELD_LOWER_SNAKE_CASE
+  sint32 int_ = 4 [(flyff.legacy_type) = "i32"];
+  // always 0 (legacy LP, unused)
+  sint32 remain_lp = 5 [(flyff.legacy_type) = "i32"];
+  // remaining stat points
+  sint32 remain_gp = 6 [(flyff.legacy_type) = "i32"];
+}
+
+// legacy SET_JOB_SKILL 0x00A7 and SET_NEAR_JOB_SKILL 0x00A8 (S2C), merged (Plan/11a, Plan/16 section 11.5);
+// obj_id: the player whose job changed, in both copies.
+//
+// Self copy (audience: self): `skills` has exactly 45 entries, positional in the server slot order
+// (MAX_SKILL_JOB: 0-2 vagrant, 3-22 expert, 23-42 pro, 43 master, 44 hero; skill_id NULL_ID verbatim for
+// empty slots). Observer copy (audience: near minus self): the legacy subset, 21 entries taken from slot 20
+// for masters and heroes, otherwise 20 entries taken from slot 3; the observer list is display-only and the
+// client must not treat it as positional. The legacy self/near layouts desynchronised the stream in several
+// cases (ref/09b section 3.4 quirks); the typed list removes that.
+message JobChanged {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xA7
+    name: "SET_JOB_SKILL"
+  };
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xA8
+    name: "SET_NEAR_JOB_SKILL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M5";
+  // new job (defineJob.h)
+  sint32 job = 1 [(flyff.legacy_type) = "i32"];
+  // self: exactly 45 entries; observers: 20 or 21 entries (see above)
+  repeated Skill skills = 2 [(flyff.legacy_type) = "raw(SKILL[45]) / raw(SKILL[n])"];
+  // dropped: dwJobLv[32] (always zero)
+}
+
+// legacy SM_MODE 0x003F (S2C); obj_id: 0 (self). One premium (item-mall) timer changed (ref/08 section 9.1,
+// Plan/16 section 14). Normalised (Plan/11 section 5.8): for the absolute-time kinds (BANK15, BANK30,
+// BANK001, PARTYSKILL1/15/30, SHOUT15/30/001, ESCAPE) the value is the expiry as unix seconds, for the
+// counter kinds it is the raw counter; 0 = off. The legacy sent remaining seconds for the absolute kinds.
+message SmMode {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x3F
+    name: "SM_MODE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M4";
+  // SM_* slot 0..25
+  sint32 sm_type = 1 [(flyff.legacy_type) = "i32 nType"];
+  // expire_at (unix s) or raw counter; 0 = off
+  sint64 value = 2 [
+    (flyff.legacy_type) = "u32",
+    (flyff.js_safe_number) = true
+  ];
+}
+
+// legacy SM_MODE_ALL 0x003E (S2C); obj_id: 0 (self). Every active premium timer, in SM index order: part of
+// the join batch and of the world change (Plan/16 section 14.3). The legacy i16 count is the list length.
+message SmModeAll {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x3E
+    name: "SM_MODE_ALL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M4";
+  // only the active timers (value > 0)
+  repeated SmModeEntry entries = 1 [(flyff.legacy_type) = "i16 n + n x {i32 smType, u32 value}"];
+}
+
+// legacy RESISTSMMODE 0x005D (S2C); obj_id: 0 (self). The element resistance stones on the weapons and the
+// armour changed (Plan/16 section 14.4). 0xFF = none, otherwise the element id.
+message ResistSmMode {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x5D
+    name: "RESISTSMMODE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M4";
+  uint32 attack_resist_left = 1 [(flyff.legacy_type) = "u8 nAttackResistLeft"];
+  uint32 attack_resist_right = 2 [(flyff.legacy_type) = "u8 nAttackResistRight"];
+  uint32 defense_resist = 3 [(flyff.legacy_type) = "u8 nDefenceResist"];
+}
+
+// legacy SETFAME 0x0040 (S2C); obj_id: the player. PvP fame changed (duel and PK results, Plan/17 section
+// 8.6). Audience: near including self.
+message SetFame {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x40
+    name: "SETFAME"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M5";
+  sint32 fame = 1 [(flyff.legacy_type) = "i32 nFame"];
+}
+
+// legacy MODIFYMODE 0x00D3 (S2C); obj_id: the player. The full mode word (m_dwMode, flags in
+// _Common/authorization.h: MATCHLESS, FREEPK 0x1000, PVPCONFIRM 0x2000, MAILBOX 0x8000, EXPUP_STOP 0x40000,
+// EQUIP_DENIAL 0x20000, DONT_RENDER_MASK 0x01000000 ...). Audience: near including self. S2C only: the
+// legacy C2S MODIFYMODE is internal and is never accepted from a client (VR-002).
+message ModifyMode {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xD3
+    name: "MODIFYMODE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M3";
+  uint32 mode = 1 [(flyff.legacy_type) = "u32 m_dwMode"];
+}
+
+// legacy STATEMODE 0x00DF (S2C); obj_id: the mover. The state-mode word changed, e.g. a timed item use
+// (flying board summon, return scroll) started or was cancelled (ref/08 section 9.1, ref/09b section 3.4).
+// Audience: near including self.
+message StateModeNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xDF
+    name: "STATEMODE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M4";
+  // STATE_BASEMOTION_MODE 0x4 ...
+  uint32 state_mode = 1 [(flyff.legacy_type) = "u32 dwStateMode"];
+  // STATEMODE_BASEMOTION_ON 0, OFF 1, CANCEL 2
+  uint32 flag = 2 [(flyff.legacy_type) = "u8 nFlag"];
+  // the item being cast; written only when flag is ON (0), otherwise 0
+  uint32 item_prop_id = 3 [(flyff.legacy_type) = "u32 (iff flag == 0)"];
+}
+
+// legacy SETFUEL 0x004B (S2C); obj_id: 0 (self). Flying fuel, every 16 ticks while accelerating (Plan/16
+// section 15).
+message SetFuel {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x4B
+    name: "SETFUEL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M5";
+  sint32 fuel = 1 [(flyff.legacy_type) = "i32 nFuel"];
+  uint32 acc_fuel = 2 [(flyff.legacy_type) = "u32 tmAccFuel"];
+}
+
+// legacy SET_TUTORIAL_STATE 0x8F0C (S2C); obj_id: 0 (self; the legacy header is NULL_ID). The stored guide
+// step (answer of TutorialState, also sent in the join batch).
+message SetTutorialState {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8F0C
+    name: "SET_TUTORIAL_STATE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M3";
+  sint32 state = 1 [(flyff.legacy_type) = "i32"];
+}
+
+// legacy HIDE_COAT 0x8900 (S2C; custom __HIDE_FASHION); obj_id: the player. One fashion part is hidden or
+// shown. Audience: near including self.
+message HideCoatNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8900
+    name: "HIDE_COAT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M4";
+  // 0 HAT, 1 CLOTH, 2 GLOVE, 3 BOOTS, 4 CLOAK
+  sint32 position = 1 [(flyff.legacy_type) = "i32"];
+  bool hide = 2 [(flyff.legacy_type) = "BOOL bHide"];
+}
+
+// legacy SETSCALE 0x0039 (S2C); obj_id: the mover. Model scale multiplier: collecting resource shrink, giant
+// buffs. Audience: near including self.
+message SetScale {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x39
+    name: "SETSCALE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M4";
+  // multiplier of the model scale; the client animates toward it
+  float factor = 1 [(flyff.legacy_type) = "f32 fScalePercent"];
+}
+
+// legacy DISGUISE 0x00F5 (S2C); obj_id: the mover. The model is replaced by a monster model (disguise
+// items). Audience: near including self.
+message Disguise {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xF5
+    name: "DISGUISE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M4";
+  // MoverProp id of the model
+  uint32 mover_index = 1 [(flyff.legacy_type) = "u32"];
+}
+
+// legacy NODISGUISE 0x00F6 (S2C); obj_id: the mover. The disguise ends. No payload.
+message NoDisguise {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xF6
+    name: "NODISGUISE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "16";
+  option (flyff.milestone) = "M4";
+}
+
+// One active premium timer of SmModeAll (same value rule as SmMode).
+message SmModeEntry {
+  // SM_* slot 0..25
+  sint32 sm_type = 1 [(flyff.legacy_type) = "i32"];
+  // expire_at (unix s) or raw counter
+  sint64 value = 2 [
+    (flyff.legacy_type) = "u32",
+    (flyff.js_safe_number) = true
+  ];
+}

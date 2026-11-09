@@ -1,0 +1,231 @@
+# The default quick locations of the live map (Plan/25 section 3.13, WP-ADMIN-14).
+#
+# Nothing in this file is a coordinate that a data file already knows. A row names WHERE its position comes from (`from`), and the server
+# resolves it against the loaded game data when `GET /admin/api/locations` is asked (`crates/flyff-server/src/admin/api/locations.rs`):
+#
+#   kind = "teleport16"      name           the `teleport16.inc` row of that name (the "[Town] " tag in front is ignored)
+#   kind = "region_pos"      world, title   the `vPos` of the titled region of that world's `.rgn`
+#   kind = "portal_pos"      world, to      the `vPos` of the region of `world` that teleports to world `to` (a dungeon entrance)
+#   kind = "portal_target"   world, to      the destination of that region (where a player arrives)
+#   kind = "wld_camera"      world          the `camera` line of the world's `.wld`
+#   kind = "party_dungeon"   world, monster the `SetMonster` position of that monster in `PartyDungeon.lua`
+#   kind = "auto_raid"       name           the `SetPosition` of `AddRaid(name)` in `AutoRaid.lua`
+#   kind = "revival"         world, key     the revival point of that key (`.rgn` revival regions)
+#   kind = "dyo_npc"         world, key     the placement of the NPC with that `character.inc` key in the world's `.dyo`
+#   kind = "const"           world, x, z, source   a constant of the original server code that no data file holds: `source` cites it
+#                                                  (`src:<file under Source/>:<line>`), and every `const` row must have one
+#
+# The layer policy comes from the world (`pick_live` for the worlds the instance definitions use, 25 section 3.13): a row may say `policy` to
+# override it. `zoom` is the scale a click flies to, in world units per pixel (2 = 1:2, about 1 km wide; 1 = 1:1); a row without one uses the
+# `[zoom]` of its group, and a group without one fits the world (dungeons) or keeps the scale.
+#
+# A shared bookmark with the same group and name as a row here replaces it (that is how staff edit a default), see the Locations editor.
+# The rows come out in this order; the groups in the order of their first row. Every world's `.wld` camera is added by the server as the group
+# "All worlds".
+
+[zoom]
+Towns = 2.0
+Fields = 2.0
+Entrances = 1.0
+Bosses = 1.0
+
+# ---- Towns ---------------------------------------------------------------------------------------------------------------------------
+
+[[location]]
+group = "Towns"
+name = "Flaris"
+from = { kind = "teleport16", name = "Flaris" }
+
+[[location]]
+group = "Towns"
+name = "Saint Morning"
+from = { kind = "teleport16", name = "Saint Morning" }
+
+[[location]]
+group = "Towns"
+name = "Garden of Rhisis"
+from = { kind = "teleport16", name = "Garden of Rhisis" }
+
+[[location]]
+group = "Towns"
+name = "Darkon City"
+from = { kind = "teleport16", name = "Darkon City" }
+
+[[location]]
+group = "Towns"
+name = "Darkon 1"
+from = { kind = "teleport16", name = "Darkon 1" }
+
+[[location]]
+group = "Towns"
+name = "Darkon 3"
+from = { kind = "teleport16", name = "Darkon 3" }
+
+[[location]]
+group = "Towns"
+name = "Shaduwar (Harmonin)"
+from = { kind = "teleport16", name = "Shaduwar" }
+
+# ---- Fields --------------------------------------------------------------------------------------------------------------------------
+
+[[location]]
+group = "Fields"
+name = "Valley of the Risen"
+from = { kind = "teleport16", name = "Valley of the Risen" }
+
+[[location]]
+group = "Fields"
+name = "Istia Canyon"
+from = { kind = "region_pos", world = 1, title = "Istia Canyon" }
+
+[[location]]
+group = "Fields"
+name = "Fantasy Desert"
+from = { kind = "region_pos", world = 1, title = "Fantasy Desert" }
+
+[[location]]
+group = "Fields"
+name = "Azria"
+from = { kind = "region_pos", world = 2, title = "Azria" }
+
+[[location]]
+group = "Fields"
+name = "Coral Island"
+from = { kind = "region_pos", world = 3, title = "Coral Island" }
+
+# ---- Dungeons ------------------------------------------------------------------------------------------------------------------------
+
+[[location]]
+group = "Dungeons"
+name = "Mars Mine"
+from = { kind = "teleport16", name = "Mars Dungeon" }
+
+[[location]]
+group = "Dungeons"
+name = "Dekane Mine"
+from = { kind = "wld_camera", world = 201 }
+
+[[location]]
+group = "Dungeons"
+name = "Volcane"
+from = { kind = "teleport16", name = "Volcane" }
+
+[[location]]
+group = "Dungeons"
+name = "Ivillis Temple"
+from = { kind = "teleport16", name = "Ivillis Dungeon" }
+
+# ---- Entrances (the trigger regions of Madrigal that teleport into a dungeon) ----------------------------------------------------------
+
+[[location]]
+group = "Entrances"
+name = "Mars Mine entrance"
+from = { kind = "portal_pos", world = 1, to = 200 }
+
+[[location]]
+group = "Entrances"
+name = "Ivillis entrance"
+from = { kind = "portal_pos", world = 1, to = 204 }
+
+[[location]]
+group = "Entrances"
+name = "Clockworks entrance"
+from = { kind = "portal_pos", world = 1, to = 220 }
+
+[[location]]
+group = "Entrances"
+name = "Wilds entrance"
+from = { kind = "portal_pos", world = 1, to = 124 }
+
+[[location]]
+group = "Entrances"
+name = "Aminus entrance"
+from = { kind = "portal_pos", world = 1, to = 121 }
+
+[[location]]
+group = "Entrances"
+name = "Catacombs entrance"
+from = { kind = "portal_pos", world = 1, to = 123 }
+
+# ---- Instances (layers: the popover of the live layers) ---------------------------------------------------------------------------------
+
+[[location]]
+group = "Instances"
+name = "The Wilds"
+from = { kind = "portal_target", world = 1, to = 124 }
+
+[[location]]
+group = "Instances"
+name = "The Savage Wilds"
+from = { kind = "wld_camera", world = 125 }
+
+[[location]]
+group = "Instances"
+name = "Aminus Dungeon"
+from = { kind = "portal_target", world = 1, to = 121 }
+
+[[location]]
+group = "Instances"
+name = "Cursed Aminus"
+from = { kind = "wld_camera", world = 122 }
+
+[[location]]
+group = "Instances"
+name = "Catacombs of Anguish"
+from = { kind = "portal_target", world = 1, to = 123 }
+
+# ---- Bosses --------------------------------------------------------------------------------------------------------------------------
+
+[[location]]
+group = "Bosses"
+name = "Clockworks (cage)"
+from = { kind = "party_dungeon", world = 220, monster = "MI_CLOCKWORK1" }
+
+[[location]]
+group = "Bosses"
+name = "Red Meteonyker"
+from = { kind = "party_dungeon", world = 206, monster = "MI_DU_METEONYKER2" }
+
+[[location]]
+group = "Bosses"
+name = "Iblis (Ivillis boss)"
+from = { kind = "party_dungeon", world = 205, monster = "MI_IBLLINESS" }
+
+[[location]]
+group = "Bosses"
+name = "Clockworks raid (Flaris)"
+from = { kind = "auto_raid", name = "Flaris" }
+
+[[location]]
+group = "Bosses"
+name = "Big Muscle"
+from = { kind = "revival", world = 210, key = "boss1" }
+
+[[location]]
+group = "Bosses"
+name = "Mushmoot"
+from = { kind = "revival", world = 230, key = "boss3" }
+
+# ---- PvP & events (positions that only the original server code knows) -----------------------------------------------------------------
+
+[[location]]
+group = "PvP & events"
+name = "Guild siege territory"
+from = { kind = "const", world = 202, x = 1361.6, z = 1273.3, source = "src:_Common/eveschool.cpp:710" }
+
+[[location]]
+group = "PvP & events"
+name = "Arena"
+from = { kind = "const", world = 208, x = 540.0, z = 485.0, source = "src:WORLDSERVER/DPSrvr.cpp:11587" }
+
+[[location]]
+group = "PvP & events"
+name = "O/X Quiz"
+from = { kind = "const", world = 211, x = 798.747, z = 705.266, source = "src:_Common/Quiz.cpp:688" }
+
+# ---- Secret rooms --------------------------------------------------------------------------------------------------------------------
+
+[[location]]
+group = "Secret rooms"
+name = "Secret room NPC (Flaris)"
+from = { kind = "dyo_npc", world = 1, key = "MaFl_SecretRoom_EAST" }

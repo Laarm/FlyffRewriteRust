@@ -1,0 +1,571 @@
+// Upgrade messages (Plan/11 section 4.2, WP-PROTO-15; tag block 320-351). Transcribed from ref/07b sections
+// 8.2-8.14, ref/07c sections 8, 9 and 17, ref/08 section 12.8, ref/13 section 18 and Plan/19 section 12 (rules
+// and odds are doc 19's; this file only fixes the wire).
+//
+// Item addressing: every item is named by its inventory OBJECT ID (`ItemElem.obj_id`, equipment lives at 168 +
+// part). `NULL_ID` (0xFFFFFFFF) is kept verbatim where the legacy sent it for "no item". Every attempt is
+// refused by the server while the player trades or vends, on an equipped target and (the legacy path) on a
+// target with an applied commercial element stone; the pacing limit of PL-076
+// (`gameplay.upgrade_min_interval_ms`) applies to the automatic smelting loop. The answers are UpdateItem /
+// UpdateItemEx / DefinedText / PlaySound / CreateSfxObj of the other files plus the result messages below.
+//
+// Name changes against Plan/11a: the C2S `Piercing` (PT PIERCING 0xF000B025) is `PiercingReq`, because
+// `Piercing` is the CPiercing common type of item_types.proto and a package cannot hold two messages of one
+// name (the Req suffix of Plan/11 section 5.1 rule 3).
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+
+// legacy ENCHANT 0xF000B024 (C2S): the legacy upgrade of a weapon, armour, accessory or collector with one
+// material (ref/07b section 8.8, ref/13 section 18, Plan/19 section 12.1). The item kind of the material
+// selects the branch: element card -> element, Orichalcum -> general +1..+10, otherwise accessory or
+// collector refine. Protection and smelting scrolls are buffs used beforehand. Failure from +3 up without
+// protection destroys the target.
+message Enchant {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B024
+    name: "ENCHANT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the upgraded item (inventory object id)
+  uint32 item_obj_id = 1 [(flyff.legacy_type) = "u32 dwItemId"];
+  // the consumed material (inventory object id)
+  uint32 material_obj_id = 2 [(flyff.legacy_type) = "u32 dwItemMaterialId"];
+}
+
+// legacy SMELT_SAFETY 0x70007000 (C2S): one attempt of the "safe" upgrade with a protection scroll (custom
+// __BETTER_SAFE_UPGRADES, ref/07b section 8.9, ref/13 section 18, Plan/19 section 12.1). The repack client
+// sends these ids as four u16 (the legacy u32 layout of SendSmeltSafety is not ported); its auto-upgrade
+// window repeats the request every second until the target level, the maximum or the material runs out. The
+// target is never destroyed. Answer: SmeltSafetyNtf.
+message SmeltSafetyReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x70007000
+    name: "SMELT_SAFETY"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the upgraded item
+  uint32 item_obj_id = 1 [(flyff.legacy_type) = "u16 mainItemOID"];
+  // Orichalcum, moonstone, element card ...; its item kind selects the branch
+  uint32 material_obj_id = 2 [(flyff.legacy_type) = "u16 matOID"];
+  // the protection scroll item (consumed per attempt)
+  uint32 protection_obj_id = 3 [(flyff.legacy_type) = "u16 scrollOID"];
+  // optional smelting scroll item; 0xFFFF = none (kept verbatim)
+  uint32 smelt_scroll_obj_id = 4 [(flyff.legacy_type) = "u16 scroll2OID"];
+}
+
+// legacy PIERCING_SIZE 0xF000D008 (C2S): add a socket to an item with a moonstone (ref/07b section 8.2,
+// Plan/19 section 12.5). Costs 100000 penya; a failure destroys the target unless a protection scroll is
+// given. With features.no_piercing (shipped) only vis pets are pierceable and the answer for every other item
+// is TID_PIERCING_POSSIBLE_ITEM.
+message PiercingSize {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000D008
+    name: "PIERCING_SIZE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the target item
+  uint32 item_obj_id = 1 [(flyff.legacy_type) = "u32 dwId1"];
+  // the moonstone (always consumed)
+  uint32 moonstone_obj_id = 2 [(flyff.legacy_type) = "u32 dwId2"];
+  // the socket protection scroll, NULL_ID = none (kept verbatim)
+  uint32 protection_obj_id = 3 [(flyff.legacy_type) = "u32 dwId3"];
+}
+
+// legacy PIERCING 0xF000B025 (C2S; named `Piercing` in Plan/11a, renamed because item_types.proto owns
+// `Piercing`): insert a socket card into a free socket (ref/07b section 8.3, Plan/19 section 12.5). With
+// features.no_piercing only vis pets pass. Success consumes the card.
+message PiercingReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B025
+    name: "PIERCING"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the target item
+  uint32 item_obj_id = 1 [(flyff.legacy_type) = "u32 dwItemId"];
+  // the socket card (or vis item)
+  uint32 card_obj_id = 2 [(flyff.legacy_type) = "u32 dwSocketCard"];
+}
+
+// legacy PIERCINGREMOVE 0xF000F809 (C2S): remove the LAST filled socket card of a pierceable item for 1000000
+// penya (ref/07b section 8.4, Plan/19 section 12.5).
+message PiercingRemove {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F809
+    name: "PIERCINGREMOVE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the item
+  uint32 item_obj_id = 1 [(flyff.legacy_type) = "u32 objId"];
+}
+
+// legacy REMVOE_ATTRIBUTE 0xF000D00B (C2S): remove the element of an item for 100000 penya (ref/07b section
+// 8.11, Plan/19 section 12.3). Answer: RemoveAttributeNtf.
+message RemoveAttributeReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000D00B
+    name: "REMVOE_ATTRIBUTE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the item
+  uint32 item_obj_id = 1 [(flyff.legacy_type) = "u32 objItemId"];
+}
+
+// legacy CHANGE_ATTRIBUTE 0xF000D00E (C2S): change the element of an item keeping its level, with an
+// element-change scroll (ref/07b section 8.12, Plan/19 section 12.3).
+message ChangeAttribute {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000D00E
+    name: "CHANGE_ATTRIBUTE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the target item
+  uint32 item_obj_id = 1 [(flyff.legacy_type) = "u32 objTargetItem"];
+  // the II_SYS_SYS_SCR_SOKCHANG scroll
+  uint32 material_obj_id = 2 [(flyff.legacy_type) = "u32 objMaterialItem"];
+  // the new element: FIRE 1, WATER 2, ELECTRICITY 3, WIND 4, EARTH 5 (NO_PROP 0 and END_PROP 6 are refused)
+  sint32 attribute = 3 [(flyff.legacy_type) = "i32 nAttribute"];
+}
+
+// legacy RANDOMSCROLL 0xF000D00D (C2S): apply a random stat scroll (STR, DEX, INT or STA) onto a weapon or
+// armour; the value 1..4 is rolled by the server (ref/07b section 8.13, Plan/19 section 12.6.1).
+message RandomScroll {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000D00D
+    name: "RANDOMSCROLL"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the target item
+  uint32 item_obj_id = 1 [(flyff.legacy_type) = "u32 dwId1"];
+  // the scroll item
+  uint32 scroll_obj_id = 2 [(flyff.legacy_type) = "u32 dwId2"];
+}
+
+// legacy ITEMTRANSY 0xF000D00C (C2S; the legacy define is spelled PACHETTYPE_ITEMTRANSY): swap an armour for
+// its opposite-gender twin keeping upgrades, element, options and sockets (ref/07b section 8.5, Plan/19
+// section 12.8). Only the cash path (a scroll) exists; the penya path is compiled out.
+message ItemTransy {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000D00C
+    name: "ITEMTRANSY"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the armour
+  uint32 item_obj_id = 1 [(flyff.legacy_type) = "u32 objidTarget"];
+  // the II_CHR_SYS_SCR_ITEMTRANSY_A / _B scroll or NULL_ID (kept verbatim)
+  uint32 scroll_obj_id = 2 [(flyff.legacy_type) = "u32 objidTransy"];
+  // the ItemProp id of the wanted opposite-gender item
+  uint32 change_item_id = 3 [(flyff.legacy_type) = "u32 dwChangeId"];
+  // true = pay with the scroll; false does nothing (KEEP)
+  bool cash = 4 [(flyff.legacy_type) = "BOOL bCash"];
+}
+
+// legacy REMOVE_ITEM_LEVEL_DOWN 0x70000005 (C2S): remove the "required level -5 / -10" bits from an item for
+// free (ref/07b section 8.6, Plan/19 section 12.6.5). Answer: UpdateItemEx(UI_RANDOMOPTITEMID).
+message RemoveItemLevelDown {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x70000005
+    name: "REMOVE_ITEM_LEVEL_DOWN"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the item
+  uint32 item_obj_id = 1 [(flyff.legacy_type) = "u32 dwId"];
+}
+
+// legacy COMMERCIALELEM 0xF000B04F (C2S): apply or remove a commercial element stone (ref/07b section 8.14,
+// Plan/19 section 12.3). II_CHR_SYS_SCR_TINEINEDSTONE removes the element; a stone blocks further upgrades of
+// the item. Answer: CommercialElemNtf.
+message CommercialElemReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B04F
+    name: "COMMERCIALELEM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the target weapon or armour suit
+  uint32 item_obj_id = 1 [(flyff.legacy_type) = "u32 dwItemId0"];
+  // the element stone
+  uint32 stone_obj_id = 2 [(flyff.legacy_type) = "u32 dwItemId1"];
+}
+
+// legacy AWAKENING 0x70000008 (C2S): awaken an item at the awakening NPC (MMI_ITEM_AWAKENING within 32 m) for
+// 100000 penya (ref/07c section 17.1, Plan/19 section 12.6.3). Does not use the protection flow.
+message Awakening {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x70000008
+    name: "AWAKENING"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the item (inventory object id)
+  sint32 item_obj_id = 1 [(flyff.legacy_type) = "i32 nItem"];
+}
+
+// legacy BLESSEDNESS_CANCEL 0x7000000A (C2S): remove the blessing options from an item at the blessing-cancel
+// NPC (MMI_BLESSING_CANCEL within 32 m), free (ref/07c section 17.2, Plan/19 section 12.6.3).
+message BlessednessCancel {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x7000000A
+    name: "BLESSEDNESS_CANCEL"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the item (inventory object id)
+  sint32 item_obj_id = 1 [(flyff.legacy_type) = "i32 nItem"];
+}
+
+// legacy ITEM_SELECT_AWAKENING_VALUE 0x88100221 (C2S): the choice of the protected awakening
+// (__PROTECT_AWAKE): keep the old option set or take the new one offered by ItemSelectAwakeningValueNtf
+// (ref/07c section 17.3, Plan/19 section 12.6.4). The client sends "keep old" itself after 60 s. The serial
+// must match the item.
+message ItemSelectAwakeningValueReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x88100221
+    name: "ITEM_SELECT_AWAKENING_VALUE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the awakened item
+  uint32 item_obj_id = 1 [(flyff.legacy_type) = "u32 dwItemObjID"];
+  // the item serial from the notification (widened from the legacy u32, D5)
+  uint64 serial = 2 [
+    (flyff.legacy_type) = "u32 dwSerialNumber",
+    (flyff.js_safe_number) = true
+  ];
+  // 1 = keep the old value (_AWAKE_OLD_VALUE), 2 = take the new one (_AWAKE_NEW_VALUE)
+  uint32 select_flag = 3 [(flyff.legacy_type) = "u8 bySelectFlag"];
+}
+
+// legacy RANDOMOPTIONRETRY 0xAA000004 (C2S; repack "Scroll of Augmentation"): re-roll one awakening line of
+// an item with II_SYS_SYS_SCR_RANDOMOPTIONRTRY (ref/07c section 17.4, Plan/19 section 12.6.7). The server
+// refuses a line outside 1..line count (VR-023; the legacy wiped the options).
+message RandomOptionRetry {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xAA000004
+    name: "RANDOMOPTIONRETRY"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the awakened item
+  uint32 item_obj_id = 1 [(flyff.legacy_type) = "u32 dwItemId"];
+  // the augmentation scroll
+  uint32 scroll_obj_id = 2 [(flyff.legacy_type) = "u32 dwItemId2"];
+  // the awakening line to re-roll, 1..3
+  sint32 line = 3 [(flyff.legacy_type) = "i32 nRadio"];
+}
+
+// legacy ULTIMATE_MAKEITEM 0xF000F110 (C2S): make one Shining Orichalcum (II_GEN_MAT_ORICHALCUM02) from five
+// Orichalcum and five moonstones (ref/07c section 8, Plan/19 section 12.7). Always succeeds when the items
+// and the inventory room are there. Answer: Ultimate (MakeItem).
+message UltimateMakeItem {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F110
+    name: "ULTIMATE_MAKEITEM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // exactly 10 entries: indexes 0-4 hold the Orichalcum stacks (five units in total), 5-9 the moonstone
+  // stacks (five units)
+  repeated uint32 item_obj_ids = 1 [
+    (flyff.legacy_type) = "raw(OBJID[10])",
+    (flyff.max_len) = 10
+  ];
+}
+
+// legacy ULTIMATE_MAKEGEM 0xF000F111 (C2S): destroy a general or unique weapon to extract ultimate gems
+// (ref/07c section 8, Plan/19 section 12.7). The gem kind follows the weapon's level limit, the count the +N.
+// Answer: Ultimate (MakeGem).
+message UltimateMakeGem {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F111
+    name: "ULTIMATE_MAKEGEM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the weapon (not equipped)
+  uint32 weapon_obj_id = 1 [(flyff.legacy_type) = "OBJID"];
+}
+
+// legacy ULTIMATE_TRANSWEAPON 0xF000F112 (C2S): transmute a general weapon to unique, or a +10 unique weapon
+// to an ultimate weapon (ref/07c section 8, Plan/19 section 12.7). Consumes the level gem and the Shining
+// Orichalcum; a failure destroys the weapon unless protected. Answer: Ultimate (TransWeapon).
+message UltimateTransWeapon {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F112
+    name: "ULTIMATE_TRANSWEAPON"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the weapon (not equipped)
+  uint32 weapon_obj_id = 1 [(flyff.legacy_type) = "OBJID"];
+  // the ultimate gem of the weapon level
+  uint32 gem_obj_id = 2 [(flyff.legacy_type) = "OBJID"];
+  // the Shining Orichalcum (II_GEN_MAT_ORICHALCUM02)
+  uint32 shining_obj_id = 3 [(flyff.legacy_type) = "OBJID"];
+}
+
+// legacy ULTIMATE_ENCHANTWEAPON 0xF000F113 (C2S): upgrade an ultimate weapon one level with a Shining
+// Orichalcum (ref/07c section 8, Plan/19 section 12.7); the odds fall from 25 % to 5 %, a failure destroys
+// the weapon unless protected. Answer: Ultimate (EnchantWeapon).
+message UltimateEnchantWeapon {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F113
+    name: "ULTIMATE_ENCHANTWEAPON"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the ultimate weapon (not equipped)
+  uint32 weapon_obj_id = 1 [(flyff.legacy_type) = "OBJID"];
+  // the Shining Orichalcum (ref/07c calls it "gem")
+  uint32 shining_obj_id = 2 [(flyff.legacy_type) = "OBJID"];
+}
+
+// legacy ULTIMATE_SETGEM 0xF000F114 (C2S): socket an ultimate gem into the first empty ultimate socket of an
+// ultimate weapon (ref/07c section 8, Plan/19 section 12.7). Answer: Ultimate (SetGem).
+message UltimateSetGem {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F114
+    name: "ULTIMATE_SETGEM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the ultimate weapon (not equipped)
+  uint32 weapon_obj_id = 1 [(flyff.legacy_type) = "OBJID"];
+  // the ultimate gem
+  uint32 gem_obj_id = 2 [(flyff.legacy_type) = "OBJID"];
+}
+
+// legacy ULTIMATE_REMOVEGEM 0xF000F115 (C2S): clear the last filled ultimate socket of an ultimate weapon
+// with a moonstone (ref/07c section 8, Plan/19 section 12.7). Answer: Ultimate (RemoveGem).
+message UltimateRemoveGem {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F115
+    name: "ULTIMATE_REMOVEGEM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the ultimate weapon (not equipped)
+  uint32 weapon_obj_id = 1 [(flyff.legacy_type) = "OBJID"];
+  // the moonstone (consumed)
+  uint32 moonstone_obj_id = 2 [(flyff.legacy_type) = "OBJID"];
+}
+
+// legacy EXCHANGE 0xF000F116 (C2S; __TRADESYS): run one row of an NPC item-exchange list
+// (Exchange_Script.txt) (ref/07c section 9, Plan/19 section 16). VR-012: an NPC with that menu must be within
+// range (the legacy had no check). Answer: ExchangeNtf.
+message ExchangeReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F116
+    name: "EXCHANGE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the NPC menu id the exchange list belongs to
+  sint32 mmi_id = 1 [(flyff.legacy_type) = "i32 nMMIid"];
+  // the row (set) index inside the list
+  sint32 set_index = 2 [(flyff.legacy_type) = "i32 nListNum"];
+}
+
+// legacy SMELT_SAFETY 0x9900 (S2C); obj_id: 0 (self; the legacy header is the player). The result of one
+// SmeltSafetyReq attempt (ref/07b section 8.9, ref/08 section 12.8, Plan/19 section 12.1). The client's
+// auto-upgrade window continues on 1 and 2 and stops on 0 and 3.
+message SmeltSafetyNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9900
+    name: "SMELT_SAFETY"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // 0 = invalid or refused (nothing consumed), 1 = success, 2 = failed (target kept), 3 = already at the
+  // maximum
+  uint32 result = 1 [(flyff.legacy_type) = "u8 nResult"];
+}
+
+// legacy REMOVE_ATTRIBUTE 0x0122 (S2C); obj_id: 0 (self). The answer of RemoveAttributeReq (ref/07b section
+// 8.11, ref/08 section 12.8).
+message RemoveAttributeNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x122
+    name: "REMOVE_ATTRIBUTE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // true = the element was removed
+  bool success = 1 [(flyff.legacy_type) = "BOOL bSuccess"];
+}
+
+// legacy COMMERCIALELEM 0x005E (S2C); obj_id: 0 (the legacy header is NULL_ID). The element stone state of an
+// item changed (ref/07b section 8.14, ref/08 section 14.3, Plan/19 section 12.3). A removal sends 9999 first
+// and then a second message with 0 (KEEP).
+message CommercialElemNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x5E
+    name: "COMMERCIALELEM"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the inventory object id of the item
+  uint32 item_obj_id = 1 [(flyff.legacy_type) = "u32 dwItemId"];
+  // the applied stone item id, 0 = none, 9999 = the element was removed
+  sint32 resist_sm_item_id = 2 [(flyff.legacy_type) = "i32 nResistSMItemId"];
+}
+
+// legacy ITEM_SELECT_AWAKENING_VALUE 0x8834 (S2C); obj_id: 0 (self). The protected awakening produced a
+// second option set; the player chooses with ItemSelectAwakeningValueReq within 60 s (ref/07c section 10,
+// ref/08 section 12.8, Plan/19 section 12.6.4). Re-sent after the join batch while the choice is pending
+// (PL-079).
+message ItemSelectAwakeningValueNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8834
+    name: "ITEM_SELECT_AWAKENING_VALUE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the awakened item (inventory object id)
+  uint32 item_obj_id = 1 [(flyff.legacy_type) = "u8 id"];
+  // the item serial the request must echo (widened from the legacy u32, D5)
+  uint64 serial = 2 [
+    (flyff.legacy_type) = "u32 dwSerialNumber",
+    (flyff.js_safe_number) = true
+  ];
+  // the offered packed random-option word. Bit-packed (bits 62 and 63 are used): NO js_safe_number, a bigint
+  // in TypeScript like ItemElem.random_opt_item_id (Plan/11 section 4.3)
+  sint64 new_random_option = 3 [(flyff.legacy_type) = "i64 n64NewRandomOption"];
+}
+
+// legacy ULTIMATE 0x0100 (S2C); obj_id: 0 (self). The result of one ultimate-weapon request (ref/07c section
+// 8, ref/08 section 12.8, ref/09b section 3.14, Plan/19 section 12.7). The legacy `u8 sub` selects the case;
+// the field number is sub + 1 (Plan/11 section 5.2): ULTIMATE_MAKEITEM 1, TRANSWEAPON 2, MAKEGEM 3, SETGEM 4,
+// REMOVEGEM 5, ENCHANTWEAPON 6. The nested messages drop the ULTIMATE_ prefix of the constants. Result codes:
+// ULTIMATE_SUCCESS 0, FAILED 1, CANCEL 2, ISULTIMATE 3, INVENTORY 4, ISNOTULTIMATE 5.
+message Ultimate {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x100
+    name: "ULTIMATE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  oneof sub {
+    // ULTIMATE_MAKEITEM 1
+    MakeItem make_item = 2;
+    // ULTIMATE_TRANSWEAPON 2
+    TransWeapon trans_weapon = 3;
+    // ULTIMATE_MAKEGEM 3
+    MakeGem make_gem = 4;
+    // ULTIMATE_SETGEM 4
+    SetGem set_gem = 5;
+    // ULTIMATE_REMOVEGEM 5
+    RemoveGem remove_gem = 6;
+    // ULTIMATE_ENCHANTWEAPON 6
+    EnchantWeapon enchant_weapon = 7;
+  }
+
+  message MakeItem {
+    sint32 result = 1 [(flyff.legacy_type) = "i32 nResult"];
+  }
+
+  message TransWeapon {
+    sint32 result = 1 [(flyff.legacy_type) = "i32 nResult"];
+  }
+
+  message MakeGem {
+    sint32 result = 1 [(flyff.legacy_type) = "i32 nResult"];
+    // the number of gems made (when the roll succeeded)
+    sint32 num = 2 [(flyff.legacy_type) = "i32 nNum"];
+  }
+
+  message SetGem {
+    sint32 result = 1 [(flyff.legacy_type) = "i32 nResult"];
+  }
+
+  message RemoveGem {
+    sint32 result = 1 [(flyff.legacy_type) = "i32 nResult"];
+  }
+
+  message EnchantWeapon {
+    sint32 result = 1 [(flyff.legacy_type) = "i32 nResult"];
+  }
+}
+
+// legacy EXCHANGE 0x0101 (S2C); obj_id: 0 (self). The result of ExchangeReq (ref/07c section 9, ref/08
+// section 12.8, Plan/19 section 16): the client's event dialog shows it.
+message ExchangeNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x101
+    name: "EXCHANGE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // EXCHANGE_RESULT = 1, the only state the client handles
+  uint32 state = 1 [(flyff.legacy_type) = "u8 state"];
+  // 0 success, 1 failed (unknown list or row), 2 not enough inventory room, 3 condition not met
+  sint32 result = 2 [(flyff.legacy_type) = "i32 nResult"];
+}

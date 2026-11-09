@@ -1,0 +1,11 @@
+* text=auto eol=lf
+*.binpb binary
+*.bin binary
+*.png binary
+*.wasm binary
+*.dds binary
+*.tga binary
+*.bmp binary
+*.wav binary
+content/npc/** text eol=lf
+*.woff2 binary

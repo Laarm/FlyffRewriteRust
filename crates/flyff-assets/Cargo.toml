@@ -1,0 +1,40 @@
+[package]
+name = "flyff-assets"
+description = "Derived-asset builders, cache/ management, asset pool (Plan/24; tier R)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+default = []
+# dev-dependencies and e2e builds only, never in `dist`.
+# ts-rs derives of the client manifest types: `tests/ts_export.rs` writes web/src/gen/data/ (Plan/24 §6.4).
+ts = ["dep:ts-rs"]
+
+[dependencies]
+flyff-common = { workspace = true, features = ["rt"] }
+flyff-vfs = { workspace = true }
+flyff-script = { workspace = true }
+flyff-formats = { workspace = true }
+flyff-data = { workspace = true, features = ["bundle"] }
+flyff-sim = { workspace = true }
+flume = { workspace = true }
+rustix = { workspace = true }
+libc = { workspace = true }
+libm = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+xxhash-rust = { workspace = true }
+png = { workspace = true }
+flate2 = { workspace = true }
+bytes = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tempfile = { workspace = true, optional = true }
+ts-rs = { workspace = true, optional = true }
+

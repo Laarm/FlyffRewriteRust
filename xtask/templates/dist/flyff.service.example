@@ -1,0 +1,25 @@
+[Unit]
+Description=Flyff V15 server
+After=network-online.target
+Wants=network-online.target
+# crash loops (e.g. exit 70, unscoped panic) stop after 5 restarts within 10 min
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=flyff
+WorkingDirectory=/opt/flyff
+ExecStart=/opt/flyff/flyff serve
+Restart=on-failure
+# no restart on errors a restart cannot fix: data fatal, usage, Resource missing, instance lock held, config
+RestartPreventExitStatus=2 64 66 75 78
+KillSignal=SIGTERM
+# `systemctl reload flyff` re-reads flyff.toml (the same as the console word "reload")
+ExecReload=/bin/kill -HUP $MAINPID
+# must exceed the shutdown countdown configured in flyff.toml
+TimeoutStopSec=180
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

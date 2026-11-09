@@ -1,0 +1,1082 @@
+ns,id,name,dir,message,file,ms,doc,status,note
+PT,0000000B,QUERYTICKCOUNT,C2S,ServerTimeReq,session.proto,M1,10,merge,FILETIME tick sync replaced by ServerTime echo (D3)
+PT,00000010,QUERYSETGUILDNAME,C2S,QuerySetGuildName,guild.proto,M6,21,port,
+PT,00000012,QUERYSETPLAYERNAME,C2S,QuerySetPlayerNameReq,messenger.proto,M5,21,port,rename scroll
+PT,00000015,GET_CLOCK,C2S,,,,03,drop,anti-cheat clock probe (D1)
+PT,00000016,CLOSE_EXISTING_CONNECTION,C2S,POST /api/login,HTTP,M1,12,merge,duplicate-login takeover flag on /api/login (doc 12)
+PT,00000018,KEEP_ALIVE,C2S,,,,10,drop,replaced by WebSocket ping/pong (D3)
+PT,0000001A,QUERYPOSTMAIL,C2S,QueryPostMail,mail.proto,M4,19,port,
+PT,0000001B,QUERYREMOVEMAIL,C2S,QueryRemoveMail,mail.proto,M4,19,port,
+PT,0000001C,QUERYGETMAILITEM,C2S,QueryGetMailItem,mail.proto,M4,19,port,
+PT,0000001D,QUERYMAILBOX,C2S,QueryMailBoxReq,mail.proto,M4,19,port,
+PT,0000001F,QUERYGETMAILGOLD,C2S,QueryGetMailGold,mail.proto,M4,19,port,
+PT,00000020,DO_ESCAPE,C2S,DoEscape,inventory.proto,M4,19,port,escape item
+PT,00000024,READMAIL,C2S,ReadMail,mail.proto,M4,19,port,
+PT,0000002A,CREATEMONSTER,C2S,CreateMonster,inventory.proto,M4,19,port,monster-summon item
+ST,00C1,DESTPOS,C2S,DestPosReq,movement.proto,M2,18,port,was the only upstream SNAPSHOT entry
+PT,000000F4,CREATE_PLAYER,C2S,CreatePlayer,lobby.proto,M1,12,port,server-side validation (ref/02 port note 9)
+PT,000000F5,DEL_PLAYER,C2S,DelPlayer,lobby.proto,M1,12,port,requires pw hash (ref/02 port note 10)
+PT,000000F6,GETPLAYERLIST,C2S,Hello,session.proto,M1,12,merge,CharList is pushed after HelloAck
+PT,000000FC,CERTIFY,C2S,POST /api/login,HTTP,M1,12,merge,"browser md5 + argon2id, token (D3)"
+PT,000000FE,ERROR,C2S,,,,12,drop,"client ""please close"" request; WS close frame"
+PT,00000F00,EXPBOXINFO,C2S,,,,15,drop,exp boxes never created in V15
+PT,00000F31,SEND_TO_SERVER_EXP,C2S,,,,23,drop,GM debug packet; available as text command (ref/07b §22)
+PT,00000F32,SEND_TO_SERVER_CHANGEJOB,C2S,,,,16,drop,handler body commented out (ref/07b §5.3)
+PT,00000F33,SEND_TO_SERVER_AP,C2S,SendToServerAp,skill.proto,M5,17,port,handler only — no V15 sender; VR-004 clamp 0..100
+PT,0000FF00,JOIN,C2S,EnterWorld,lobby.proto,M1,12,merge,PRE_JOIN + JOIN collapse into one request
+PT,0000FF05,PRE_JOIN,C2S,EnterWorld,lobby.proto,M1,12,merge,PRE_JOIN + JOIN collapse into one request
+PT,000F0003,DOUSESKILLPOINT,C2S,DoUseSkillPointReq,skill.proto,M5,17,port,
+PT,00FF0000,CHAT,C2S,ChatReq,chat.proto,M2,21,port,commands parsed server-side (ref/24)
+PT,00FF0006,MOVEITEM,C2S,MoveItemReq,inventory.proto,M3,19,port,
+PT,00FF0007,DROPITEM,C2S,DropItem,inventory.proto,M3,19,port,
+PT,00FF0008,DROPGOLD,C2S,,,,19,drop,handler returns immediately (__VER >= 8)
+PT,00FF000B,DOEQUIP,C2S,DoEquipReq,inventory.proto,M3,19,port,
+PT,00FF0010,MELEE_ATTACK,C2S,MeleeAttackReq,combat.proto,M3,17,port,__HACK_1023 attack-speed float dropped
+PT,00FF0011,MAGIC_ATTACK,C2S,MagicAttackReq,combat.proto,M3,17,port,"idSfxHit removed (server projectiles, D4)"
+PT,00FF0012,RANGE_ATTACK,C2S,RangeAttackReq,combat.proto,M3,17,port,idSfxHit removed (D4)
+PT,00FF0014,MELEE_ATTACK2,C2S,MeleeAttackReq,combat.proto,M5,17,merge,"flying melee: the V15 client sends it from `ProcessActMsg2` ATK1 (`src:_AIInterface/ActionMoverMsg2.cpp:169`, ref/99 App. B; ref/07a §12.2 ""no sender"" is wrong); one request for ground and flying, the server queues by the mover's state (17 §3.2; §8 R1-2)"
+PT,00FF0015,SHIP_ACTMSG,C2S,,,,18,drop,no ships in V15
+PT,00FF0016,MOTION,C2S,MotionReq,movement.proto,M2,18,port,whitelist SITDOWN/STANDUP (ref/07b port note 1)
+PT,00FF0018,SETNAVIPOINT,C2S,SetNaviPointReq,party.proto,M5,21,port,FIX: party/range check on target
+PT,00FF0019,REMOVEINVENITEM,C2S,RemoveInvenItem,inventory.proto,M3,19,port,
+PT,00FF0020,USESKILL,C2S,UseSkillReq,skill.proto,M5,17,port,
+PT,00FF0021,DOUSEITEM,C2S,DoUseItem,inventory.proto,M3,19,port,
+PT,00FF0022,SFX_ID,C2S,,,,17,drop,client projectile registration; server-simulated projectiles (D4)
+PT,00FF0023,SETTARGET,C2S,SetTargetReq,combat.proto,M3,17,port,
+PT,00FF0024,SFX_CLEAR,C2S,,,,17,drop,client projectile clear removed (D4)
+PT,00FF0025,TELESKILL,C2S,TeleSkill,skill.proto,M5,17,port,"world bounds only, no skill-range clamp (03 NA-05)"
+PT,00FF0026,REMOVEQUEST,C2S,RemoveQuestReq,quest.proto,M7,20,port,
+PT,00FF002F,TRADECONFIRM,C2S,TradeConfirm,trade.proto,M4,19,port,last confirm
+PT,00FF00A0,TRADE,C2S,TradeReq,trade.proto,M4,19,port,
+PT,00FF00A1,TRADEPUT,C2S,TradePutReq,trade.proto,M4,19,port,
+PT,00FF00A2,TRADEPULL,C2S,TradePullReq,trade.proto,M4,19,port,
+PT,00FF00A3,TRADEOK,C2S,TradeOkReq,trade.proto,M4,19,port,
+PT,00FF00A4,TRADECANCEL,C2S,TradeCancelReq,trade.proto,M4,19,port,
+PT,00FF00A5,TRADEPUTGOLD,C2S,TradePutGoldReq,trade.proto,M4,19,port,FIX: refund previous amount
+PT,00FF00A6,TRADECLEARGOLD,C2S,,,,19,drop,handler registration commented out (ref/07b §22)
+PT,00FF00A7,CONFIRMTRADE,C2S,ConfirmTradeReq,trade.proto,M4,19,port,creates pending request (FIX)
+PT,00FF00A8,CONFIRMTRADECANCEL,C2S,ConfirmTradeCancelReq,trade.proto,M4,19,port,
+PT,00FF00A9,PVENDOR_OPEN,C2S,PVendorOpenReq,trade.proto,M4,19,port,
+PT,00FF00AA,PVENDOR_CLOSE,C2S,PVendorCloseReq,trade.proto,M4,19,port,
+PT,00FF00AB,REGISTER_PVENDOR_ITEM,C2S,RegisterPVendorItemReq,trade.proto,M4,19,port,
+PT,00FF00AC,QUERY_PVENDOR_ITEM,C2S,QueryPVendorItem,trade.proto,M4,19,port,
+PT,00FF00AD,BUY_PVENDOR_ITEM,C2S,BuyPVendorItem,trade.proto,M4,19,port,
+PT,00FF00AE,UNREGISTER_PVENDOR_ITEM,C2S,UnregisterPVendorItemReq,trade.proto,M4,19,port,
+PT,00FF00AF,SET_HAIR,C2S,SetHairReq,shop.proto,M4,19,port,beauty shop
+PT,00FF00B0,SCRIPTDLG,C2S,ScriptDlg,npc.proto,M4,20,port,server DialogSession validates offered keys (D2)
+PT,00FF00B1,OPENSHOPWND,C2S,OpenShopWndReq,shop.proto,M4,19,port,FIX: NPC proximity 32 m
+PT,00FF00B2,CLOSESHOPWND,C2S,CloseShopWnd,shop.proto,M4,19,port,
+PT,00FF00B3,BUYITEM,C2S,BuyItem,shop.proto,M4,19,port,
+PT,00FF00B4,SELLITEM,C2S,SellItem,shop.proto,M4,19,port,
+PT,00FF00B5,REPAIRITEM,C2S,,,,19,drop,"durability removed in V15 (__REMOVE_ENDURANCE, ref/07b port note 12)"
+PT,00FF00B6,BUYCHIPITEM,C2S,BuyChipItem,shop.proto,M4,19,port,
+PT,00FF00C0,REVIVAL,C2S,RevivalReq,combat.proto,M3,17,port,revive in place (scroll)
+PT,00FF00C1,REVIVAL_TO_LODESTAR,C2S,RevivalToLodestarReq,combat.proto,M3,17,port,
+PT,00FF00C2,REVIVAL_TO_LODELIGHT,C2S,,,,17,drop,empty handler body (ref/07a §10.3)
+PT,00FF00C3,SETLODELIGHT,C2S,SetLodelight,combat.proto,M4,17,port,
+PT,00FF00C4,INC_STAT_LEVEL,C2S,IncStatLevel,character.proto,M3,16,port,
+PT,00FF00D2,SFX_HIT,C2S,,,,17,drop,client hit reporting removed (D4)
+PT,00FF00D5,ENDSKILLQUEUE,C2S,EndSkillQueueReq,skill.proto,M5,17,port,
+PT,00FF00EE,CHANGEFACE,C2S,ChangeFaceReq,shop.proto,M4,19,port,"FIX: sender id, broadcast near (ref/07b port note 2)"
+PT,00FF00EF,NW_WANTED_GOLD,C2S,,,,17,drop,"dead feature: wanted/bounty board (F-179, PL-142, PD-19; 17 §8.9, 21 §15; §8 R1-1)"
+PT,00FF00F0,NW_WANTED_LIST,C2S,,,,17,drop,"dead feature: wanted/bounty board (F-179, PL-142, PD-19; 17 §8.9, 21 §15; §8 R1-1)"
+PT,00FF00F2,NW_WANTED_INFO,C2S,,,,17,drop,"dead feature: wanted/bounty board (F-179, PL-142, PD-19; 17 §8.9, 21 §15; §8 R1-1)"
+PT,00FF00FA,REQ_LEAVE,C2S,ReqLeave,lobby.proto,M2,12,port,starts 10 s TIMEWAIT_CLOSE logout timer
+PT,00FF00FC,NW_WANTED_NAME,C2S,,,,17,drop,"dead feature: wanted/bounty board (F-179, PL-142, PD-19; 17 §8.9, 21 §15; §8 R1-1)"
+PT,00FF0FF0,CORR_REQ,C2S,,,,18,drop,debug resync request
+PT,00FF0FFD,CREATE_GUILDCLOAK,C2S,CreateGuildCloak,guild.proto,M6,21,port,
+PT,00FF0FFF,LOCALPOSFROMIA,C2S,,,,18,drop,no ships in V15
+PT,00FFF000,CREATEANGEL,C2S,CreateAngel,pet.proto,M4,19,port,
+PT,00FFF002,ANGELBUFF,C2S,AngelBuff,pet.proto,M5,19,port,
+PT,0F000F09,LOG_GAMEMASTER_CHAT,C2S,,,,23,drop,GM whisper audit -> server audit JSONL (D2)
+PT,70000004,DO_USE_ITEM_TARGET,C2S,DoUseItemTarget,inventory.proto,M4,19,port,
+PT,70000005,REMOVE_ITEM_LEVEL_DOWN,C2S,RemoveItemLevelDown,upgrade.proto,M4,19,port,
+PT,70000006,AVAIL_POCKET,C2S,AvailPocket,inventory.proto,M4,19,port,
+PT,70000007,MOVE_ITEM_POCKET,C2S,MoveItemPocket,inventory.proto,M4,19,port,
+PT,70000008,AWAKENING,C2S,Awakening,upgrade.proto,M4,19,port,
+PT,70000009,QUE_PETRESURRECTION,C2S,QuePetResurrection,pet.proto,M4,19,port,
+PT,7000000A,BLESSEDNESS_CANCEL,C2S,BlessednessCancel,upgrade.proto,M4,19,port,
+PT,70000010,ARENA_ENTER,C2S,ArenaEnter,npc.proto,M7,22,port,
+PT,70000011,ARENA_EXIT,C2S,ArenaExit,npc.proto,M7,22,port,
+PT,70000100,SECRETROOM_TENDER,C2S,SecretRoomTender,secret_room.proto,M7,22,port,
+PT,70000101,SECRETROOM_LINEUPMEMBER,C2S,SecretRoomLineUpMember,secret_room.proto,M7,22,port,
+PT,70000102,SECRETROOM_TENDEROPENWND,C2S,SecretRoomTenderOpenWndReq,secret_room.proto,M7,22,port,
+PT,70000103,SECRETROOM_LINEUPOPENWND,C2S,SecretRoomLineUpOpenWndReq,secret_room.proto,M7,22,port,
+PT,70000104,SECRETROOM_ENTRANCE,C2S,SecretRoomEntrance,secret_room.proto,M7,22,port,
+PT,70000105,SECRETROOM_TELEPORTTONPC,C2S,SecretRoomTeleportToNpc,secret_room.proto,M7,22,port,
+PT,70000106,SECRETROOM_TENDERVIEW,C2S,SecretRoomTenderViewReq,secret_room.proto,M7,22,port,
+PT,70000107,SECRETROOM_TENDERCANCELRETURN,C2S,SecretRoomTenderCancelReturn,secret_room.proto,M7,22,port,
+PT,70000114,SECRETROOM_TELEPORTTODUNGEON,C2S,SecretRoomTeleportToDungeon,secret_room.proto,M7,22,port,
+PT,70001003,TAX_SET_TAXRATE,C2S,TaxSetTaxRate,lord.proto,M7,22,port,
+PT,70001008,HEAVENTOWER_TELEPORT,C2S,HeavenTowerTeleport,npc.proto,M7,22,port,
+PT,70002000,RAINBOWRACE_PREVRANKING_OPENWND,C2S,RainbowRacePrevRankingOpenWndReq,event.proto,M7,22,port,
+PT,70002001,RAINBOWRACE_APPLICATION_OPENWND,C2S,RainbowRaceApplicationOpenWndReq,event.proto,M7,22,port,
+PT,70002002,RAINBOWRACE_APPLICATION,C2S,RainbowRaceApplication,event.proto,M7,22,port,
+PT,70002003,RAINBOWRACE_MINIGAME_PACKET,C2S,RainbowRaceMiniGamePacket,event.proto,M7,22,port,
+PT,70002004,RAINBOWRACE_REQ_FINISH,C2S,RainbowRaceReqFinish,event.proto,M7,22,port,
+PT,70003002,HOUSING_SETUPFURNITURE,C2S,HousingSetupFurnitureReq,housing.proto,M7,22,port,
+PT,70003004,HOUSING_VISITROOM,C2S,HousingVisitRoom,housing.proto,M7,22,port,
+PT,70003005,HOUSING_SETVISITALLOW,C2S,HousingSetVisitAllowReq,housing.proto,M7,22,port,
+PT,70003006,HOUSING_REQVISITABLELIST,C2S,HousingReqVisitableList,housing.proto,M7,22,port,
+PT,70003007,HOUSING_GOOUT,C2S,HousingGoOut,housing.proto,M7,22,port,
+PT,70004000,HONOR_LIST_REQ,C2S,HonorListReq,relation.proto,M6,21,port,
+PT,70004001,HONOR_CHANGE_REQ,C2S,HonorChangeReq,relation.proto,M6,21,port,
+PT,70005000,QUESTHELPER_REQNPCPOS,C2S,QuestHelperReqNpcPos,quest.proto,M7,20,port,
+PT,70007000,SMELT_SAFETY,C2S,SmeltSafetyReq,upgrade.proto,M4,19,port,
+PT,70057054,PRIME_SMELT,C2S,,,,19,drop,no-op pacing packet (custom __BETTER_SAFE_UPGRADES); generic rate limit
+PT,88000000,VISPET_REMOVEVIS,C2S,VisPetRemoveVis,pet.proto,M4,19,port,
+PT,88000001,VISPET_SWAPVIS,C2S,VisPetSwapVis,pet.proto,M4,19,port,
+PT,88100001,GUILDHOUSE_BUY,C2S,GuildHouseBuy,housing.proto,M7,22,port,
+PT,88100003,GUILDHOUSE_PACKET,C2S,GuildHousePacketReq,housing.proto,M7,22,port,registered C>W handler (ref/07a #284)
+PT,88100006,GUILDHOUSE_ENTER,C2S,GuildHouseEnter,housing.proto,M7,22,port,
+PT,88100007,GUILDHOUSE_GOOUT,C2S,GuildHouseGoOut,housing.proto,M7,22,port,
+PT,88100100,TELEPORTER,C2S,Teleporter,npc.proto,M4,20,port,
+PT,88100110,QUEST_CHECK,C2S,QuestCheck,quest.proto,M7,20,port,
+PT,88100121,CAMPUS_INVITE,C2S,CampusInviteReq,relation.proto,M6,21,port,
+PT,88100122,CAMPUS_ACCEPT,C2S,CampusAccept,relation.proto,M6,21,port,
+PT,88100123,CAMPUS_REFUSE,C2S,CampusRefuse,relation.proto,M6,21,port,
+PT,88100125,CAMPUS_REMOVE_MEMBER,C2S,CampusRemoveMember,relation.proto,M6,21,port,
+PT,88100221,ITEM_SELECT_AWAKENING_VALUE,C2S,ItemSelectAwakeningValueReq,upgrade.proto,M4,19,port,
+PT,88100230,GUILDHOUSE_TENDER_MAINWND,C2S,,,,22,drop,inactive (__GUILD_HOUSE_MIDDLE undefined)
+PT,88100231,GUILDHOUSE_TENDER_INFOWND,C2S,,,,22,drop,inactive (__GUILD_HOUSE_MIDDLE undefined)
+PT,88100233,GUILDHOUSE_TENDER_JOIN,C2S,,,,22,drop,inactive (__GUILD_HOUSE_MIDDLE undefined)
+PT,8FFF0000,ELECTION_ADD_DEPOSIT,C2S,ElectionAddDepositReq,lord.proto,M7,22,port,
+PT,8FFF0001,ELECTION_SET_PLEDGE,C2S,ElectionSetPledgeReq,lord.proto,M7,22,port,
+PT,8FFF0002,ELECTION_INC_VOTE,C2S,ElectionIncVoteReq,lord.proto,M7,22,port,
+PT,8FFF0008,L_EVENT_CREATE,C2S,LEventCreateReq,lord.proto,M7,22,port,
+PT,8FFF0009,LORD_SKILL_USE,C2S,LordSkillUseReq,lord.proto,M7,22,port,
+PT,8FFF000D,TRANSFORM_ITEM,C2S,TransformItem,pet.proto,M4,19,port,
+PT,8FFF000E,TUTORIAL_STATE,C2S,TutorialState,character.proto,M3,16,port,md5 tamper string dropped
+PT,8FFF000F,PICKUP_PET_AWAKENING_CANCEL,C2S,PickupPetAwakeningCancel,pet.proto,M4,19,port,
+PT,8FFF0010,OPTION_ENABLE_RENDER_MASK,C2S,OptionEnableRenderMask,character.proto,M4,16,port,
+PT,8FFFF000,PROPOSE,C2S,Propose,relation.proto,M6,21,port,
+PT,8FFFF001,REFUSE,C2S,Refuse,relation.proto,M6,21,port,
+PT,8FFFF002,COUPLE,C2S,CoupleReq,relation.proto,M6,21,port,
+PT,8FFFF003,DECOUPLE,C2S,Decouple,relation.proto,M6,21,port,
+PT,8FFFFF00,DO_USE_ITEM_INPUT,C2S,DoUseItemInput,inventory.proto,M4,19,port,
+PT,8FFFFF01,CLEAR_PET_NAME,C2S,ClearPetName,pet.proto,M4,19,port,
+PT,AA000001,UPDATE_JOB,C2S,UpdateJob,character.proto,M5,16,port,"repack __FAST_JOBCHANGE, table-driven validation"
+PT,AA000002,SORT_INVENTORY,C2S,SortInventory,inventory.proto,M4,19,port,repack
+PT,AA000003,QUICKSELL,C2S,QuickSell,shop.proto,M4,19,port,repack
+PT,AA000004,RANDOMOPTIONRETRY,C2S,RandomOptionRetry,upgrade.proto,M4,19,port,repack
+PT,AA000005,TELE16,C2S,Tele16,npc.proto,M4,20,port,repack teleporter
+PT,AA000006,MULTIPLE_ITEM_PICKER,C2S,,,,19,drop,no-op handler (ref/07c §30.3)
+PT,AA000007,HIDE_COAT,C2S,HideCoatReq,character.proto,M4,16,port,repack __HIDE_FASHION
+PT,AA000008,JOIN_PARTY_REQ,C2S,JoinPartyReq,party.proto,M5,21,port,repack party finder list request
+PT,AA000009,PARTYALLOWJOIN,C2S,PartyAllowJoinReq,party.proto,M5,21,port,repack
+PT,AA000010,EXP_STOP,C2S,ExpStop,character.proto,M3,16,port,repack
+PT,AA000011,PETFILTER,C2S,PetFilter,pet.proto,M4,19,port,repack
+PT,F000B007,SENDTAG,C2S,SendTag,messenger.proto,M6,21,port,offline note
+PT,F000B010,NW_GUILDLOGO,C2S,GuildLogoReq,guild.proto,M6,21,port,NW_ prefix dropped
+PT,F000B011,NW_GUILDCONTRIBUTION,C2S,GuildContributionReq,guild.proto,M6,21,port,
+PT,F000B012,NW_GUILDNOTICE,C2S,GuildNoticeReq,guild.proto,M6,21,port,
+PT,F000B013,FOCUSOBJ,C2S,,,,17,drop,client never sends (ref/07b §7.7)
+PT,F000B020,GUILD_BANK_WND,C2S,GuildBankWndReq,guild.proto,M6,21,port,
+PT,F000B021,PUTITEMGUILDBANK,C2S,PutItemGuildBankReq,guild.proto,M6,21,port,atomic persistence batch (D5)
+PT,F000B022,GETITEMGUILDBANK,C2S,GetItemGuildBankReq,guild.proto,M6,21,port,atomic persistence batch (D5)
+PT,F000B024,ENCHANT,C2S,Enchant,upgrade.proto,M4,19,port,
+PT,F000B025,PIERCING,C2S,PiercingReq,upgrade.proto,M4,19,port,annex name `Piercing`: item_types.proto already owns the CPiercing type `Piercing`; the C2S request takes the Req suffix (Plan/11 section 5.1 rule 3)
+PT,F000B026,GUILD_AUTHORITY,C2S,GuildAuthorityReq,guild.proto,M6,21,port,
+PT,F000B027,GUILD_PENYA,C2S,GuildPenyaReq,guild.proto,M6,21,port,FIX: type range-checked
+PT,F000B032,GUILD_SETNAME,C2S,GuildSetNameReq,guild.proto,M6,21,port,
+PT,F000B036,DECL_GUILD_WAR,C2S,DeclGuildWarReq,guild_war.proto,M6,21,port,
+PT,F000B037,ACPT_GUILD_WAR,C2S,AcptGuildWarReq,guild_war.proto,M6,21,port,FIX: declaration must exist
+PT,F000B038,NC_ADDVOTE,C2S,,,,21,drop,guild voting unreachable in this build (ref/01 OQ5)
+PT,F000B039,NC_REMOVEVOTE,C2S,,,,21,drop,guild voting unreachable (ref/01 OQ5)
+PT,F000B03A,NC_CLOSEVOTE,C2S,,,,21,drop,guild voting unreachable (ref/01 OQ5)
+PT,F000B03B,NC_CASTVOTE,C2S,,,,21,drop,guild voting unreachable (ref/01 OQ5)
+PT,F000B047,SURRENDER,C2S,SurrenderReq,guild_war.proto,M6,21,port,
+PT,F000B048,QUERY_TRUCE,C2S,QueryTruceReq,guild_war.proto,M6,21,port,
+PT,F000B049,ACPT_TRUCE,C2S,AcptTruce,guild_war.proto,M6,21,port,FIX: master + pending truce required
+PT,F000B04E,REQUEST_GUILD_RANKING,C2S,,,,21,drop,inactive (__GUILDRANK undefined)
+PT,F000B04F,COMMERCIALELEM,C2S,CommercialElemReq,upgrade.proto,M4,19,port,
+PT,F000B050,UPGRADEBASE,C2S,,,,19,drop,empty handler body (ref/07b §22)
+PT,F000B054,ENTERCHTTING,C2S,EnterChatting,trade.proto,M4,19,port,vendor chat room; typo CHTTING fixed
+PT,F000B055,CHATTING,C2S,ChattingReq,trade.proto,M4,19,port,
+PT,F000B057,COMMONPLACE,C2S,,,,15,drop,"handler body commented out, no client sender (ref/07b §22)"
+PT,F000B058,OPENCHATTINGROOM,C2S,OpenChattingRoom,trade.proto,M4,19,port,
+PT,F000B059,CLOSECHATTINGROOM,C2S,CloseChattingRoom,trade.proto,M4,19,port,
+PT,F000D008,PIERCING_SIZE,C2S,PiercingSize,upgrade.proto,M4,19,port,
+PT,F000D009,QUERYEQUIP,C2S,QueryEquipReq,inventory.proto,M4,19,port,FIX: visibility-range check
+PT,F000D00A,QUERYEQUIPSETTING,C2S,QueryEquipSetting,character.proto,M4,16,port,EQUIP_DENIAL toggle
+PT,F000D00B,REMVOE_ATTRIBUTE,C2S,RemoveAttributeReq,upgrade.proto,M4,19,port,typo REMVOE fixed in name
+PT,F000D00C,ITEMTRANSY,C2S,ItemTransy,upgrade.proto,M4,19,port,define spelled PACHETTYPE_ITEMTRANSY
+PT,F000D00D,RANDOMSCROLL,C2S,RandomScroll,upgrade.proto,M4,19,port,
+PT,F000D00E,CHANGE_ATTRIBUTE,C2S,ChangeAttribute,upgrade.proto,M4,19,port,
+PT,F000D010,RETURNSCROLL,C2S,ReturnScrollReq,inventory.proto,M4,19,port,select −1 return trip M5 (WP-ITEM-20)
+PT,F000D022,IN_GUILDCOMBAT,C2S,InGuildCombat,guild_siege.proto,M6,21,port,
+PT,F000D023,OUT_GUILDCOMBAT,C2S,OutGuildCombat,guild_siege.proto,M6,21,port,
+PT,F000D024,JOIN_GUILDCOMBAT,C2S,JoinGuildCombat,guild_siege.proto,M6,21,port,
+PT,F000D027,SELECTPLAYER_GUILDCOMBAT,C2S,SelectPlayerGuildCombat,guild_siege.proto,M6,21,port,FIX: membership per uid
+PT,F000D028,REQUEST_STATUS,C2S,RequestStatus,guild_siege.proto,M6,21,port,
+PT,F000D02B,SELECTMAP_GUILDCOMBAT,C2S,SelectMapGuildCombat,guild_siege.proto,M6,21,port,
+PT,F000D02D,GETPENYAGUILD_GUILDCOMBAT,C2S,GetPenyaGuildGuildCombat,guild_siege.proto,M6,21,port,
+PT,F000D02E,GETPENYAPLAYER_GUILDCOMBAT,C2S,GetPenyaPlayerGuildCombat,guild_siege.proto,M6,21,port,
+PT,F000D02F,GETITEM_GUILDCOMBAT,C2S,,,,21,drop,inactive (__VER < 8)
+PT,F000D030,TELE_GUILDCOMBAT,C2S,TeleGuildCombat,guild_siege.proto,M6,21,port,
+PT,F000D031,PLAYERPOINT_GUILDCOMBAT,C2S,PlayerPointGuildCombat,guild_siege.proto,M6,21,port,
+PT,F000E001,SUMMON_FRIEND,C2S,SummonFriend,messenger.proto,M6,21,port,
+PT,F000E002,SUMMON_FRIEND_CONFIRM,C2S,SummonFriendConfirm,messenger.proto,M6,21,port,
+PT,F000E003,SUMMON_PARTY,C2S,SummonParty,messenger.proto,M6,21,port,FIX: require party-summon item
+PT,F000E004,SUMMON_PARTY_CONFIRM,C2S,SummonPartyConfirm,messenger.proto,M6,21,port,
+PT,F000E005,SUMMON_FRIEND_CANCEL,C2S,SummonFriendCancel,messenger.proto,M6,21,port,FIX: pending request required
+PT,F000F000,CHG_MASTER,C2S,ChgMasterReq,guild.proto,M6,21,port,
+PT,F000F008,CTRL_COOLTIME_CANCEL,C2S,CtrlCoolTimeCancel,world.proto,M4,15,port,
+PT,F000F100,KAWIBAWIBO_START,C2S,KawibawiboStart,event.proto,M7,22,port,
+PT,F000F101,KAWIBAWIBO_GETITEM,C2S,KawibawiboGetItem,event.proto,M7,22,port,
+PT,F000F102,REASSEMBLE_START,C2S,ReassembleStart,event.proto,M7,22,port,
+PT,F000F103,REASSEMBLE_OPENWND,C2S,ReassembleOpenWnd,event.proto,M7,22,port,
+PT,F000F104,ALPHABET_OPENWND,C2S,AlphabetOpenWnd,event.proto,M7,22,port,
+PT,F000F105,ALPHABET_START,C2S,AlphabetStart,event.proto,M7,22,port,
+PT,F000F106,FIVESYSTEM_OPENWND,C2S,FiveSystemOpenWnd,event.proto,M7,22,port,
+PT,F000F107,FIVESYSTEM_DESTROYWND,C2S,FiveSystemDestroyWnd,event.proto,M7,22,port,
+PT,F000F108,FIVESYSTEM_BET,C2S,FiveSystemBet,event.proto,M7,22,port,
+PT,F000F109,FIVESYSTEM_START,C2S,FiveSystemStart,event.proto,M7,22,port,
+PT,F000F110,ULTIMATE_MAKEITEM,C2S,UltimateMakeItem,upgrade.proto,M4,19,port,
+PT,F000F111,ULTIMATE_MAKEGEM,C2S,UltimateMakeGem,upgrade.proto,M4,19,port,
+PT,F000F112,ULTIMATE_TRANSWEAPON,C2S,UltimateTransWeapon,upgrade.proto,M4,19,port,
+PT,F000F113,ULTIMATE_ENCHANTWEAPON,C2S,UltimateEnchantWeapon,upgrade.proto,M4,19,port,
+PT,F000F114,ULTIMATE_SETGEM,C2S,UltimateSetGem,upgrade.proto,M4,19,port,
+PT,F000F115,ULTIMATE_REMOVEGEM,C2S,UltimateRemoveGem,upgrade.proto,M4,19,port,
+PT,F000F116,EXCHANGE,C2S,ExchangeReq,upgrade.proto,M4,19,port,
+PT,F000F500,LEGENDSKILLUP_START,C2S,LegendSkillUpStart,skill.proto,M5,17,port,
+PT,F000F501,MODIFY_STATUS,C2S,ModifyStatus,character.proto,M3,16,port,
+PT,F000F600,PET_RELEASE,C2S,PetReleaseReq,pet.proto,M4,19,port,
+PT,F000F601,USE_PET_FEED,C2S,UsePetFeed,pet.proto,M4,19,port,
+PT,F000F602,PET_TAMER_MISTAKE,C2S,PetTamerMistake,pet.proto,M4,19,port,
+PT,F000F603,PET_TAMER_MIRACLE,C2S,PetTamerMiracle,pet.proto,M4,19,port,
+PT,F000F604,FEED_POCKET_INACTIVE,C2S,FeedPocketInactive,pet.proto,M5,19,port,
+PT,F000F605,MAKE_PET_FEED,C2S,MakePetFeed,pet.proto,M4,19,port,
+PT,F000F700,GC1TO1_TENDEROPENWND,C2S,Gc1to1TenderOpenWndReq,guild_siege.proto,M7,21,port,
+PT,F000F701,GC1TO1_TENDERVIEW,C2S,Gc1to1TenderViewReq,guild_siege.proto,M7,21,port,
+PT,F000F702,GC1TO1_TENDER,C2S,Gc1to1Tender,guild_siege.proto,M7,21,port,
+PT,F000F703,GC1TO1_TENDERCANCEL,C2S,Gc1to1TenderCancel,guild_siege.proto,M7,21,port,
+PT,F000F705,GC1TO1_MEMBERLINEUPOPENWND,C2S,Gc1to1MemberLineUpOpenWndReq,guild_siege.proto,M7,21,port,
+PT,F000F706,GC1TO1_MEMBERLINEUP,C2S,Gc1to1MemberLineUp,guild_siege.proto,M7,21,port,
+PT,F000F707,GC1TO1_TELEPORTTONPC,C2S,Gc1to1TeleportToNpc,guild_siege.proto,M7,21,port,
+PT,F000F708,GC1TO1_TELEPORTTOSTAGE,C2S,Gc1to1TeleportToStage,guild_siege.proto,M7,21,port,
+PT,F000F709,GC1TO1_TENDERFAILED,C2S,Gc1to1TenderFailed,guild_siege.proto,M7,21,port,
+PT,F000F800,QUERY_START_COLLECTING,C2S,QueryStartCollecting,inventory.proto,M4,19,port,
+PT,F000F801,QUERY_STOP_COLLECTING,C2S,QueryStopCollecting,inventory.proto,M4,19,port,
+PT,F000F802,QUERY_PLAYER_DATA,C2S,QueryPlayerDataReq,messenger.proto,M5,21,port,
+PT,F000F807,QUERY_PLAYER_DATA2,C2S,QueryPlayerData2,messenger.proto,M5,21,port,PDVer raw -> PlayerDataVersion
+PT,F000F809,PIERCINGREMOVE,C2S,PiercingRemove,upgrade.proto,M4,19,port,
+PT,F000F810,GUILDLOG_VIEW,C2S,GuildLogViewReq,guild.proto,M6,21,port,
+PT,F000F811,SEALCHAR_REQ,C2S,SealCharReq,inventory.proto,M8,19,port,low priority (ref/07c §15.2)
+PT,F000F812,SEALCHARCONM_REQ,C2S,SealCharConmReq,inventory.proto,M8,19,port,
+PT,F000F813,NPC_BUFF,C2S,NpcBuff,npc.proto,M4,20,port,
+PT,F000F814,SEALCHARGET_REQ,C2S,SealCharGetReq,inventory.proto,M8,19,port,
+PT,FF000003,QUIZ_ENTRANCE,C2S,QuizEntrance,event.proto,M7,22,port,
+PT,FF000004,QUIZ_TELEPORT,C2S,QuizTeleport,event.proto,M7,22,port,
+PT,FFFFF000,MAP_KEY,C2S,,,,03,drop,__MAP_SECURITY anti-cheat (D1)
+PT,FFFFFF00,SNAPSHOT,C2S,ClientEnvelope,envelope.proto,M1,11,merge,upstream container; its only entry DESTPOS -> DestPosReq
+PT,FFFFFF01,PLAYERMOVED,C2S,PlayerMoveState,movement.proto,M2,18,merge,"D4 timestamped state, reason=MOVED"
+PT,FFFFFF02,PLAYERBEHAVIOR,C2S,PlayerMoveState,movement.proto,M2,18,merge,reason=BEHAVIOR
+PT,FFFFFF03,PLAYERMOVED2,C2S,PlayerMoveState,movement.proto,M5,18,merge,"flying fields, reason=MOVED"
+PT,FFFFFF04,PLAYERBEHAVIOR2,C2S,PlayerMoveState,movement.proto,M5,18,merge,"flying, reason=BEHAVIOR"
+PT,FFFFFF05,PLAYERCORR,C2S,PlayerMoveState,movement.proto,M2,18,merge,reason=CORR
+PT,FFFFFF06,PLAYERCORR2,C2S,PlayerMoveState,movement.proto,M5,18,merge,"flying, reason=CORR"
+PT,FFFFFF07,PLAYERSETDESTOBJ,C2S,SetDestObjReq,movement.proto,M2,18,port,
+PT,FFFFFF08,QUERYGETPOS,C2S,,,,18,drop,resync superseded by timestamped state + shared sim (D4)
+PT,FFFFFF09,GETPOS,C2S,,,,18,drop,superseded (D4)
+PT,FFFFFF0A,REMOVEAPPLETTASKBAR,C2S,RemoveAppletTaskBar,taskbar.proto,M3,42,port,
+PT,FFFFFF0B,ADDAPPLETTASKBAR,C2S,AddAppletTaskBar,taskbar.proto,M3,42,port,
+PT,FFFFFF0C,ADDITEMTASKBAR,C2S,AddItemTaskBar,taskbar.proto,M3,42,port,
+PT,FFFFFF0D,REMOVEITEMTASKBAR,C2S,RemoveItemTaskBar,taskbar.proto,M3,42,port,
+PT,FFFFFF0E,SKILLTASKBAR,C2S,SkillTaskBar,taskbar.proto,M5,42,port,action-slot queue
+PT,FFFFFF11,ADDPARTYMEMBER,C2S,AddPartyMember,party.proto,M5,21,port,invitee accepts; FIX: invite must exist
+PT,FFFFFF12,REMOVEPARTYMEMBER,C2S,RemovePartyMember,party.proto,M5,21,port,
+PT,FFFFFF17,MEMBERREQUEST,C2S,MemberRequest,party.proto,M5,21,port,invite (FIX: pending invite required)
+PT,FFFFFF18,MEMBERREQUESTCANCLE,C2S,MemberRequestCancel,party.proto,M5,21,port,typo CANCLE fixed
+PT,FFFFFF19,CHANGETROUP,C2S,ChangeTroup,party.proto,M5,21,port,
+PT,FFFFFF1A,CHANPARTYNAME,C2S,ChanPartyName,party.proto,M5,21,port,
+PT,FFFFFF1B,PARTYSKILLUSE,C2S,PartySkillUse,party.proto,M5,21,port,
+PT,FFFFFF20,PARTYCHANGEITEMMODE,C2S,PartyChangeItemModeReq,party.proto,M5,21,port,
+PT,FFFFFF21,PARTYCHANGEEXPMODE,C2S,PartyChangeExpModeReq,party.proto,M5,21,port,
+PT,FFFFFF23,DUELREQUEST,C2S,DuelRequestReq,pvp.proto,M5,17,port,
+PT,FFFFFF24,DUELYES,C2S,DuelYes,pvp.proto,M5,17,port,
+PT,FFFFFF25,DUELNO,C2S,DuelNoReq,pvp.proto,M5,17,port,
+PT,FFFFFF26,DUELPARTYREQUEST,C2S,DuelPartyRequestReq,pvp.proto,M5,17,port,
+PT,FFFFFF27,DUELPARTYYES,C2S,DuelPartyYes,pvp.proto,M5,17,port,
+PT,FFFFFF28,DUELPARTYNO,C2S,DuelPartyNoReq,pvp.proto,M5,17,port,
+PT,FFFFFF29,PLAYERANGLE,C2S,PlayerMoveState,movement.proto,M5,18,merge,"flying steering, reason=ANGLE"
+PT,FFFFFF2B,QUERYPLAYERLISTSTRING,C2S,,,,21,drop,inactive (#else of __VER >= 11)
+PT,FFFFFF2D,MOVERFOCOUS,C2S,MoverFocusReq,gm.proto,M8,23,port,GM only; typo FOCOUS fixed
+PT,FFFFFF2F,PARTYCHANGELEADER,C2S,PartyChangeLeader,party.proto,M5,21,port,
+PT,FFFFFF32,DESTROY_GUILD,C2S,DestroyGuildReq,guild.proto,M6,21,port,
+PT,FFFFFF33,ADD_GUILD_MEMBER,C2S,AddGuildMemberReq,guild.proto,M6,21,port,"FIX: invite must exist, inviter rank checked"
+PT,FFFFFF34,REMOVE_GUILD_MEMBER,C2S,RemoveGuildMemberReq,guild.proto,M6,21,port,
+PT,FFFFFF35,GUILD_INVITE,C2S,GuildInviteReq,guild.proto,M6,21,port,
+PT,FFFFFF36,IGNORE_GUILD_INVITE,C2S,IgnoreGuildInvite,guild.proto,M6,21,port,
+PT,FFFFFF37,QUERYPLAYERSTRING,C2S,,,,21,drop,inactive (#else of __VER >= 11)
+PT,FFFFFF3A,GUILD_MEMBER_LEVEL,C2S,GuildMemberLevelReq,guild.proto,M6,21,port,
+PT,FFFFFF3E,GUILD_BANK_WND_CLOSE,C2S,GuildBankWndClose,guild.proto,M6,21,port,
+PT,FFFFFF3F,GUILD_BANK_MOVEITEM,C2S,GuildBankMoveItem,guild.proto,M6,21,port,
+PT,FFFFFF40,OPENBANKWND,C2S,OpenBankWnd,bank.proto,M4,19,port,FIX: NPC proximity / remote-bank item
+PT,FFFFFF41,CLOSEBANKWND,C2S,CloseBankWnd,bank.proto,M4,19,port,
+PT,FFFFFF42,PUTITEMBACK,C2S,PutItemBack,bank.proto,M4,19,port,inventory -> bank
+PT,FFFFFF43,PUTGOLDBACK,C2S,PutGoldBack,bank.proto,M4,19,port,
+PT,FFFFFF44,GETITEMBACK,C2S,GetItemBack,bank.proto,M4,19,port,bank -> inventory
+PT,FFFFFF45,GETGOLDBACK,C2S,GetGoldBack,bank.proto,M4,19,port,
+PT,FFFFFF46,MOVEBANKITEM,C2S,,,,19,drop,empty handler body (ref/07a §14.10)
+PT,FFFFFF47,CHANGEBANKPASS,C2S,ChangeBankPassReq,bank.proto,M4,19,port,
+PT,FFFFFF48,CONFIRMBANK,C2S,ConfirmBank,bank.proto,M4,19,port,
+PT,FFFFFF49,PUTBACKTOBANK,C2S,PutBackToBank,bank.proto,M4,19,port,between bank slots
+PT,FFFFFF5A,BLOCK,C2S,BlockReq,chat.proto,M6,21,port,"FIX: ignore szNameTo, use session player"
+PT,FFFFFF60,ADDFRIEND,C2S,AddFriendReq,messenger.proto,M6,21,port,acceptor; FIX: pending request required
+PT,FFFFFF61,ADDFRIENDREQEST,C2S,AddFriendRequestReq,messenger.proto,M6,21,port,typo REQEST fixed
+PT,FFFFFF62,ADDFRIENDCANCEL,C2S,AddFriendCancelReq,messenger.proto,M6,21,port,
+PT,FFFFFF63,GETFRIENDNAME,C2S,,,,21,drop,inactive (#else of __VER >= 11)
+PT,FFFFFF64,GETFRIENDSTATE,C2S,GetFriendStateReq,messenger.proto,M6,21,port,
+PT,FFFFFF67,SETFRIENDSTATE,C2S,SetFriendStateReq,messenger.proto,M6,21,port,
+PT,FFFFFF68,FRIENDINTERCEPTSTATE,C2S,FriendInterceptStateReq,messenger.proto,M6,21,port,
+PT,FFFFFF6A,REMOVEFRIEND,C2S,RemoveFriendReq,messenger.proto,M6,21,port,
+PT,FFFFFF6B,ADDFRIENDNAMEREQEST,C2S,AddFriendNameRequestReq,messenger.proto,M6,21,port,
+PT,FFFFFF72,QUERYGETDESTOBJ,C2S,,,,18,drop,superseded (D4)
+PT,FFFFFF73,GETDESTOBJ,C2S,,,,18,drop,superseded (D4)
+PT,FFFFFF74,GUILD_CLASS,C2S,GuildClassReq,guild.proto,M6,21,port,
+PT,FFFFFF75,GUILD_NICKNAME,C2S,GuildNicknameReq,guild.proto,M6,21,port,
+PT,FFFFFF78,RESURRECTION_OK,C2S,ResurrectionOk,combat.proto,M5,17,port,
+PT,FFFFFF79,RESURRECTION_CANCEL,C2S,ResurrectionCancel,combat.proto,M5,17,port,
+PT,FFFFFF7A,STATEMODE,C2S,StateModeReq,character.proto,M4,16,port,cancel base-motion casting
+PT,FFFFFF7B,MODE,C2S,ChangeMode,character.proto,M5,16,port,PK/PvP option toggles (rename: see §5.3)
+PT,FFFFFF7C,CHEERING,C2S,Cheering,relation.proto,M6,21,port,FIX: visibility-range check
+PT,0000000B,QUERYTICKCOUNT,S2C,ServerTime,session.proto,M1,10,merge,reply of ServerTimeReq
+PT,00000012,QUERYSETPLAYERNAME,S2C,QuerySetPlayerNameNtf,messenger.proto,M5,21,port,broadcast to all
+PT,00000014,PING,S2C,,,,10,drop,login-server echo never called by V15 client; WS ping/pong (D3)
+PT,00000015,GET_CLOCK,S2C,,,,03,drop,anti-cheat clock probe (D1)
+PT,00000017,ONE_HOUR_NOTIFY,S2C,,,,12,drop,billing
+PT,00000018,KEEP_ALIVE,S2C,,,,10,drop,replaced by WebSocket ping/pong (D3)
+PT,00000023,SNOOP,S2C,Snoop,gm.proto,M8,23,port,
+PT,000000F2,CACHE_ADDR,S2C,,,,12,drop,single same-origin endpoint
+PT,000000F3,PLAYER_LIST,S2C,CharList,lobby.proto,M1,12,port,
+PT,000000FD,SRVR_LIST,S2C,,,,12,drop,"one server/channel, no select screen (D1, D7); server name in HelloAck"
+PT,000000FE,ERROR,S2C,LobbyError,lobby.proto,M1,12,merge,login-server/DB errors; certifier errors become /api/login HTTP error codes
+PT,00000FF6,NEWYEAR,S2C,,,,22,drop,"dead (hard-coded 2009-12-31, ref/03 §9.2)"
+PT,0000FF00,JOIN,S2C,ServerBatch,envelope.proto,M1,11,merge,container type of the first batch; join-batch order fixed in doc 11 §2.5
+PT,0000FF05,PRE_JOIN,S2C,,,,12,drop,ack folded into the join batch / LobbyError
+PT,0000FF06,GAMERATE,S2C,GameRate,event.proto,M4,22,merge,core broadcast variant
+PT,00FF00D4,WHISPER,S2C,Whisper,chat.proto,M2,21,port,
+PT,00FF00D6,CAPTION,S2C,Caption,notice.proto,M2,23,port,
+PT,00FF00E0,SAY,S2C,Say,chat.proto,M2,21,port,
+PT,00FF00E7,GETPLAYERADDR,S2C,GetPlayerAddr,gm.proto,M8,23,port,
+PT,00FF00E8,GETPLAYERCOUNT,S2C,GetPlayerCount,gm.proto,M8,23,port,
+PT,00FF00E9,GETCOREPLAYER,S2C,GetCorePlayer,gm.proto,M8,23,port,
+PT,00FF00EA,SYSTEM,S2C,SystemNotice,notice.proto,M2,23,port,rename (see §5.3)
+PT,00FF00EC,DEFINEDTEXT,S2C,DefinedText,notice.proto,M2,11,merge,core variant
+PT,00FF00ED,GMSAY,S2C,,,,21,drop,"dead (ref/03 §9.2, ref/24 drop)"
+PT,00FF00F1,WN_WANTED_LIST,S2C,,,,17,drop,"dead feature: wanted/bounty board (F-179, PL-142, PD-19; 17 §8.9, 21 §15; §8 R1-1)"
+PT,00FF00FD,WN_WANTED_NAME,S2C,,,,17,drop,"dead feature: wanted/bounty board (F-179, PL-142, PD-19; 17 §8.9, 21 §15; §8 R1-1)"
+PT,00FF0F00,REPLACE,S2C,Replace,world.proto,M2,15,merge,top-level variant has no sender
+PT,70000003,ERROR_STRING,S2C,,,,12,drop,GPotato region auth
+PT,7000000B,LOGOUT,S2C,PresenceLogout,messenger.proto,M6,21,port,rename (see §5.3)
+PT,88100200,LOGIN_PROTECT_NUMPAD,S2C,,,,12,drop,LoginProtect numpad dropped (D1)
+PT,88100201,LOGIN_PROTECT_CERT,S2C,,,,12,drop,LoginProtect numpad dropped (D1)
+PT,F000B008,INSERTTAG_RESULT,S2C,InsertTagResult,messenger.proto,M6,21,port,
+PT,F000B023,GUILD_MSG_CONTROL,S2C,,,,21,drop,listed Core->client (ref/03 §9.2) but Neuz has no handler (ref/09a §4.2)
+PT,F000B029,GUILD_GAMELOGIN,S2C,GuildGameLogin,guild.proto,M6,21,port,
+PT,F000B030,GUILD_GAMEJOIN,S2C,GuildGameJoin,guild.proto,M6,21,port,
+PT,F000B032,GUILD_SETNAME,S2C,GuildSetNameNtf,guild.proto,M6,21,port,
+PT,F000B035,GUILD_ERROR,S2C,GuildError,guild.proto,M6,21,port,
+PT,F000B036,DECL_GUILD_WAR,S2C,DeclGuildWarNtf,guild_war.proto,M6,21,port,
+PT,F000B037,ACPT_GUILD_WAR,S2C,AcptGuildWarNtf,guild_war.proto,M6,21,port,
+PT,F000B045,WAR_DEAD,S2C,WarDead,guild_war.proto,M6,21,port,
+PT,F000B046,WAR_END,S2C,WarEnd,guild_war.proto,M6,21,port,
+PT,F000B047,SURRENDER,S2C,SurrenderNtf,guild_war.proto,M6,21,port,
+PT,F000B048,QUERY_TRUCE,S2C,QueryTruceNtf,guild_war.proto,M6,21,port,
+PT,F000B04E,REQUEST_GUILD_RANKING,S2C,,,,21,drop,inactive (__GUILDRANK undefined)
+PT,F000F000,CHG_MASTER,S2C,ChgMasterNtf,guild.proto,M6,21,port,
+PT,F000F00A,TRAFIC_LOG,S2C,,,,23,drop,inactive (__TRAFIC_1218)
+PT,F000F808,UPDATE_PLAYER_DATA,S2C,UpdatePlayerData,messenger.proto,M5,21,port,
+PT,FF000002,QUIZ_NOTICE,S2C,QuizNotice,event.proto,M7,22,port,
+PT,FFFFFF00,SNAPSHOT,S2C,ServerBatch,envelope.proto,M1,11,merge,per-tick container
+PT,FFFFFF10,ERRORPARTY,S2C,ErrorParty,party.proto,M5,21,merge,core variant
+PT,FFFFFF30,GUILD,S2C,Guild,guild.proto,M6,21,merge,core variant on joining a guild
+PT,FFFFFF33,ADD_GUILD_MEMBER,S2C,AddGuildMemberNtf,guild.proto,M6,21,port,
+PT,FFFFFF34,REMOVE_GUILD_MEMBER,S2C,RemoveGuildMemberNtf,guild.proto,M6,21,port,
+PT,FFFFFF39,GUILD_CHAT,S2C,GuildChat,chat.proto,M6,21,port,
+PT,FFFFFF3A,GUILD_MEMBER_LEVEL,S2C,GuildMemberLevelNtf,guild.proto,M6,21,port,
+PT,FFFFFF5A,BLOCK,S2C,BlockNtf,chat.proto,M6,21,port,
+PT,FFFFFF64,GETFRIENDSTATE,S2C,GetFriendStateNtf,messenger.proto,M6,21,port,
+PT,FFFFFF65,ADDFRIENDJOIN,S2C,AddFriendJoin,messenger.proto,M6,21,port,
+PT,FFFFFF66,ADDFRIENDLOGOUT,S2C,AddFriendLogout,messenger.proto,M6,21,port,
+PT,FFFFFF67,SETFRIENDSTATE,S2C,SetFriendStateNtf,messenger.proto,M6,21,port,
+PT,FFFFFF68,FRIENDINTERCEPTSTATE,S2C,FriendInterceptStateNtf,messenger.proto,M6,21,port,
+PT,FFFFFF69,FRIENDNOINTERCEPT,S2C,FriendNoIntercept,messenger.proto,M6,21,port,
+PT,FFFFFF6B,ADDFRIENDNAMEREQEST,S2C,AddFriendNameRequestNtf,messenger.proto,M6,21,port,
+PT,FFFFFF6C,ADDFRIENDNAMENOTFOUND,S2C,AddFriendNameNotFound,messenger.proto,M6,21,port,
+PT,FFFFFF6D,REMOVEFRIENDSTATE,S2C,RemoveFriendState,messenger.proto,M6,21,port,
+PT,FFFFFF6E,ONEFRIEMDSTATE,S2C,OneFriendState,messenger.proto,M6,21,port,typo FRIEMD fixed
+PT,FFFFFF74,GUILD_CLASS,S2C,GuildClassNtf,guild.proto,M6,21,port,
+PT,FFFFFF75,GUILD_NICKNAME,S2C,GuildNicknameNtf,guild.proto,M6,21,port,
+ST,0001,CHAT,S2C,ChatNtf,chat.proto,M2,21,port,
+ST,0002,ACTMSG,S2C,,,,18,drop,unused (defined only)
+ST,0003,CREATEITEM,S2C,CreateItem,inventory.proto,M3,19,port,
+ST,0004,MOVEITEM,S2C,MoveItemNtf,inventory.proto,M3,19,port,
+ST,0005,TRADEPUTERROR,S2C,TradePutError,trade.proto,M4,19,port,
+ST,0006,DOEQUIP,S2C,DoEquipNtf,inventory.proto,M3,19,port,CUserMng layout only
+ST,0007,TRADE,S2C,TradeNtf,trade.proto,M4,19,port,FIX: partner inventory not sent
+ST,0008,TRADEPUT,S2C,TradePutNtf,trade.proto,M4,19,port,FIX: carries ItemElem of offered item
+ST,0009,TRADEPULL,S2C,TradePullNtf,trade.proto,M4,19,port,
+ST,000A,TRADEOK,S2C,TradeOkNtf,trade.proto,M4,19,port,
+ST,000B,TRADECANCEL,S2C,TradeCancelNtf,trade.proto,M4,19,port,
+ST,000C,TRADECONSENT,S2C,TradeConsent,trade.proto,M4,19,port,
+ST,000D,SYNCITEM,S2C,,,,19,drop,unused (defined only)
+ST,000E,SETPOSANGLE,S2C,,,,18,drop,airship sync only; no ships in V15 (ref/09a drop list)
+ST,000F,CREATESFXOBJ,S2C,CreateSfxObj,world.proto,M3,15,port,
+ST,0010,SETPOS,S2C,SetPos,movement.proto,M2,18,port,+ IntentStamp; immediate flush on teleport
+ST,0011,SETLEVEL,S2C,SetLevel,character.proto,M3,16,port,
+ST,0012,SETEXPERIENCE,S2C,SetExperience,character.proto,M3,16,port,
+ST,0013,DAMAGE,S2C,Damage,combat.proto,M3,17,port,"+ hp_after, server_frame (FIX ref/08 port D14)"
+ST,0014,OPENSHOPWND,S2C,OpenShopWndNtf,shop.proto,M4,19,port,
+ST,0015,VENDOR,S2C,Vendor,shop.proto,M4,19,port,restock to viewers
+ST,0016,UPDATE_VENDOR,S2C,UpdateVendor,shop.proto,M4,19,port,
+ST,0017,UPDATE_MOVER,S2C,,,,16,drop,unused (defined only)
+ST,0018,UPDATE_ITEM,S2C,UpdateItem,inventory.proto,M3,19,port,
+ST,0019,USESKILL,S2C,UseSkillNtf,skill.proto,M5,17,port,
+ST,001A,CLEAR_USESKILL,S2C,ClearUseSkill,skill.proto,M5,17,port,
+ST,001B,QUERYGETPOS,S2C,,,,18,drop,superseded (D4)
+ST,001C,SETDESTPARAM,S2C,SetDestParam,character.proto,M3,16,port,
+ST,001D,RESETDESTPARAM,S2C,ResetDestParam,character.proto,M3,16,port,
+ST,001E,SETPOINTPARAM,S2C,SetPointParam,character.proto,M3,16,port,FIX: DST_GOLD to self only (ref/08 port D15)
+ST,001F,GETPOS,S2C,,,,18,drop,superseded (D4)
+ST,0020,TRADEPUTGOLD,S2C,TradePutGoldNtf,trade.proto,M4,19,port,
+ST,0021,TRADECLEARGOLD,S2C,,,,19,drop,writer commented out
+ST,0022,CONFIRMTRADE,S2C,ConfirmTradeNtf,trade.proto,M4,19,port,
+ST,0023,CONFIRMTRADECANCEL,S2C,ConfirmTradeCancelNtf,trade.proto,M4,19,port,
+ST,0024,RUNSCRIPTFUNC,S2C,DialogOps,npc.proto,M4,20,merge,N RUNSCRIPTFUNC records -> one DialogOps batch (D3)
+ST,0026,SETSKILLLEVEL,S2C,SetSkillLevel,skill.proto,M5,17,port,
+ST,0027,RESURRECTION_MESSAGE,S2C,ResurrectionMessage,combat.proto,M5,17,port,
+ST,0028,SET_SLAUGHTER_POINT,S2C,,,,16,drop,inactive (__VER < 8)
+ST,0029,SETFXP,S2C,SetFxp,character.proto,M5,16,port,
+ST,002A,SETFLIGHTLEVEL,S2C,SetFlightLevel,character.proto,M5,16,port,
+ST,002B,TRADELASTCONFIRM,S2C,TradeLastConfirm,trade.proto,M4,19,port,
+ST,002C,TRADELASTCONFIRMOK,S2C,TradeLastConfirmOk,trade.proto,M4,19,port,
+ST,002D,SCHOOL_REPORT,S2C,,,,22,drop,"legacy school event, optional (ref/08 drop list)"
+ST,002E,GAMERATE,S2C,GameRate,event.proto,M4,22,port,
+ST,002F,EVENTMESSAGE,S2C,EventMessage,notice.proto,M7,22,port,
+ST,0030,DUELREQUEST,S2C,DuelRequestNtf,pvp.proto,M5,17,port,
+ST,0031,DUELSTART,S2C,DuelStart,pvp.proto,M5,17,port,
+ST,0032,DUELNO,S2C,DuelNoNtf,pvp.proto,M5,17,port,
+ST,0033,DUELCANCEL,S2C,DuelCancel,pvp.proto,M5,17,port,
+ST,0034,DUELPARTYREQUEST,S2C,DuelPartyRequestNtf,pvp.proto,M5,17,port,
+ST,0035,DUELPARTYSTART,S2C,DuelPartyStart,pvp.proto,M5,17,port,
+ST,0036,DUELPARTYNO,S2C,DuelPartyNoNtf,pvp.proto,M5,17,port,
+ST,0037,DUELPARTYCANCEL,S2C,DuelPartyCancel,pvp.proto,M5,17,port,
+ST,0038,DUELPARTYRESULT,S2C,DuelPartyResult,pvp.proto,M5,17,port,
+ST,0039,SETSCALE,S2C,SetScale,character.proto,M4,16,port,
+ST,003A,REMOVEQUEST,S2C,RemoveQuestNtf,quest.proto,M7,20,port,
+ST,003B,MOVERFOCUS,S2C,MoverFocusNtf,gm.proto,M8,23,port,
+ST,003C,PARTYMAPINFO,S2C,PartyMapInfo,party.proto,M5,21,port,
+ST,003D,CALLTHEROLL,S2C,CallTheRoll,event.proto,M7,22,port,attendance event
+ST,003E,SM_MODE_ALL,S2C,SmModeAll,character.proto,M4,16,port,
+ST,003F,SM_MODE,S2C,SmMode,character.proto,M4,16,port,
+ST,0040,SETFAME,S2C,SetFame,character.proto,M5,16,port,
+ST,0041,CORRREQ,S2C,,,,18,drop,debug only (ref/08 drop list)
+ST,0042,PVENDOR_OPEN,S2C,PVendorOpenNtf,trade.proto,M4,19,port,
+ST,0043,PVENDOR_CLOSE,S2C,PVendorCloseNtf,trade.proto,M4,19,port,
+ST,0044,REGISTER_PVENDOR_ITEM,S2C,RegisterPVendorItemNtf,trade.proto,M4,19,port,
+ST,0045,PVENDOR_ITEM,S2C,PVendorItem,trade.proto,M4,19,port,
+ST,0046,PVENDOR_ITEM_NUM,S2C,PVendorItemNum,trade.proto,M4,19,port,
+ST,0047,UNREGISTER_PVENDOR_ITEM,S2C,UnregisterPVendorItemNtf,trade.proto,M4,19,port,
+ST,0048,SET_HAIR,S2C,SetHairNtf,shop.proto,M4,19,port,
+ST,0049,QUERYGETDESTOBJ,S2C,,,,18,drop,superseded (D4)
+ST,004A,GETDESTOBJ,S2C,,,,18,drop,superseded (D4)
+ST,004B,SETFUEL,S2C,SetFuel,character.proto,M5,16,port,
+ST,004C,SETSKILLSTATE,S2C,SetSkillState,skill.proto,M4,17,port,buff add/refresh (CUserMng layout only)
+ST,004D,CHANGEFACE,S2C,ChangeFaceNtf,shop.proto,M4,19,port,
+ST,004E,MONSTERPROP,S2C,,,,23,drop,"back-end live tuning, optional; runtime_override replaces it"
+ST,004F,GMCHAT,S2C,,,,23,drop,"back-end live tuning (__S1108_BACK_END_SYSTEM), optional"
+ST,0050,PUTITEMBANK,S2C,PutItemBank,bank.proto,M4,19,port,
+ST,0051,GETITEMBANK,S2C,GetItemBank,bank.proto,M4,19,port,
+ST,0052,PUTGOLDBANK,S2C,PutGoldBank,bank.proto,M4,19,port,
+ST,0053,MOVEBANKITEM,S2C,MoveBankItem,bank.proto,M4,19,port,
+ST,0054,UPDATE_BANKITEM,S2C,UpdateBankItem,bank.proto,M4,19,port,
+ST,0055,BANKISFULL,S2C,BankIsFull,bank.proto,M4,19,port,
+ST,0056,BANKWINDOW,S2C,BankWindow,bank.proto,M4,19,port,
+ST,0057,CHANGEBANKPASS,S2C,ChangeBankPassNtf,bank.proto,M4,19,port,
+ST,0058,CONFIRMBANKPASS,S2C,ConfirmBankPass,bank.proto,M4,19,port,
+ST,0059,SETSTUN,S2C,SetStun,combat.proto,M5,17,port,
+ST,005A,SETPOISON,S2C,,,,17,drop,unused (defined only)
+ST,005B,SETDARK,S2C,,,,17,drop,unused (defined only)
+ST,005C,SENDACTMSG,S2C,SendActMsg,movement.proto,M3,18,port,
+ST,005D,RESISTSMMODE,S2C,ResistSmMode,character.proto,M4,16,port,
+ST,005E,COMMERCIALELEM,S2C,CommercialElemNtf,upgrade.proto,M4,19,port,
+ST,005F,PUSHPOWER,S2C,PushPower,movement.proto,M3,18,port,
+ST,0060,ENVIRONMENT,S2C,Environment,world.proto,M2,15,port,
+ST,0061,ENVIRONMENTSNOW,S2C,,,,15,drop,inactive (!__ENVIRONMENT_EFFECT)
+ST,0062,ENVIRONMENTRAIN,S2C,,,,15,drop,inactive (!__ENVIRONMENT_EFFECT)
+ST,0063,ENVIRONMENTALL,S2C,EnvironmentAll,world.proto,M2,15,port,
+ST,0065,PK_RELATION,S2C,PkRelation,pvp.proto,M5,17,port,inner oneof PINK/PROPENSITY/PKVALUE
+ST,0065,UPDATE_PLAYER_ENEMY,S2C,,,,16,drop,inactive (__VER < 8)
+ST,0066,SETDUEL,S2C,SetDuel,pvp.proto,M5,17,port,
+ST,0067,DUELCOUNT,S2C,DuelCount,pvp.proto,M5,17,port,
+ST,0068,ADDPARTYNAME,S2C,AddPartyName,party.proto,M5,21,port,join batch
+ST,0069,PARTYCHAT,S2C,PartyChat,chat.proto,M5,21,port,
+ST,006A,SETSTATE,S2C,SetState,character.proto,M3,16,port,
+ST,006B,CMDSETSKILLLEVEL,S2C,CmdSetSkillLevel,skill.proto,M5,17,port,
+ST,006E,ACTIVESKILL,S2C,,,,17,drop,writer never called
+ST,006F,RESETBUFFSKILL,S2C,,,,17,drop,inactive (!__BUFF_1107)
+ST,0070,ADDFRIEND,S2C,AddFriendNtf,messenger.proto,M6,21,port,
+ST,0071,ADDFRIENDREQEST,S2C,AddFriendRequestNtf,messenger.proto,M6,21,port,
+ST,0072,ADDFRIENDCANCEL,S2C,AddFriendCancelNtf,messenger.proto,M6,21,port,
+ST,0073,ADDGETFRIENDNAME,S2C,,,,21,drop,inactive (__VER < 11)
+ST,0074,ADDFRIENDGAMEJOIN,S2C,AddFriendGameJoin,messenger.proto,M6,21,port,join batch; Friend raw -> FriendEntry
+ST,0075,REMOVEFRIEND,S2C,RemoveFriendNtf,messenger.proto,M6,21,port,
+ST,0076,ADDFRIENDERROR,S2C,AddFriendError,messenger.proto,M6,21,port,
+ST,0077,ADDFRIENDCHANGEJOB,S2C,,,,21,drop,inactive (__VER < 11)
+ST,0078,ADDGAMEJOIN,S2C,AddGameJoin,character.proto,M2,16,port,join batch: saved play time
+ST,0079,ADDPARTYCHANGELEADER,S2C,AddPartyChangeLeader,party.proto,M5,21,port,
+ST,007A,SET_WAR,S2C,SetWar,guild_war.proto,M6,21,port,
+ST,007B,CHATTING,S2C,ChattingNtf,trade.proto,M4,19,port,inner oneof CHATTING_*
+ST,007C,INITSKILLPOINT,S2C,InitSkillPoint,skill.proto,M5,17,port,
+ST,007D,DOUSESKILLPOINT,S2C,DoUseSkillPointNtf,skill.proto,M5,17,port,
+ST,007E,COMMONPlACE,S2C,CommonPlace,world.proto,M4,15,port,ctrl effects (action/alpha/quake)
+ST,007F,END_RECOVERMODE,S2C,,,,16,drop,unused (defined only)
+ST,0080,WANTED_INFO,S2C,,,,17,drop,"dead feature: wanted/bounty board (F-179, PL-142, PD-19; 17 §8.9, 21 §15; §8 R1-1)"
+ST,0081,ERRORPARTY,S2C,ErrorParty,party.proto,M5,21,port,
+ST,0082,PARTYMEMBER,S2C,PartyMember,party.proto,M5,21,port,
+ST,0083,PARTYREQEST,S2C,PartyRequest,party.proto,M5,21,port,typo REQEST fixed
+ST,0084,PARTYREQESTCANCEL,S2C,PartyRequestCancel,party.proto,M5,21,port,
+ST,0085,PARTYEXP,S2C,PartyExp,party.proto,M5,21,port,
+ST,0086,PARTYMEMBERJOB,S2C,,,,21,drop,inactive (__VER < 11)
+ST,0087,PARTYMEMBERLEVEL,S2C,,,,21,drop,inactive (__VER < 11)
+ST,0088,PARTYCHANGETROUP,S2C,PartyChangeTroup,party.proto,M5,21,port,
+ST,0089,PARTYCHANGENAME,S2C,PartyChangeName,party.proto,M5,21,port,
+ST,008A,PARTYSKILL_CALL,S2C,PartySkillCall,party.proto,M5,21,port,
+ST,008B,PARTYSKILL_BLITZ,S2C,PartySkillBlitz,party.proto,M5,21,port,
+ST,008C,PARTYSKILL_RETREAT,S2C,PartySkillRetreat,party.proto,M5,21,port,
+ST,008D,SETPARTYMODE,S2C,SetPartyMode,party.proto,M5,21,port,
+ST,008E,PARTYSKILL_SPHERECIRCLE,S2C,PartySkillSphereCircle,party.proto,M5,21,port,
+ST,008F,PARTYCHANGEITEMMODE,S2C,PartyChangeItemModeNtf,party.proto,M5,21,port,
+ST,0090,PARTYCHANGEEXPMODE,S2C,PartyChangeExpModeNtf,party.proto,M5,21,port,
+ST,0091,SET_PARTY_MEMBER_PARAM,S2C,SetPartyMemberParam,party.proto,M5,21,port,
+ST,0092,DO_ESCAPE,S2C,,,,19,drop,writer never called
+ST,0093,SNOOP,S2C,Snoop,gm.proto,M8,23,merge,snapshot variant
+ST,0094,DEFINEDTEXT1,S2C,DefinedText,notice.proto,M2,11,merge,no args
+ST,0095,DEFINEDTEXT,S2C,DefinedText,notice.proto,M2,11,port,args as string list (D3 conventions)
+ST,0096,GAMETIMER,S2C,GameTimer,world.proto,M2,15,port,
+ST,0097,TASKBAR,S2C,TaskBar,taskbar.proto,M3,42,port,join batch
+ST,0098,MOTION,S2C,MotionNtf,movement.proto,M2,18,port,
+ST,0099,QUERYPLAYERSTRING,S2C,,,,21,drop,inactive (__VER < 11)
+ST,009A,GUILD_INVITE,S2C,GuildInviteNtf,guild.proto,M6,21,port,
+ST,009B,SET_GUILD,S2C,SetGuild,guild.proto,M6,21,port,
+ST,009C,CREATE_GUILD,S2C,CreateGuild,guild.proto,M6,21,port,
+ST,009D,DESTROY_GUILD,S2C,DestroyGuildNtf,guild.proto,M6,21,port,
+ST,009E,GUILD,S2C,Guild,guild.proto,M6,21,port,full guild (self)
+ST,009F,ALL_GUILDS,S2C,AllGuilds,guild.proto,M6,21,port,join batch
+ST,00A0,TEXT,S2C,Text,notice.proto,M2,11,port,kind GENERAL/DIAG
+ST,00A1,REVIVAL,S2C,RevivalNtf,combat.proto,M3,17,port,
+ST,00A2,REVIVAL_TO_LODESTAR,S2C,RevivalToLodestarNtf,combat.proto,M3,17,port,
+ST,00A3,REVIVAL_TO_LODELIGHT,S2C,,,,17,drop,unused (defined only)
+ST,00A4,SET_STAT_LEVEL,S2C,SetStatLevel,character.proto,M3,16,port,
+ST,00A5,SET_JOB_LEVEL,S2C,,,,16,drop,unused (defined only)
+ST,00A6,SET_GROWTH_LEARNING_POINT,S2C,SetGrowthLearningPoint,character.proto,M3,16,port,
+ST,00A7,SET_JOB_SKILL,S2C,JobChanged,character.proto,M5,16,merge,one shape for self and observers (ref/09a port note 3)
+ST,00A8,SET_NEAR_JOB_SKILL,S2C,JobChanged,character.proto,M5,16,merge,
+ST,00A9,RETURNSAY,S2C,ReturnSay,chat.proto,M2,21,port,
+ST,00AA,CREATESFXALLOW,S2C,ProjectileSpawn,combat.proto,M3,17,merge,arrow projectile -> generic ProjectileSpawn (D3)
+ST,00AB,REMOVEITEMATID,S2C,,,,19,drop,unused (defined only)
+ST,00AC,QUERYEQUIP,S2C,QueryEquipNtf,inventory.proto,M4,19,port,
+ST,00AD,RETURNSCORLL,S2C,ReturnScrollNtf,inventory.proto,M4,19,port,
+ST,00AE,SETTARGET,S2C,SetTargetNtf,combat.proto,M3,17,port,
+ST,00AF,FOCUSOBJ,S2C,,,,17,drop,only echo of FOCUSOBJ
+ST,00B0,SETQUEST,S2C,SetQuest,quest.proto,M7,20,port,QUEST raw 12 B -> Quest
+ST,00B1,ANGEL,S2C,Angel,pet.proto,M5,19,port,
+ST,00B2,FLYFF_EVENT,S2C,FlyffEvent,event.proto,M2,22,port,"raw u8[1024] -> bytes flags (bit array, not a struct)"
+ST,00B3,SET_LOCAL_EVENT,S2C,SetLocalEvent,event.proto,M2,22,port,
+ST,00B4,SETCHEERPARAM,S2C,SetCheerParam,relation.proto,M6,21,port,
+ST,00B5,SETGUILDQUEST,S2C,SetGuildQuest,quest.proto,M7,20,port,
+ST,00B6,REMOVEGUILDQUEST,S2C,RemoveGuildQuest,quest.proto,M7,20,port,
+ST,00B7,ALLACTION,S2C,,,,16,drop,server-merge rename artefact (ref/08 drop list)
+ST,00B7,DIAG_TEXT,S2C,,,,11,drop,inactive (!__S_SERVER_UNIFY); diag text goes via TEXT
+ST,00B8,GUILDCOMBAT,S2C,GuildCombat,guild_siege.proto,M6,21,port,inner oneof per GC_* sub-type
+ST,00B9,DEFINEDCAPTION,S2C,DefinedText,notice.proto,M2,11,merge,display=CAPTION/CAPTION_SMALL
+ST,00BA,QUEST_TEXT_TIME,S2C,QuestTextTime,quest.proto,M7,20,port,
+ST,00BB,QUERYPLAYERLISTSTRING,S2C,,,,21,drop,inactive (__VER < 11)
+ST,00BC,CHATTEXT,S2C,DefinedText,notice.proto,M2,11,merge,display=CHAT
+ST,00BD,EXPBOXINFO,S2C,,,,15,drop,"exp boxes never created in V15 (CreateExpBox returns NULL, ref/07c §10)"
+ST,00BE,EXPBOXCOLLTIME,S2C,ExpBoxCoolTime,world.proto,M4,15,port,ctrl (chest) ready timer
+ST,00BF,EXPBOXCOLLTIMECANCEL,S2C,ExpBoxCoolTimeCancel,world.proto,M4,15,port,
+ST,00C0,PLAYERPOS,S2C,,,,18,drop,unused (defined only)
+ST,00C1,DESTPOS,S2C,DestPosNtf,movement.proto,M2,18,port,+ IntentStamp (D3/D4)
+ST,00C2,MOVERSETDESTOBJ,S2C,SetDestObjNtf,movement.proto,M2,18,port,+ IntentStamp
+ST,00C3,DESTANGLE,S2C,DestAngle,movement.proto,M3,18,port,+ IntentStamp
+ST,00C4,MOVINGACTMSG,S2C,,,,18,drop,unused (defined only)
+ST,00C5,SETACTIONPOINT,S2C,SetActionPoint,skill.proto,M5,17,port,
+ST,00C6,SETNAVIPOINT,S2C,SetNaviPointNtf,party.proto,M5,21,port,
+ST,00C7,MOVERDEATH,S2C,MoverDeath,combat.proto,M3,17,port,
+ST,00C8,MOVERCORR,S2C,MoverStateNtf,movement.proto,M2,18,merge,"player relay + NPC collision correction, reason=CORR"
+ST,00C9,MOVERCORR2,S2C,MoverStateNtf,movement.proto,M5,18,merge,flying correction
+ST,00CA,MOVERMOVED,S2C,MoverStateNtf,movement.proto,M2,18,merge,"relay, reason=MOVED"
+ST,00CB,MOVERBEHAVIOR,S2C,MoverStateNtf,movement.proto,M2,18,merge,relay / server-forced pose (fTransferToMe)
+ST,00CC,MOVERMOVED2,S2C,MoverStateNtf,movement.proto,M5,18,merge,flying relay
+ST,00CD,MOVERBEHAVIOR2,S2C,MoverStateNtf,movement.proto,M5,18,merge,flying relay / death pose
+ST,00CE,MOVERANGLE,S2C,MoverStateNtf,movement.proto,M5,18,merge,flying steering relay
+ST,00CF,SETMOVEPATTERN,S2C,SetMovePattern,movement.proto,M3,18,port,"+ IntentStamp; M3 with the flying-monster patterns (F-107, PL-003; §8 R1-3)"
+ST,00D0,SHOUT,S2C,Shout,chat.proto,M2,21,port,
+ST,00D1,PLAYMUSIC,S2C,PlayMusic,world.proto,M3,15,port,
+ST,00D2,PLAYSOUND,S2C,PlaySound,world.proto,M3,15,port,inner oneof id/file
+ST,00D3,MODIFYMODE,S2C,ModifyMode,character.proto,M3,16,port,
+ST,00D4,GETITEMGUILDBANK,S2C,GetItemGuildBankNtf,guild.proto,M6,21,port,inner oneof per mode
+ST,00D5,GUILD_REAL_PENYA,S2C,GuildRealPenya,guild.proto,M6,21,port,
+ST,00D6,GUILD_CHANGEJOBLEVEL,S2C,,,,21,drop,inactive (__VER < 11)
+ST,00D7,DOAPPLYUSESKILL,S2C,DoApplyUseSkill,skill.proto,M5,17,port,
+ST,00D8,GUILD_ADDVOTE,S2C,,,,21,drop,guild voting unreachable (ref/01 OQ5)
+ST,00D9,GUILD_MODIFYVOTE,S2C,,,,21,drop,guild voting unreachable (ref/01 OQ5)
+ST,00DA,WAR,S2C,War,guild_war.proto,M6,21,port,
+ST,00DB,REQUEST_GUILDRANK,S2C,,,,21,drop,inactive (__GUILDRANK undefined)
+ST,00DC,SEX_CHANGE,S2C,SexChange,shop.proto,M4,19,port,
+ST,00DD,COMMONSKILL,S2C,CommonSkill,skill.proto,M5,17,port,
+ST,00DE,WORLDMSG,S2C,WorldMsg,notice.proto,M7,22,port,FIX: rect test uses x/z
+ST,00DF,STATEMODE,S2C,StateModeNtf,character.proto,M4,16,port,
+ST,00E0,MELEE_ATTACK,S2C,MeleeAttackNtf,combat.proto,M3,17,port,
+ST,00E1,MAGIC_ATTACK,S2C,MagicAttackNtf,combat.proto,M3,17,port,idSfxHit -> projectile_id
+ST,00E2,RANGE_ATTACK,S2C,RangeAttackNtf,combat.proto,M3,17,port,
+ST,00E3,SP_ATTACK,S2C,SpAttack,combat.proto,M3,17,port,
+ST,00E4,MELEE_ATTACK2,S2C,MeleeAttackNtf,combat.proto,M5,17,merge,"relay of the flying melee request (`AddMeleeAttack2`, vis−self, ref/08 §10.1, ref/07a §12.2); the client routes `MeleeAttackNtf` to the flying or ground action path by the attacker's flying state (17 §3.2; §8 R1-2)"
+ST,00E5,ENDSKILLQUEUE,S2C,EndSkillQueueNtf,skill.proto,M5,17,port,
+ST,00E6,POSTMAIL,S2C,PostMail,mail.proto,M4,19,port,
+ST,00E7,REMOVEMAIL,S2C,RemoveMail,mail.proto,M4,19,port,
+ST,00E8,MINIGAME,S2C,MiniGame,event.proto,M7,22,port,inner oneof per MINIGAME_* sub
+ST,00E9,QUERYMAILBOX,S2C,QueryMailBoxNtf,mail.proto,M4,19,port,
+ST,00EA,CRIME,S2C,,,,17,drop,unused (defined only)
+ST,00EB,RESURRECTION,S2C,Resurrection,combat.proto,M5,17,port,
+ST,00EC,SHIP_ACTMSG,S2C,,,,18,drop,no ships in V15
+ST,00ED,SUMMON,S2C,Summon,messenger.proto,M6,21,port,inner oneof SOMMON_*
+ST,00EE,MOTION_ARRIVE,S2C,MotionArrive,movement.proto,M3,18,port,
+ST,00EF,PUTITEMGUILDBANK,S2C,PutItemGuildBankNtf,guild.proto,M6,21,port,
+ST,00F0,ADD_OBJ,S2C,SpawnSelf+SpawnPlayer+SpawnNpc+SpawnItem+SpawnCtrl,world.proto,M2,15,split,METHOD_NONE/EXCLUDE_ITEM split (ref/09a port note 3)
+ST,00F1,DEL_OBJ,S2C,DelObj,world.proto,M2,15,port,
+ST,00F2,REPLACE,S2C,Replace,world.proto,M2,15,port,immediate flush
+ST,00F3,REMOVE_GUILD_BANK_ITEM,S2C,RemoveGuildBankItem,guild.proto,M6,21,port,
+ST,00F4,REMOVEALLSKILLINFULENCE,S2C,RemoveAllSkillInfluence,skill.proto,M4,17,port,
+ST,00F5,DISGUISE,S2C,Disguise,character.proto,M4,16,port,
+ST,00F6,NODISGUISE,S2C,NoDisguise,character.proto,M4,16,port,
+ST,00F7,TAG,S2C,Tag,messenger.proto,M6,21,port,
+ST,00F8,REMOVESKILLINFULENCE,S2C,RemoveSkillInfluence,skill.proto,M4,17,port,
+ST,00F9,ADDREGION,S2C,,,,23,drop,"GM-only dynamic region, REGIONELEM undecoded (ref/08 OQ1)"
+ST,00FA,GUILD_BANK_WND,S2C,GuildBankWndNtf,guild.proto,M6,21,port,
+ST,00FB,GUILD_LOGO,S2C,GuildLogoNtf,guild.proto,M6,21,port,
+ST,00FC,GUILD_CONTRIBUTION,S2C,GuildContributionNtf,guild.proto,M6,21,port,
+ST,00FD,GUILD_NOTICE,S2C,GuildNoticeNtf,guild.proto,M6,21,port,
+ST,00FE,GUILD_AUTHORITY,S2C,GuildAuthorityNtf,guild.proto,M6,21,port,
+ST,00FF,GUILD_PENYA,S2C,GuildPenyaNtf,guild.proto,M6,21,port,
+ST,0100,ULTIMATE,S2C,Ultimate,upgrade.proto,M4,19,port,inner oneof per ULTIMATE_* sub
+ST,0101,EXCHANGE,S2C,ExchangeNtf,upgrade.proto,M4,19,port,
+ST,0110,PET_CALL,S2C,PetCall,pet.proto,M4,19,port,
+ST,0111,PET_RELEASE,S2C,PetReleaseNtf,pet.proto,M4,19,port,
+ST,0112,PET_LEVELUP,S2C,PetLevelup,pet.proto,M4,19,port,
+ST,0113,PET_SET_EXP,S2C,PetSetExp,pet.proto,M4,19,port,
+ST,0114,PET,S2C,Pet,pet.proto,M4,19,port,
+ST,0115,PET_STATE,S2C,PetState,pet.proto,M4,19,port,
+ST,0116,PET_FEED,S2C,PetFeed,pet.proto,M4,19,port,
+ST,0117,PET_MILL,S2C,PetMill,pet.proto,M4,19,port,
+ST,0118,SET_SPEED_FACTOR,S2C,SetSpeedFactor,movement.proto,M3,18,port,+ IntentStamp
+ST,0120,LEGENDSKILLUP_RESULT,S2C,LegendSkillUpResult,skill.proto,M5,17,port,
+ST,0121,EVENTLUA_DESC,S2C,EventLuaDesc,event.proto,M4,22,port,
+ST,0122,REMOVE_ATTRIBUTE,S2C,RemoveAttributeNtf,upgrade.proto,M4,19,port,
+ST,0123,START_COLLECTING,S2C,StartCollecting,inventory.proto,M4,19,port,
+ST,0124,STOP_COLLECTING,S2C,StopCollecting,inventory.proto,M4,19,port,
+ST,0125,GC1TO1_NOWSTATE,S2C,Gc1to1NowState,guild_siege.proto,M7,21,port,
+ST,0126,GC1TO1_TENDEROPENWND,S2C,Gc1to1TenderOpenWndNtf,guild_siege.proto,M7,21,port,
+ST,0127,GC1TO1_TENDERVIEW,S2C,Gc1to1TenderViewNtf,guild_siege.proto,M7,21,port,
+ST,0128,GC1TO1_MEMBERLINEUPOPENWND,S2C,Gc1to1MemberLineUpOpenWndNtf,guild_siege.proto,M7,21,port,
+ST,0129,GC1TO1_WARRESULT,S2C,Gc1to1WarResult,guild_siege.proto,M7,21,port,
+ST,0140,UPDATE_ITEM_EX,S2C,UpdateItemEx,inventory.proto,M4,19,port,
+ST,0141,QUERY_PLAYER_DATA,S2C,QueryPlayerDataNtf,messenger.proto,M5,21,port,sPlayerData raw -> PlayerData
+ST,0142,GUILDLOG_VIEW,S2C,GuildLogViewNtf,guild.proto,M6,21,port,
+ST,0143,RESTART_COLLECTING,S2C,RestartCollecting,inventory.proto,M4,19,port,
+ST,0144,SEALCHAR_REQ,S2C,SealCharNtf,inventory.proto,M8,19,port,
+ST,0145,SEALCHARGET_REQ,S2C,SealCharGetNtf,inventory.proto,M8,19,port,
+ST,0146,EVENT_COUPON,S2C,EventCoupon,event.proto,M7,22,port,
+ST,0200,POCKET_ATTRIBUTE,S2C,PocketAttribute,inventory.proto,M4,19,port,
+ST,0201,POCKET_ADD_ITEM,S2C,PocketAddItem,inventory.proto,M4,19,port,
+ST,0202,POCKET_REMOVE_ITEM,S2C,PocketRemoveItem,inventory.proto,M4,19,port,
+ST,0203,QUE_PETRESURRECTION_RESULT,S2C,QuePetResurrectionResult,pet.proto,M4,19,port,
+ST,0204,REMOVESFXOBJ,S2C,RemoveSfxObj,world.proto,M3,15,port,
+ST,0300,SECRETROOM_MNG_STATE,S2C,SecretRoomMngState,secret_room.proto,M7,22,port,
+ST,0301,SECRETROOM_INFO,S2C,SecretRoomInfo,secret_room.proto,M7,22,port,inner oneof GUILDLIST/KILLCOUNT/WARSTATE
+ST,0302,SECRETROOM_TENDEROPENWND,S2C,SecretRoomTenderOpenWndNtf,secret_room.proto,M7,22,port,
+ST,0303,SECRETROOM_LINEUPOPENWND,S2C,SecretRoomLineUpOpenWndNtf,secret_room.proto,M7,22,port,
+ST,0304,SECRETROOM_TENDERVIEW,S2C,SecretRoomTenderViewNtf,secret_room.proto,M7,22,port,
+ST,0400,TAX_ALLINFO,S2C,TaxAllInfo,lord.proto,M7,22,port,
+ST,0401,TAX_SETTAXRATE_OPENWND,S2C,TaxSetTaxRateOpenWnd,lord.proto,M7,22,port,
+ST,8800,MOVER_CHANGESFX,S2C,MoverChangeSfx,pet.proto,M4,19,port,
+ST,8801,VISPET_ACTIVATE,S2C,VisPetActivate,pet.proto,M4,19,port,
+ST,8810,GUILDHOUSE_PACKET,S2C,GuildHousePacketNtf,housing.proto,M7,22,port,
+ST,8812,GUILDHOUSE_ALLINFO,S2C,GuildHouseAllInfo,housing.proto,M7,22,port,join batch
+ST,8813,GUILDHOUSE_REMOVE,S2C,GuildHouseRemove,housing.proto,M7,22,port,
+ST,8814,GUILDHOUSE_RESTPOINT,S2C,GuildHouseRestPoint,housing.proto,M7,22,port,
+ST,8820,QUEST_CHECKED,S2C,QuestChecked,quest.proto,M7,20,port,
+ST,8830,CAMPUS_INVITE,S2C,CampusInviteNtf,relation.proto,M6,21,port,
+ST,8831,CAMPUS_UPDATE,S2C,CampusUpdate,relation.proto,M6,21,port,
+ST,8832,CAMPUS_REMOVE,S2C,CampusRemove,relation.proto,M6,21,port,
+ST,8833,CAMPUS_UPDATE_POINT,S2C,CampusUpdatePoint,relation.proto,M6,21,port,
+ST,8834,ITEM_SELECT_AWAKENING_VALUE,S2C,ItemSelectAwakeningValueNtf,upgrade.proto,M4,19,port,
+ST,8840,GUILDHOUSE_TENDER_MAINWND,S2C,,,,22,drop,inactive (__GUILD_HOUSE_MIDDLE)
+ST,8841,GUILDHOUSE_TENDER_INFOWND,S2C,,,,22,drop,inactive (__GUILD_HOUSE_MIDDLE)
+ST,8842,GUILDHOUSE_TENDER_RESULT,S2C,,,,22,drop,inactive (__GUILD_HOUSE_MIDDLE)
+ST,8860,QUERYMAILBOX_REQ,S2C,QueryMailBoxReqNtf,mail.proto,M4,19,port,i32 bCheckTransMailBox
+ST,8900,HIDE_COAT,S2C,HideCoatNtf,character.proto,M4,16,port,
+ST,8901,PARTYFINDER_REFRESH,S2C,PartyFinderRefresh,party.proto,M5,21,port,FIX: count = list length
+ST,8902,PARTYALLOWJOIN,S2C,PartyAllowJoinNtf,party.proto,M5,21,port,
+ST,8903,DPS_UPDATE,S2C,DpsUpdate,combat.proto,M5,17,port,repack __DPS_METER
+ST,8F00,ELECTION_ADD_DEPOSIT,S2C,ElectionAddDepositNtf,lord.proto,M7,22,port,
+ST,8F01,ELECTION_SET_PLEDGE,S2C,ElectionSetPledgeNtf,lord.proto,M7,22,port,
+ST,8F02,ELECTION_INC_VOTE,S2C,ElectionIncVoteNtf,lord.proto,M7,22,port,
+ST,8F03,ELECTION_BEGIN_CANDIDACY,S2C,ElectionBeginCandidacy,lord.proto,M7,22,port,
+ST,8F04,ELECTION_BEGIN_VOTE,S2C,ElectionBeginVote,lord.proto,M7,22,port,
+ST,8F05,ELECTION_END_VOTE,S2C,ElectionEndVote,lord.proto,M7,22,port,
+ST,8F06,LORD,S2C,Lord,lord.proto,M7,22,port,join batch
+ST,8F07,L_EVENT,S2C,,,,22,drop,unused (defined only)
+ST,8F08,L_EVENT_CREATE,S2C,LEventCreateNtf,lord.proto,M7,22,port,
+ST,8F09,L_EVENT_INITIALIZE,S2C,LEventInitialize,lord.proto,M7,22,port,
+ST,8F0A,LORD_SKILL_TICK,S2C,LordSkillTick,lord.proto,M7,22,port,
+ST,8F0B,L_EVENT_TICK,S2C,LEventTick,lord.proto,M7,22,port,
+ST,8F0C,SET_TUTORIAL_STATE,S2C,SetTutorialState,character.proto,M3,16,port,
+ST,8F0D,LORD_SKILL_USE,S2C,LordSkillUseNtf,lord.proto,M7,22,port,
+ST,9000,RAINBOWRACE_PREVRANKING_OPENWND,S2C,RainbowRacePrevRankingOpenWndNtf,event.proto,M7,22,port,
+ST,9001,RAINBOWRACE_APPLICATION_OPENWND,S2C,RainbowRaceApplicationOpenWndNtf,event.proto,M7,22,port,
+ST,9002,RAINBOWRACE_NOWSTATE,S2C,RainbowRaceNowState,event.proto,M7,22,port,
+ST,9003,RAINBOWRACE_MINIGAMESTATE,S2C,RainbowRaceMiniGameState,event.proto,M7,22,port,
+ST,9004,RAINBOWRACE_MINIGAMEEXTSTATE,S2C,RainbowRaceMiniGameExtState,event.proto,M7,22,port,
+ST,9100,SET_PET_NAME,S2C,SetPetName,pet.proto,M4,19,port,
+ST,9200,HOUSING_ALLINFO,S2C,HousingAllInfo,housing.proto,M7,22,port,
+ST,9201,HOUSING_FURNITURELIST,S2C,HousingFurnitureList,housing.proto,M7,22,port,
+ST,9202,HOUSING_SETUPFURNITURE,S2C,HousingSetupFurnitureNtf,housing.proto,M7,22,port,
+ST,9203,HOUSING_PAPERINGINFO,S2C,HousingPaperingInfo,housing.proto,M7,22,port,
+ST,9204,HOUSING_SETVISITALLOW,S2C,HousingSetVisitAllowNtf,housing.proto,M7,22,port,
+ST,9205,HOUSING_VISITABLELIST,S2C,HousingVisitableList,housing.proto,M7,22,port,
+ST,9300,HONOR_LIST_ACK,S2C,HonorListAck,relation.proto,M6,21,port,
+ST,9301,HONOR_CHANGE_ACK,S2C,HonorChangeAck,relation.proto,M6,21,port,
+ST,9400,QUESTHELPER_NPCPOS,S2C,QuestHelperNpcPos,quest.proto,M7,20,port,
+ST,9500,CLEAR_TARGET,S2C,ClearTarget,combat.proto,M3,17,port,
+ST,9700,COUPLE,S2C,CoupleNtf,relation.proto,M6,21,port,
+ST,9701,PROPOSE_RESULT,S2C,ProposeResult,relation.proto,M6,21,port,
+ST,9703,COUPLE_RESULT,S2C,CoupleResult,relation.proto,M6,21,port,
+ST,9704,DECOUPLE_RESULT,S2C,DecoupleResult,relation.proto,M6,21,port,
+ST,9705,ADD_COUPLE_EXPERIENCE,S2C,AddCoupleExperience,relation.proto,M6,21,port,
+ST,9800,RESETDESTPARAM_SYNC,S2C,ResetDestParamSync,character.proto,M3,16,port,
+ST,9810,PCBANG_INFO,S2C,,,,22,drop,regional PC-bang (ref/08 drop list)
+ST,9820,ACCOUNT_PLAYTIME,S2C,,,,22,drop,inactive (__VTN_TIMELIMIT internal only)
+ST,9900,SMELT_SAFETY,S2C,SmeltSafetyNtf,upgrade.proto,M4,19,port,
+ST,9910,WORLD_READINFO,S2C,WorldReadInfo,world.proto,M2,15,port,"keep ""load world at pos""; __MAP_SECURITY keys dropped"
+ST,9920,QUIZ_STATE,S2C,QuizState,event.proto,M7,22,port,
+ST,9921,QUIZ_MESSAGE,S2C,QuizMessage,event.proto,M7,22,port,
+ST,9922,QUIZ_QUESTION,S2C,QuizQuestion,event.proto,M7,22,port,
+PT,00000001,MYREG,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00000002,PROCSERVER_LIST,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00000003,LOAD_WORLD,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00000004,RECHARGE_IDSTACK,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00000005,PASSAGE,-,,,,,drop,dead (never sent or never handled)
+PT,00000006,DUPLICATE,-,,,,,drop,dead (never sent or never handled)
+PT,00000007,UNIFY,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00000008,ID,-,,,,,drop,unused (defined only)
+PT,00000009,ADDID,-,,,,,drop,unused (defined only)
+PT,0000000A,POLL,-,,,,,drop,unused (defined only)
+PT,0000000D,ERROR_TEXT,-,,,,,drop,unused (defined only)
+PT,0000000F,PLAYERCOUNT,-,,,,,drop,unused (defined only)
+PT,00000011,AUTHQUERY,-,,,,,drop,unused (defined only)
+PT,00000013,CONN,-,,,,,drop,unused (defined only)
+PT,00000019,RUNEQ,-,,,,,drop,unused (defined only)
+PT,0000001E,ALLMAIL,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00000021,SETSNOOP,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00000022,SETSNOOPGUILD,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00000030,QUERY_DESTROY_PLAYER,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,000000F0,NEW_ACCOUNT,-,,,,,drop,dead (never sent or never handled)
+PT,000000F1,DEL_ACCOUNT,-,,,,,drop,unused (defined only)
+PT,000000F7,SEL_PLAYER,-,,,,,drop,unused (defined only)
+PT,000000F8,SAVE_PLAYER,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,000000F9,GT,-,,,,,drop,unused (defined only)
+PT,000000FA,ALLPLAYERID,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,000000FB,BUSY,-,,,,,drop,unused (defined only)
+PT,000000FF,PLAYERID,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00000F01,SEND_TO_CLIENT_NOTICE,-,,,,,drop,unused (defined only)
+PT,00000F02,SEND_TO_CLIENT_FILE_LIST,-,,,,,drop,unused (defined only)
+PT,00000F03,SEND_TO_SERVER_PATCH,-,,,,,drop,unused (defined only)
+PT,00000F04,SEND_TO_CLIENT_FILE,-,,,,,drop,unused (defined only)
+PT,00000F05,SEND_TO_CLIENT_PATCH,-,,,,,drop,unused (defined only)
+PT,00000F06,SEND_TO_CLIENT_PATCH_END,-,,,,,drop,unused (defined only)
+PT,00000F07,SEND_TO_CLIENT_PATCHCLIENTINFO,-,,,,,drop,unused (defined only)
+PT,00000F08,SEND_TO_SERVER_PATCHCLIENT_CORRECT,-,,,,,drop,unused (defined only)
+PT,00000F09,SEND_TO_SERVER_PATCHCLIENT_INCORRECT,-,,,,,drop,unused (defined only)
+PT,00000F0A,SEND_TO_CLIENT_PATCHCLIENT,-,,,,,drop,unused (defined only)
+PT,00000F0B,SEND_TO_SERVER_REQUIRE_FILE,-,,,,,drop,unused (defined only)
+PT,00000F0C,SEND_TO_SERVER_REQUIRE_FILE_LIST,-,,,,,drop,unused (defined only)
+PT,00000F0D,SEND_TO_CLIENT_CDN,-,,,,,drop,unused (defined only)
+PT,00000F34,CHANGEJOB,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00000F35,ITEM_TBL_UPDATE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00000FF2,REMOVEPLAYERID,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00000FF3,PLAYER_COUNT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00000FF4,ENABLE_SERVER,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00000FF5,FAIL,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00001000,INSTANCEDUNGEON_ALLINFO,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00001001,INSTANCEDUNGEON_CREATE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00001002,INSTANCEDUNGEON_DESTROY,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00001003,INSTANCEDUNGEON_SETCOOLTIME,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00001005,INSTANCEDUNGEON_DELETECOOLTIME,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,0000FF01,LEAVE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,0000FF02,DESTROY_ALLPLAYERS,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,0000FF03,REMOVE_ALLACCOUNTS,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,0000FF04,CLOSE_ERROR,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,0000FF07,SETMONSTERRESPAWN,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,0000FF08,SETITEMEVENT,-,,,,,drop,unused (defined only)
+PT,0000FF09,LOADCONSTANT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,000F0001,BROADCAST,-,,,,,drop,dead (never sent or never handled)
+PT,000F0002,SAVEALLPLAYERS,-,,,,,drop,unused (defined only)
+PT,000F0004,SKILLPOINTLOG,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00FF0001,ACTMSG,-,,,,,drop,dead (never sent or never handled)
+PT,00FF0002,ADDOBJ,-,,,,,drop,unused (defined only)
+PT,00FF0003,REMOVEOBJ,-,,,,,drop,unused (defined only)
+PT,00FF0004,CONTROL,-,,,,,drop,unused (defined only)
+PT,00FF0005,CREATEITEM,-,,,,,drop,unused (defined only)
+PT,00FF0009,REMOVEITEM,-,,,,,drop,unused (defined only)
+PT,00FF000A,SYNCITEM,-,,,,,drop,unused (defined only)
+PT,00FF000C,DAMAGE,-,,,,,drop,unused (defined only)
+PT,00FF000D,SETEXPERIENCE,-,,,,,drop,unused (defined only)
+PT,00FF000E,REMOVEVENDORITEM,-,,,,,drop,unused (defined only)
+PT,00FF000F,REMOVEALLITEM,-,,,,,drop,unused (defined only)
+PT,00FF0013,MOVERDEATH,-,,,,,drop,unused (defined only)
+PT,00FF0017,SETFXP,-,,,,,drop,unused (defined only)
+PT,00FF00C5,INC_JOB_LEVEL,-,,,,,drop,dead (never sent or never handled)
+PT,00FF00D0,ADDEXPERIENCE,-,,,,,drop,unused (defined only)
+PT,00FF00D1,SET_GROWTH_LEARNING_POINT,-,,,,,drop,unused (defined only)
+PT,00FF00D3,SETPOINTPARAM,-,,,,,drop,unused (defined only)
+PT,00FF00E1,SHOUT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00FF00E2,PLAYMUSIC,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00FF00E3,PLAYSOUND,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00FF00E4,SUMMONPLAYER,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00FF00E5,TELEPORTPLAYER,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00FF00E6,KILLPLAYER,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00FF00EB,MODIFYMODE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,00FF00F3,WN_WANTED_INFO,-,,,,,drop,unused (defined only)
+PT,00FF00F4,WC_WANTED_GOLD,-,,,,,drop,"dead feature: wanted/bounty board, no in-process replacement (F-179, PL-142, PD-19; §8 R1-1)"
+PT,00FF00F5,WC_WANTED_REWARD,-,,,,,drop,"dead feature: wanted/bounty board, no in-process replacement (F-179, PL-142, PD-19; §8 R1-1)"
+PT,00FF00F6,CW_WANTED_LIST,-,,,,,drop,"dead feature: wanted/bounty board, no in-process replacement (F-179, PL-142, PD-19; §8 R1-1)"
+PT,00FF00F7,CW_WANTED_REWARD,-,,,,,drop,"dead feature: wanted/bounty board, no in-process replacement (F-179, PL-142, PD-19; §8 R1-1)"
+PT,00FF00F8,CT_WANTED,-,,,,,drop,"dead feature: wanted/bounty board, no in-process replacement; `WANTED_TBL` is not created (13 §13) (F-179, PL-142, PD-19; §8 R1-1)"
+PT,00FF00F9,TC_LIST,-,,,,,drop,dead (never sent or never handled)
+PT,00FF00FB,WT_REQ_LEAVE,-,,,,,drop,unused (defined only)
+PT,00FF0FF1,SCRIPT_REMOVE_ALL_ITEM,-,,,,,drop,dead (never sent or never handled)
+PT,00FF0FF2,SCRIPT_EQUIP_ITEM,-,,,,,drop,dead (never sent or never handled)
+PT,00FF0FF3,SETQUEST,-,,,,,drop,dead (never sent or never handled)
+PT,00FF0FF4,SCRIPT_CREATE_ITEM,-,,,,,drop,dead (never sent or never handled)
+PT,00FF0FF5,SCRIPT_ADD_GOLD,-,,,,,drop,dead (never sent or never handled)
+PT,00FF0FF6,SCRIPT_REMOVE_QUEST,-,,,,,drop,dead (never sent or never handled)
+PT,00FF0FF7,SCRIPT_REPLACE,-,,,,,drop,dead (never sent or never handled)
+PT,00FF0FF8,SCRIPT_REPLACE_KEY,-,,,,,drop,dead (never sent or never handled)
+PT,00FF0FF9,SCRIPT_ADD_EXP,-,,,,,drop,dead (never sent or never handled)
+PT,00FF0FFA,SCRIPT_REMOVE_GOLD,-,,,,,drop,unused (defined only)
+PT,00FF0FFB,SCRIPT_TRANS_PXP,-,,,,,drop,unused (defined only)
+PT,00FF0FFC,SCRIPT_TRANS_PENYA,-,,,,,drop,unused (defined only)
+PT,00FFF001,SUMMONITEMUSE,-,,,,,drop,unused (defined only)
+PT,0F000F00,SAVE_CONCURRENT_USER_NUMBER,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,0F000F01,SAVE_CONCURRENT_FIELD_USER_NUMBER,-,,,,,drop,unused (defined only)
+PT,0F000F02,LOG_PLAY_CONNECT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,0F000F03,LOG_PLAY_DEATH,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,0F000F04,LOG_LEVELUP,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,0F000F05,LOG_SERVER_DEATH,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,0F000F06,LOG_UNIQUEITEM,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,0F000F07,LOG_ALLITEM,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,0F000F08,LOG_QUEST,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,0F000F0A,LOG_PK_PVP,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,0F000F0B,LOG_SCHOOL,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,0F000F0C,PREVENT_LOGIN,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,0F000F0F,FREQUENCY_LOG,-,,,,,drop,unused (defined only)
+PT,0F001100,INSTANCEDUNGEON_LOG,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70000000,ADD_MESSENGER,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70000001,DELETE_MESSENGER,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70000002,UPDATE_MESSENGER,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70000108,SECRETROOM_TENDER_INSERTTODB,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70000109,SECRETROOM_TENDER_UPDATETODB,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70000110,SECRETROOM_LINEUP_INSERTTODB,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70000111,SECRETROOM_INFO_CLEAR,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70000112,SECRETROOM_TENDERINFO_TO_WSERVER,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70000113,SECRETROOM_CLOSED,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70001000,TAX_ALLINFO,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70001001,TAX_SET_SECRETROOM_WINNER,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70001002,TAX_SET_LORD,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70001004,TAX_ADDSALESTAX,-,,,,,drop,unused (defined only)
+PT,70001005,TAX_ADDPURCHASEAX,-,,,,,drop,unused (defined only)
+PT,70001006,TAX_ADDTAX,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70001007,TAX_APPLY_TAXRATE_NOW,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70002005,RAINBOWRACE_LOADDBTOWORLD,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70002006,RAINBOWRACE_APPTODB,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70002007,RAINBOWRACE_FAILEDTODB,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70002008,RAINBOWRACE_RANKINGTODB,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70003000,HOUSING_LOADINFO,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70003001,HOUSING_FURNITURELIST,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70003003,HOUSING_DBFAILED,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70003008,HOUSING_GM_REMOVEALL,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70004002,LOG_GETHONORTIME,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70006000,FUNNYCOIN_REQ_USE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70006001,FUNNYCOIN_ACK_USE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70006010,PCBANG_SETAPPLY,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70006020,TIMELIMIT_INFO,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70006021,TIMELIMIT_UPDATE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,70006022,TIMELIMIT_RESET,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,88100000,GUILDHOUSE_LOAD,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,88100002,GUILDHOUSE_REMOVE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,88100004,GUILDHOUSE_ALLINFO,-,,,,,drop,unused (defined only)
+PT,88100005,GUILDHOSUE_RESTPOINT,-,,,,,drop,unused (defined only)
+PT,88100008,GUILDFURNITURE_LOG,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,88100120,CAMPUS_ALL,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,88100124,CAMPUS_ADD_MEMBER,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,88100126,CAMPUS_UPDATE_POINT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,88100210,ERROR_LOG_TO_DB,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,88100220,COLLECTION_CERTIFY,-,,,,,drop,dead (never sent or never handled)
+PT,88100232,GUILDHOUSE_TENDER_INFO,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,88100234,GUILDHOUSE_TENDER_STATE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,88100235,GUILDHOUSE_TENDER_RESULT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,88100236,GUILDHOUSE_GRADE_UPDATE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,88100237,GUILDHOUSE_LEVEL_UPDATE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,88100238,GUILDHOUSE_EXPIRED,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,88100240,QUERYMAILBOX_REQ,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,88100241,QUERYMAILBOX_COUNT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,8FFF0003,ELECTION_BEGIN_CANDIDACY,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,8FFF0004,ELECTION_BEGIN_VOTE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,8FFF0005,ELECTION_END_VOTE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,8FFF0006,ELECTION_PROCESS,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,8FFF0007,LORD,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,8FFF000A,L_EVENT_INITIALIZE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,8FFF000B,LORD_SKILL_TICK,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,8FFF000C,L_EVENT_TICK,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,8FFFF004,ALL_COUPLES,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,8FFFF005,CLEAR_PROPOSE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,8FFFF006,ADD_COUPLE_EXPERIENCE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F0008000,MONITOR_ID,-,,,,,drop,dead (never sent or never handled)
+PT,F0008001,CONSOLE_COMMAND,-,,,,,drop,unused (defined only)
+PT,F0008002,CONSOLE_OVERVIEW,-,,,,,drop,unused (defined only)
+PT,F0008003,CONSOLE_FILEHEADER,-,,,,,drop,unused (defined only)
+PT,F0008004,CONSOLE_FILEDATA,-,,,,,drop,unused (defined only)
+PT,F0008005,CONSOLE_UPLOADACK,-,,,,,drop,unused (defined only)
+PT,F0008006,CONSOLE_EXPAND,-,,,,,drop,unused (defined only)
+PT,F0008007,CONSOLE_SYNCACK,-,,,,,drop,unused (defined only)
+PT,F0008008,CONSOLE_EXPANDACK,-,,,,,drop,unused (defined only)
+PT,F0008009,CONSOLE_OVERVIEW2,-,,,,,drop,unused (defined only)
+PT,F0009000,PROCESS_CREATED,-,,,,,drop,unused (defined only)
+PT,F0009001,PROCESS_TERMINATED,-,,,,,drop,unused (defined only)
+PT,F0009002,MY_PROCESS,-,,,,,drop,unused (defined only)
+PT,F0009007,MY_PROCESS2,-,,,,,drop,unused (defined only)
+PT,F000A000,CREATE_PROCESS,-,,,,,drop,unused (defined only)
+PT,F000A001,TERMINATE_PROCESS,-,,,,,drop,unused (defined only)
+PT,F000A002,TERMINATE_PROCESS_AND_QUIT,-,,,,,drop,unused (defined only)
+PT,F000A003,PROCESS_MODE,-,,,,,drop,unused (defined only)
+PT,F000B000,ADD_ACCOUNT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B001,REMOVE_ACCOUNT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B002,ROUTE,-,,,,,drop,dead (never sent or never handled)
+PT,F000B003,DESTROY_PLAYER,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B004,ERRORCODE,-,,,,,drop,dead (never sent or never handled)
+PT,F000B005,PROCESS_CREATED2,-,,,,,drop,unused (defined only)
+PT,F000B005,RENEWEVNET,-,,,,,drop,dead (never sent or never handled)
+PT,F000B006,PROCESS_TERMINATED2,-,,,,,drop,unused (defined only)
+PT,F000B006,TAG,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B009,PARTYLEVEL,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B00A,WC_GUILDLOGO,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B00B,WC_GUILDCONTRIBUTION,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B00C,WC_GUILDNOTICE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B00D,CW_GUILDLOGO,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B00E,CW_GUILDCONTRIBUTION,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B00F,CW_GUILDNOTICE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B014,CALL_USPLOGGINGQUEST,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B016,CD_GUILD_LOGO,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B017,WD_GUILD_CONTRIBUTION,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B018,CD_GUILD_NOTICE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B028,GUILD_DB_REALPENYA,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B031,CHANGEGUILDJOBLEVEL,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B03C,CD_ADDVOTE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B03D,CD_REMOVEVOTE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B03E,CD_CLOSEVOTE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B03F,CD_CASTVOTE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B040,DC_ADDVOTERESULT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B041,CW_ADDVOTERESULT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B042,CW_MODIFYVOTE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B043,UPDATE_GUILD_RANKING,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B044,UPDATE_GUILD_RANKING_END,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B04A,WAR_TIMEOUT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B04B,WAR_MASTER_ABSENT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B04C,SCHOOL_REPORT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B04D,UPDATE_GUILD_RANKING_DB,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B051,UPDATEGUILDQUEST,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B052,BUYING_INFO,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B053,QUERYGUILDQUEST,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B056,INSERTGUILDQUEST,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000B05A,DELETEGUILDQUEST,-,,,,,drop,unused (defined only)
+PT,F000B05B,SERVER_ENABLE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000D002,JOIN_BATTLESERVER,-,,,,,drop,unused (defined only)
+PT,F000D003,BASEGAMESETTING,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000D004,MONSTERRESPAWNSETTING,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000D005,MONSTERPROPGAMESETTING,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000D006,GAMEMASTER_CHATTING,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000D007,RELOAD_PROJECT,-,,,,,drop,unused (defined only)
+PT,F000D00F,CREATESFXOBJ,-,,,,,drop,dead (never sent or never handled)
+PT,F000D011,EVENT0913,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000D01A,EVENT1206,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000D01B,EVENT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000D021,ADD_GUILDCOMBAT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000D025,RESULT_GUILDCOMBAT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000D026,GUILDCOMBAT_STATE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000D029,REMOVEPARTY_GUILDCOMBAT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000D02A,ADDPARTY_GUILDCOMBAT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000D02C,START_GUILDCOMBAT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000D032,CONTINUE_GUILDCOMBAT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000F001,GLOBALGIFTBOX,-,,,,,drop,dead (never sent or never handled)
+PT,F000F002,QUERYGLOBALGIFTBOX,-,,,,,drop,dead (never sent or never handled)
+PT,F000F003,RESTOREGLOBALGIFTBOX,-,,,,,drop,dead (never sent or never handled)
+PT,F000F004,QUERY_REMOVE_GUILD_BANK_TBL,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000F005,EVENT_GENERIC,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000F006,EVENT_FLAG,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000F007,CALL_XXX_MULTI_SERVER,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000F009,LOG_EXPBOX,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000F117,EVENTLUA_STATE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000F118,EVENTLUA_CHANGED,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000F119,EVENTLUA_NEEDSTATE,-,,,,,drop,unused (defined only)
+PT,F000F120,EVENTLUA_NOTICE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000F606,CALL_USP_PET_LOG,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000F704,GC1TO1_OPEN,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000F710,GC1TO1_STATETODB,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000F711,GC1TO1_TENDERTODB,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000F712,GC1TO1_TENDERTOSRVR,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000F713,GC1TO1_LINEUPTODB,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000F714,GC1TO1_WARPERSONTODB,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000F715,GC1TO1_WARGUILDTODB,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000F803,ALL_PLAYER_DATA,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000F804,ADD_PLAYER_DATA,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000F805,DELETE_PLAYER_DATA,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,F000F815,SEALCHARSET_REQ,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FF000000,QUIZ_CHANGED,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FF000001,QUIZ_STATE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FF000005,QUIZ_LOADQUIZ,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FF000006,QUIZ_PRIZEITEM,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FF000007,QUIZ_SELECT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FF000008,QUIZ_OPEN,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF0F,MOVERDESTPOS,-,,,,,drop,unused (defined only)
+PT,FFFFFF13,ADDPLAYERPARTY,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF14,REMOVEPLAYERPARTY,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF15,MEMBERLEVEL,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF16,MEMBERJOB,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF1C,SETPARTYMODE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF1E,ADDPARTYEXP,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF1F,REMOVEPARTYPOINT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF22,SETPARTYEXP,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF2A,SETPARTYDUEL,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF31,CREATE_GUILD,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF38,GLOBAL_DATA,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF3B,GUILD_BANK_QUERY,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF3C,GUILD_BANK,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF3D,GUILD_BANK_UPDATE,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF50,ENVIRONMENTSNOW,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF51,ENVIRONMENTRAIN,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF52,FALLRAIN,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF53,FALLSNOW,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF54,STOPRAIN,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF55,STOPSNOW,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF56,ENVIRONMENTALL,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF59,PARTYCHAT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF5B,SAVE_SKILL,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF70,PARTYNAME,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF71,ADDPARTYNAME,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF76,GUILD_MEMBERTIME,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF77,GUILD_MEMBERLOGOUT,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)
+PT,FFFFFF7D,EVE_RECOMMEND,-,,,,,internal,server↔server link; becomes in-process call / persistence command (D2)

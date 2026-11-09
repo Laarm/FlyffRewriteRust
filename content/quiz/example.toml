@@ -1,0 +1,93 @@
+# Example questions for the Flyff quiz event (Plan/22 section 15, `flyff quiz import`).
+#
+#   flyff --home <home> quiz import content/quiz/example.toml --type 2     # the 4C questions
+#   flyff --home <home> quiz import content/quiz/example.toml --type 1     # the OX questions
+#
+# `--type N` takes only the entries of that type (an entry may leave out `type` then); without it every entry
+# must name its `type`. The same file can be imported again and again: a question is identified by its type and
+# its text, so nothing is duplicated. See content/quiz/README.md.
+
+# ---- four choices (type "4c"): answer 1..=4 ------------------------------------------------------------------
+
+[[question]]
+type = "4c"
+question = "Which town is the starting point of every new character in Madrigal?"
+choices = ["Saint Morning", "Flaris", "Azria", "Coral Island"]
+answer = 2
+
+[[question]]
+type = "4c"
+question = "What is the currency of Madrigal?"
+choices = ["Rupee", "Zeny", "Penya", "Gold"]
+answer = 3
+
+[[question]]
+type = "4c"
+question = "Which of these is a first job?"
+choices = ["Ranger", "Elementor", "Knight", "Mercenary"]
+answer = 4
+
+[[question]]
+type = "4c"
+question = "Which first job casts spells with wands and staffs?"
+choices = ["Assist", "Mercenary", "Magician", "Acrobat"]
+answer = 3
+
+[[question]]
+type = "4c"
+question = "Which first job fights with yoyos and bows?"
+choices = ["Assist", "Magician", "Mercenary", "Acrobat"]
+answer = 4
+
+[[question]]
+type = "4c"
+question = "What kind of creature is an Aibatt?"
+choices = ["A bat", "A fish", "A mushroom", "A wolf"]
+answer = 1
+
+[[question]]
+type = "4c"
+question = "A Mushpang is a ..."
+choices = ["Fish", "Wolf", "Mushroom", "Bat"]
+answer = 3
+
+[[question]]
+type = "4c"
+question = "How many answers does a question of this kind offer?"
+choices = ["Two", "Three", "Four", "Five"]
+answer = 3
+
+# ---- true or false (type "ox"): answer 1 = O (true), 2 = X (false) ---------------------------------------------
+# A "|" in a question starts a new line on the players' screen.
+
+[[question]]
+type = "ox"
+question = "Flaris is the town where every new character starts.|True or false?"
+answer = 1
+
+[[question]]
+type = "ox"
+question = "Penya is the currency of Madrigal."
+answer = 1
+
+[[question]]
+type = "ox"
+question = "A Mushpang is a kind of fish."
+answer = 2
+
+[[question]]
+type = "ox"
+question = "An Aibatt is a flying creature."
+answer = 1
+
+[[question]]
+type = "ox"
+question = "Mercenaries cast spells with wands."
+answer = 2
+
+# A disabled question stays in the database but is never asked.
+[[question]]
+type = "ox"
+question = "This question is switched off and never asked."
+answer = 1
+enabled = false

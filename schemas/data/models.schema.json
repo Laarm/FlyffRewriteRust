@@ -1,0 +1,201 @@
+{
+  "$defs": {
+    "ModelRow": {
+      "description": "One model registry entry with its resolved files.",
+      "properties": {
+        "bone": {
+          "description": "The skeleton file (`.chr`) of a mover, `null` when it does not exist.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "distant": {
+          "description": "`MD_*` view distance class.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "file": {
+          "description": "The model file as a canonical VFS path, `null` when it does not exist.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "fly": {
+          "description": "Flies.",
+          "type": "boolean"
+        },
+        "index": {
+          "description": "The id within the object type (`MI_*`, `II_*`, `CI_*`, `XI_*`, the obj number).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "model_type": {
+          "description": "`MODELTYPE_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "motions": {
+          "description": "INFORMATIVE ONLY (model viewer): the registry's motion list as written, each stem resolved to a VFS\npath or `null`. Clients MUST NOT resolve animations from it: playback uses the `ClipId`s of the\nmotion table, which add the STAND fallback, the empty-slot quirk file and the wing-item slots.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "format": "uint32",
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            ],
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "name": {
+          "description": "The entry name.",
+          "type": "string"
+        },
+        "part": {
+          "description": "The part name (`male/female` for items; the sound of an sfx).",
+          "type": "string"
+        },
+        "pick": {
+          "description": "Pickable.",
+          "type": "boolean"
+        },
+        "render_flag": {
+          "description": "The render flag bit.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "scale": {
+          "description": "The default scale.",
+          "format": "float",
+          "type": "number"
+        },
+        "shadow": {
+          "description": "Casts a shadow.",
+          "type": "boolean"
+        },
+        "texture_ex": {
+          "description": "`ATEX_*` texture animation.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "trans": {
+          "description": "Fades when it hides the player.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "index",
+        "name",
+        "model_type",
+        "part",
+        "fly",
+        "distant",
+        "pick",
+        "scale",
+        "trans",
+        "shadow",
+        "texture_ex",
+        "render_flag",
+        "file",
+        "bone",
+        "motions"
+      ],
+      "type": "object"
+    },
+    "ModelsBundle": {
+      "description": "`models`: the model registry by object type.",
+      "properties": {
+        "types": {
+          "additionalProperties": {
+            "$ref": "#/$defs/RowTable_ModelRow"
+          },
+          "description": "The entries of each object type (`OT_*` as a decimal string).",
+          "type": "object"
+        }
+      },
+      "required": [
+        "types"
+      ],
+      "title": "ModelsBundle",
+      "type": "object"
+    },
+    "RowTable_ModelRow": {
+      "description": "A columnar table: `columns` names the fields of each row, `rows` holds one array of cells per row (14 §10.2).",
+      "properties": {
+        "columns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "rows": {
+          "items": {
+            "type": "array"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "columns",
+        "rows"
+      ],
+      "type": "object",
+      "x-flyff-columns": [
+        "index",
+        "name",
+        "model_type",
+        "part",
+        "fly",
+        "distant",
+        "pick",
+        "scale",
+        "trans",
+        "shadow",
+        "texture_ex",
+        "render_flag",
+        "file",
+        "bone",
+        "motions"
+      ],
+      "x-flyff-row": {
+        "$ref": "#/$defs/ModelRow"
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`models.<h16>.json`: the envelope of the `models` bundle (schema version 1).",
+  "properties": {
+    "bundle": {
+      "const": "models"
+    },
+    "data": {
+      "$ref": "#/$defs/ModelsBundle"
+    },
+    "schema": {
+      "const": 1
+    }
+  },
+  "required": [
+    "bundle",
+    "schema",
+    "data"
+  ],
+  "title": "ModelsBundleEnvelope",
+  "type": "object"
+}

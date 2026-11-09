@@ -1,0 +1,273 @@
+// Mover common types (Plan/11 section 7.3, WP-PROTO-03). Transcribed from ref/08 sections 7.2-7.5 and
+// 7.7.6, ref/09b section 7.12 and ref/07a section 13. The spawn messages that compose these types
+// (SpawnSelf, SpawnPlayer, SpawnNpc, ...) live in world.proto.
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+import "flyff/v1/common.proto";
+import "flyff/v1/item_types.proto";
+
+// CObj::Serialize (ref/08 section 7.2); the entry header (type, index) is merged in. The CCtrl::Serialize
+// objid equals ServerMsg.obj_id and is not repeated.
+message ObjCommon {
+  // OT_*: 2 CTRL, 4 ITEM, 5 MOVER (7 SHIP is unused in V15)
+  uint32 obj_type = 1 [(flyff.legacy_type) = "u8"];
+  // MoverProp / ItemProp / CtrlProp id
+  uint32 index = 2 [(flyff.legacy_type) = "u32"];
+  // m_vScale.x * 100
+  uint32 scale_x100 = 3 [(flyff.legacy_type) = "u16"];
+  Vec3 pos = 4 [(flyff.legacy_type) = "vec3"];
+  // yaw * 10 (degrees), the legacy quantisation is kept
+  sint32 angle_x10 = 5 [(flyff.legacy_type) = "i16"];
+}
+
+// Common part of players and NPCs (ref/08 section 7.5.1).
+message MoverCommon {
+  // MTI_* animation id
+  uint32 motion = 1 [(flyff.legacy_type) = "u16"];
+  bool is_player = 2 [(flyff.legacy_type) = "u8"];
+  sint32 hp = 3 [(flyff.legacy_type) = "i32"];
+  // OBJSTA_* word (ref/08 section 8.3)
+  uint32 state = 4 [(flyff.legacy_type) = "u32"];
+  // OBJSTAF_*
+  uint32 state_flag = 5 [(flyff.legacy_type) = "u32"];
+  uint32 belligerence = 6 [(flyff.legacy_type) = "u8"];
+  // __PETVIS attached effect
+  uint32 mover_sfx_id = 7 [(flyff.legacy_type) = "u32"];
+  // Added (Plan/16 sections 3.7 and 4.7, Plan/11 section 8.6): DST snapshot of the mover at spawn time,
+  // one entry per stored DST with adj != 0 or chg != NULL_CHGPARAM, ascending `dst`.
+  repeated DstValue dst_params = 100;
+}
+
+// Added helper type (Plan/16 section 4.7 replication contract; the browser `rules` derive stats from it).
+// The browser starts from the default DST table, sets each listed (adj, chg), then applies the legacy
+// SetDestParam/ResetDestParam deltas.
+message DstValue {
+  // DST_* id (legacy numeric value)
+  uint32 dst = 1;
+  // aggregated adjustment
+  sint32 adj = 2;
+  // change value; NULL_CHGPARAM 0x7FFFFFFF verbatim when unset (Plan/11 section 5.4)
+  sint32 chg = 3;
+}
+
+// Player public part, always sent (ref/08 section 7.5.2, legacy fields 8-40).
+message PlayerPublic {
+  // <= 64 B
+  string name = 1 [(flyff.legacy_type) = "str<=64"];
+  // 0 male, 1 female
+  uint32 sex = 2 [(flyff.legacy_type) = "u8"];
+  uint32 skin_set = 3 [(flyff.legacy_type) = "u8"];
+  uint32 hair_mesh = 4 [(flyff.legacy_type) = "u8"];
+  // ARGB
+  uint32 hair_color = 5 [(flyff.legacy_type) = "u32"];
+  uint32 head_mesh = 6 [(flyff.legacy_type) = "u8"];
+  // DB character id
+  uint32 id_player = 7 [(flyff.legacy_type) = "u32"];
+  // 0..31 (defineJob.h)
+  uint32 job = 8 [(flyff.legacy_type) = "u8"];
+  // widened from u16
+  uint32 str = 9 [(flyff.legacy_type) = "u16"];
+  uint32 sta = 10 [(flyff.legacy_type) = "u16"];
+  uint32 dex = 11 [(flyff.legacy_type) = "u16"];
+  // `int` is a keyword in several target languages
+  // buf:lint:ignore FIELD_LOWER_SNAKE_CASE
+  uint32 int_ = 12 [(flyff.legacy_type) = "u16"];
+  // widened from u16
+  uint32 level = 13 [(flyff.legacy_type) = "u16"];
+  // flying fuel; -1 = unset (the client recomputes 20 % of the maximum)
+  sint32 fuel = 14 [(flyff.legacy_type) = "i32"];
+  sint32 acc_fuel = 15 [(flyff.legacy_type) = "i32"];
+  // dropped: hasGuild flag (0 = no guild)
+  // 0 = none
+  uint32 id_guild = 16 [(flyff.legacy_type) = "u8 hasGuild + u32"];
+  uint32 id_war = 17 [(flyff.legacy_type) = "u32 (only if hasGuild)"];
+  // guild id printed on the cloak
+  uint32 id_guild_cloak = 18 [(flyff.legacy_type) = "u32"];
+  // dropped: hasParty flag (0 = no party)
+  // 0 = none
+  uint32 id_party = 19 [(flyff.legacy_type) = "u8 hasParty + u32"];
+  uint32 id_duel_party = 20 [(flyff.legacy_type) = "u32 (only if hasParty)"];
+  // AUTH_* letter value
+  sint32 authorization = 21 [(flyff.legacy_type) = "i8"];
+  // m_dwMode
+  uint32 mode = 22 [(flyff.legacy_type) = "u32"];
+  // STATE_*
+  uint32 state_mode = 23 [(flyff.legacy_type) = "u32"];
+  // ItemProp id of the item being cast, or 0
+  uint32 use_item_prop_id = 24 [(flyff.legacy_type) = "u32"];
+  // remaining "pink" time in ms
+  uint32 pk_time_ms = 25 [(flyff.legacy_type) = "u32"];
+  sint32 pk_value = 26 [(flyff.legacy_type) = "i32"];
+  uint32 pk_propensity = 27 [(flyff.legacy_type) = "u32"];
+  uint32 pk_exp = 28 [(flyff.legacy_type) = "u32"];
+  sint32 fame = 29 [(flyff.legacy_type) = "i32"];
+  // 0 none, 1 solo duel, 2 party duel
+  uint32 duel = 30 [(flyff.legacy_type) = "u8"];
+  // selected title id (__HONORABLE_TITLE), -1 none
+  sint32 honor = 31 [(flyff.legacy_type) = "i32"];
+  // exactly 31 entries (MAX_HUMAN_PARTS), index = PARTS_*
+  repeated sint32 equip_option = 32 [(flyff.legacy_type) = "i32[31]"];
+  sint32 guild_combat_state = 33 [(flyff.legacy_type) = "i32"];
+  // exactly 26 entries (SM_MAX); unix-seconds normalisation of Plan/11 section 5.8
+  repeated sint64 sm_time = 34 [
+    (flyff.legacy_type) = "u32[26]",
+    (flyff.js_safe_number) = true
+  ];
+  // exactly 5 entries (__HIDE_FASHION): 0 HAT, 1 CLOTH, 2 GLOVE, 3 BOOTS, 4 CLOAK
+  repeated bool hide_coat = 35 [(flyff.legacy_type) = "raw(BOOL[5])"];
+}
+
+// Player METHOD_NONE part: the receiver's own character only (ref/08 section 7.5.3).
+message PlayerSelf {
+  // widened from the truncated u16
+  sint32 mp = 1 [(flyff.legacy_type) = "u16"];
+  sint32 fp = 2 [(flyff.legacy_type) = "u16"];
+  sint32 tutorial_state = 3 [(flyff.legacy_type) = "i32"];
+  // flight EXP (the flight level is derived)
+  sint32 fxp = 4 [(flyff.legacy_type) = "i32"];
+  uint32 gold = 5 [(flyff.legacy_type) = "u32"];
+  sint64 exp = 6 [
+    (flyff.legacy_type) = "i64",
+    (flyff.js_safe_number) = true
+  ];
+  sint32 skill_level = 7 [(flyff.legacy_type) = "i32"];
+  sint32 skill_point = 8 [(flyff.legacy_type) = "i32"];
+  sint64 death_exp = 9 [
+    (flyff.legacy_type) = "i64",
+    (flyff.js_safe_number) = true
+  ];
+  sint32 death_level = 10 [(flyff.legacy_type) = "i32"];
+  // dropped: jobLv[32] (always zero)
+  // Lodelight return world and position
+  uint32 marking_world = 11 [(flyff.legacy_type) = "u32"];
+  Vec3 marking_pos = 12 [(flyff.legacy_type) = "vec3"];
+  // at most MAX_QUEST 100
+  repeated Quest quests = 13 [(flyff.legacy_type) = "u8 n + raw(QUEST)[n]"];
+  // no cap on the server (the legacy MAX_COMPLETE_QUEST 300 was dropped, FIX PL-160); the u8 count is the legacy wire form
+  repeated uint32 complete_quests = 14 [(flyff.legacy_type) = "u8 n + raw(u16[n])"];
+  // at most 5 (MAX_CHECKED_QUEST)
+  repeated uint32 checked_quests = 15 [(flyff.legacy_type) = "u8 n + raw(u16[n])"];
+  uint32 id_murderer = 16 [(flyff.legacy_type) = "u32"];
+  // stat points, widened from i16
+  sint32 remain_gp = 17 [(flyff.legacy_type) = "i16"];
+  // dropped: unused i16 (always 0)
+  // exactly 31 entries, index = PARTS_*
+  repeated uint32 equip_item_ids = 18 [(flyff.legacy_type) = "u32[31]"];
+  // exactly 45 entries (MAX_SKILL_JOB), positional
+  repeated Skill job_skills = 19 [(flyff.legacy_type) = "raw(SKILL[45])"];
+  uint32 cheer_point = 20 [(flyff.legacy_type) = "u8"];
+  // ms until the next cheer point
+  uint32 cheer_rest_ms = 21 [(flyff.legacy_type) = "u32"];
+  // character slot 0..2
+  uint32 slot = 22 [(flyff.legacy_type) = "u8"];
+  // exactly 3 entries: bank gold of the 3 account slots
+  repeated uint32 gold_bank = 23 [(flyff.legacy_type) = "u32[3]"];
+  // exactly 3 entries
+  repeated uint32 id_player_bank = 24 [(flyff.legacy_type) = "u32[3]"];
+  sint32 plus_max_hp = 25 [(flyff.legacy_type) = "i32"];
+  uint32 attack_resist_left = 26 [(flyff.legacy_type) = "u8"];
+  uint32 attack_resist_right = 27 [(flyff.legacy_type) = "u8"];
+  uint32 defense_resist = 28 [(flyff.legacy_type) = "u8"];
+  sint64 angel_exp = 29 [
+    (flyff.legacy_type) = "i64",
+    (flyff.js_safe_number) = true
+  ];
+  sint32 angel_level = 30 [(flyff.legacy_type) = "i32"];
+  // max 199 (168 + 31 equip)
+  ItemContainer inventory = 31 [(flyff.legacy_type) = "CItemContainer"];
+  // exactly 3 containers of 42 slots (D5: per character, the 3 account slots)
+  repeated ItemContainer banks = 32 [(flyff.legacy_type) = "CItemContainer[3]"];
+  // inventory object id of the summoned pet item; NULL_ID (0xFFFFFFFF) verbatim if none
+  uint32 pet_id = 33 [(flyff.legacy_type) = "u32"];
+  PocketSet pockets = 34 [(flyff.legacy_type) = "CPocketController"];
+  // remaining mute units (Plan/23)
+  uint32 mute = 35 [(flyff.legacy_type) = "u32"];
+  // exactly 150 entries (MAX_HONOR_TITLE)
+  repeated sint32 honor_progress = 36 [(flyff.legacy_type) = "i32[150]"];
+  uint32 id_campus = 37 [(flyff.legacy_type) = "u32"];
+  sint32 campus_point = 38 [(flyff.legacy_type) = "i32"];
+}
+
+// Player METHOD_EXCLUDE_ITEM part: every other player (ref/08 section 7.5.4).
+message PlayerOther {
+  // private shop title, "" if none
+  string vendor_title = 1 [(flyff.legacy_type) = "str"];
+  // occupied parts only
+  repeated EquipVisual equip = 2 [(flyff.legacy_type) = "u8 n + {u8, u16, u8}[n]"];
+  // MAKELONG(kind, level) of the active pet item; NULL_ID (0xFFFFFFFF) verbatim if none
+  uint32 pet_id = 3 [(flyff.legacy_type) = "u32"];
+  string pet_name = 4 [(flyff.legacy_type) = "str"];
+}
+
+// NPC / monster part (ref/08 section 7.5.5).
+message NpcPart {
+  uint32 hair_mesh = 1 [(flyff.legacy_type) = "u8"];
+  uint32 hair_color = 2 [(flyff.legacy_type) = "u32"];
+  uint32 head_mesh = 3 [(flyff.legacy_type) = "u8"];
+  // key into character.inc (client data bundle)
+  string character_key = 4 [(flyff.legacy_type) = "str"];
+  // humanoid NPCs only (IsEquipableNPC); no flag
+  repeated EquipVisual equip = 5 [(flyff.legacy_type) = "u8 n + {u8, u16}[n]"];
+  // aggressive monster
+  bool active_attack = 6 [(flyff.legacy_type) = "u8"];
+  uint32 move_pattern = 7 [(flyff.legacy_type) = "u8"];
+  uint32 move_event = 8 [(flyff.legacy_type) = "u8"];
+  sint32 move_event_cnt = 9 [(flyff.legacy_type) = "i32"];
+  // __AI_0509
+  float speed_factor = 10 [(flyff.legacy_type) = "f32"];
+}
+
+// CBuffMgr::Serialize entry (ref/08 section 7.5.6).
+message Buff {
+  // BUFF_ITEM 0, BUFF_SKILL 1, BUFF_PET 2, BUFF_ITEM2 3, BUFF_EQUIP 4
+  uint32 type = 1 [(flyff.legacy_type) = "u16"];
+  // skill id / item id
+  uint32 id = 2 [(flyff.legacy_type) = "u16"];
+  // skill level; 0 for BUFF_ITEM2 (see expire_at)
+  uint32 level = 3 [(flyff.legacy_type) = "u32"];
+  // world: total - (now - inst), clamped >= 0
+  uint32 remain_ms = 4 [(flyff.legacy_type) = "u32"];
+  // BUFF_ITEM2 only: the legacy `level` carried the absolute time_t
+  sint64 expire_at = 5 [
+    (flyff.legacy_type) = "u32 (in level)",
+    (flyff.js_safe_number) = true
+  ];
+}
+
+// QUEST (raw, 12 B; ref/08 section 7.7.6).
+message Quest {
+  uint32 state = 1 [(flyff.legacy_type) = "u8"];
+  // remaining minutes; bit 15 = timer frozen (ref/16 section 7.1 m_wTime)
+  uint32 time = 2 [(flyff.legacy_type) = "u16"];
+  uint32 quest_id = 3 [(flyff.legacy_type) = "u16"];
+  // exactly 2 entries
+  repeated uint32 kill_npc_num = 4 [(flyff.legacy_type) = "u16[2]"];
+  bool patrol = 5 [(flyff.legacy_type) = "bit0"];
+  bool dialog = 6 [(flyff.legacy_type) = "bit1"];
+}
+
+// SKILL (raw, 8 B).
+message Skill {
+  // NULL_ID (0xFFFFFFFF) verbatim for empty slots
+  uint32 skill_id = 1 [(flyff.legacy_type) = "u32"];
+  uint32 level = 2 [(flyff.legacy_type) = "u32"];
+}
+
+// SHORTCUT (ref/07a section 13, ref/08 section 12.10).
+message Shortcut {
+  // SHORTCUT_* 0..11
+  uint32 shortcut_type = 1 [(flyff.legacy_type) = "u32"];
+  uint32 id = 2 [(flyff.legacy_type) = "u32"];
+  uint32 type = 3 [(flyff.legacy_type) = "u32"];
+  uint32 index = 4 [(flyff.legacy_type) = "u32"];
+  uint32 user_id = 5 [(flyff.legacy_type) = "u32"];
+  uint32 data = 6 [(flyff.legacy_type) = "u32"];
+  // only SHORTCUT_CHAT (8), <= 127 B
+  string text = 7 [
+    (flyff.legacy_type) = "str<=127",
+    (flyff.max_len) = 127
+  ];
+}

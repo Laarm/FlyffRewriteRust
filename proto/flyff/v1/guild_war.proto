@@ -1,0 +1,228 @@
+// Guild war messages (Plan/11 section 4.2, WP-PROTO-29; tag block 720-751). Transcribed from ref/03 section 9, ref/09a
+// section 5.14, ref/08 section 13.3 and Plan/21 section 6. The war record is GuildWarInfo / WarEntry
+// (social_types.proto). War flags (GuildWarInfo.flag, ASCII): WF_WARTIME '0', W_GN '1', W_SR '2', L_GN '3', L_SR '4',
+// TRUCE '5', DRAW '6', END '9'. War end results (WarEnd.result): DECL_GN 0, ACPT_GN 1, DECL_SR 2, ACPT_SR 3, DECL_AB 4,
+// ACPT_AB 5, DECL_DD 6, ACPT_DD 7, TRUCE 8, DRAW 9 (the winner is named first: DECL_GN = the declarer won by a kill).
+// Every C2S message acts for the session character (VR-001).
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+import "flyff/v1/social_types.proto";
+
+// legacy DECL_GUILD_WAR 0xF000B036 (C2S): the master declares war on another guild (ref/03 section 9.1,
+// ref/09a section 7, Plan/21 section 6.2). Needs level 6 on both sides, the target master online and at least
+// 10 target members. Answer: DeclGuildWarNtf to the target master.
+message DeclGuildWarReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B036
+    name: "DECL_GUILD_WAR"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: idMaster (u32, the session character)
+  // name of the guild to fight
+  string target_name = 1 [
+    (flyff.legacy_type) = "str<=47",
+    (flyff.max_len) = 47
+  ];
+}
+
+// legacy ACPT_GUILD_WAR 0xF000B037 (C2S): the master accepts a declaration (ref/03 section 9.1, ref/09a
+// section 7, Plan/21 section 6.2). Needs a live declaration from that guild's master (FIX VR-043). Answer:
+// AcptGuildWarNtf to everyone, SetWar near the members.
+message AcptGuildWarReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B037
+    name: "ACPT_GUILD_WAR"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: idMaster (u32, the session character)
+  // the declaring guild
+  uint32 id_decl_guild = 1 [(flyff.legacy_type) = "u32 idDecl"];
+}
+
+// legacy SURRENDER 0xF000B047 (C2S): give up the war (ref/03 section 9.1, Plan/21 section 6.3). Any member
+// with a running war. No payload. Answer: SurrenderNtf to both guilds.
+message SurrenderReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B047
+    name: "SURRENDER"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: idPlayer (u32, the session character)
+}
+
+// legacy QUERY_TRUCE 0xF000B048 (C2S): the master of a guild at war proposes a truce (ref/03 section 9.1,
+// Plan/21 section 6.3). No payload. Answer: QueryTruceNtf to the enemy master.
+message QueryTruceReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B048
+    name: "QUERY_TRUCE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: idPlayer (u32, the session character)
+}
+
+// legacy ACPT_TRUCE 0xF000B049 (C2S): the master accepts the truce (ref/03 section 9.1, Plan/21 section 6.3).
+// Needs a live truce request from the enemy master (FIX VR-043). No payload. Result: the war ends as WR_TRUCE
+// (WarEnd).
+message AcptTruce {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B049
+    name: "ACPT_TRUCE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: idPlayer (u32, the session character)
+}
+
+// legacy DECL_GUILD_WAR 0xF000B036 (S2C); obj_id: 0 (self). A declaration of war for the master of the target
+// guild (ref/03 section 9.2, ref/09a section 5.14).
+message DeclGuildWarNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B036
+    name: "DECL_GUILD_WAR"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // the declaring guild
+  uint32 id_decl_guild = 1 [(flyff.legacy_type) = "u32 idDeclGuild"];
+  // name of the declaring master
+  string master_name = 2 [(flyff.legacy_type) = "str<=42"];
+}
+
+// legacy ACPT_GUILD_WAR 0xF000B037 (S2C); obj_id: 0 (self). A war started; broadcast to everyone (ref/03
+// section 9.2, ref/09a section 5.14, Plan/21 section 6.2).
+message AcptGuildWarNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B037
+    name: "ACPT_GUILD_WAR"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 id_war = 1 [(flyff.legacy_type) = "u32 idWar"];
+  // the declaring guild
+  uint32 id_decl = 2 [(flyff.legacy_type) = "u32 idDecl"];
+  // the accepting guild
+  uint32 id_acpt = 3 [(flyff.legacy_type) = "u32 idAcpt"];
+}
+
+// legacy SURRENDER 0xF000B047 (S2C); obj_id: 0 (self). A player surrendered; to both guilds (ref/03 section
+// 9.2, ref/09a section 5.14).
+message SurrenderNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B047
+    name: "SURRENDER"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 id_war = 1 [(flyff.legacy_type) = "u32"];
+  uint32 id_player = 2 [(flyff.legacy_type) = "u32"];
+  // name of the player who surrendered
+  string name = 3 [(flyff.legacy_type) = "str<=42"];
+  // true = the player belongs to the declaring side
+  bool decl = 4 [(flyff.legacy_type) = "BOOL bDecl"];
+}
+
+// legacy QUERY_TRUCE 0xF000B048 (S2C); obj_id: 0 (self). The enemy master proposes a truce (ref/03 section
+// 9.2, ref/09a section 5.14). No payload.
+message QueryTruceNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B048
+    name: "QUERY_TRUCE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+}
+
+// legacy WAR_DEAD 0xF000B045 (S2C); obj_id: 0 (self). A player died in the war; to both guilds (ref/03 section
+// 9.2, ref/09a section 5.14, Plan/21 section 6.3).
+message WarDead {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B045
+    name: "WAR_DEAD"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 id_war = 1 [(flyff.legacy_type) = "u32"];
+  // name of the player who died
+  string player_name = 2 [(flyff.legacy_type) = "str<=42"];
+  // true = the dead player belongs to the declaring side
+  bool decl = 3 [(flyff.legacy_type) = "BOOL bDecl"];
+}
+
+// legacy WAR_END 0xF000B046 (S2C); obj_id: 0 (self). The war ended; broadcast to everyone (ref/03 section 9.2,
+// ref/09a section 5.14, Plan/21 section 6.4).
+message WarEnd {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B046
+    name: "WAR_END"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 id_war = 1 [(flyff.legacy_type) = "u32"];
+  // war points of the declaring guild after the war
+  sint32 points_decl = 2 [(flyff.legacy_type) = "i32 nWptDecl"];
+  // war points of the accepting guild after the war
+  sint32 points_acpt = 3 [(flyff.legacy_type) = "i32 nWptAcpt"];
+  // WR_* result 0..9 (see the file header)
+  sint32 result = 4 [(flyff.legacy_type) = "i32 nType"];
+}
+
+// legacy WAR 0x00DA (S2C); obj_id: 0 (self). The running war of the receiver's guild, in the join batch
+// (ref/08 section 13.3, ref/09a section 5.14, Plan/21 section 3.5).
+message War {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xDA
+    name: "WAR"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: idWar (u32; repeated as war.id_war)
+  // both sides, the flag and the start time
+  GuildWarInfo war = 1 [(flyff.legacy_type) = "CGuildWar::Serialize"];
+}
+
+// legacy SET_WAR 0x007A (S2C); obj_id: the player whose war changed. Announced to the players near (ref/08
+// section 13.3, ref/09a section 5.14, Plan/21 section 6.2).
+message SetWar {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x7A
+    name: "SET_WAR"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // the war id, 0 = no war
+  uint32 id_war = 1 [(flyff.legacy_type) = "u32"];
+}

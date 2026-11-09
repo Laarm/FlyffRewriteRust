@@ -1,0 +1,8 @@
+# Base clippy configuration, copied into the root clippy.toml and into every per-crate clippy.toml
+# (Plan/02 §11.2). `msrv` is filled in from rust-toolchain.toml by `cargo xtask gen`.
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-indexing-slicing-in-tests = true
+allow-panic-in-tests = true
+allow-dbg-in-tests = true
+allow-print-in-tests = true

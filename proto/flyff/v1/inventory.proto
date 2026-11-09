@@ -1,0 +1,626 @@
+// Inventory messages (Plan/11 section 4.2, WP-PROTO-14; tag block 288-319 plus the hot tags 9 and 12).
+// Transcribed from ref/08 sections 12.1, 12.7 and 12.9, ref/07a section 7, ref/07b sections 8.7, 8.15, 8.16, 9.2
+// and 15, ref/07c sections 14-16, 22 and 30, ref/09a section 5.3, ref/13 sections 6-7 and Plan/19 (ownership in
+// 19 section 19, lifecycle in 4.1, handlers in 5).
+//
+// Addressing (ref/07a section 7): an item has a storage OBJECT ID (`obj_id`, ItemElem.obj_id; equipment lives at
+// ids 168 + part) used by almost every packet, and a SLOT INDEX used only by MoveItem and SortInventory (the bag
+// has 168 slots, MAX_INVENTORY; the container is 199 slots with the 31 equipment parts). Packets that carry
+// `MAKELONG(ITYPE_ITEM = 0, obj_id)` in a u32 (`data`) keep the id in the HIGH word.
+//
+// Not messages of this file (the plan maps them elsewhere): gold is SetPointParam{DST_GOLD} (character.proto,
+// owner only, PL-075); a ground item appears with SpawnItem and disappears with DelObj (world.proto); picking up
+// is the movement arrival at the ground item (SetDestObjReq) and the loot texts are DefinedText / Text
+// (notice.proto); an item destroyed by DropItem (events.drop_item_remove) is an UpdateItem with NUM 0.
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+import "flyff/v1/common.proto";
+import "flyff/v1/item_types.proto";
+
+// legacy DOUSEITEM 0x00FF0021 (C2S): use or equip-toggle an item (ref/07a section 7.5, Plan/19 section 5.1).
+// The server checks ownership and usability of the item (VR-010) and runs the use pipeline; the answer is a
+// set of UpdateItem / SetPointParam / DefinedText messages. `part` >= 31 is ignored.
+message DoUseItem {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF0021
+    name: "DOUSEITEM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M3";
+  // MAKELONG(ITYPE_ITEM = 0, inventory obj_id): the item is in the high word
+  uint32 data = 1 [(flyff.legacy_type) = "u32 dwData"];
+  // target object id of targeted items (NULL_ID = none)
+  uint32 target = 2 [(flyff.legacy_type) = "u32 objid"];
+  // -1 = not an equipment slot, otherwise the equip part 0..30
+  sint32 part = 3 [(flyff.legacy_type) = "i32 nPart"];
+  // dropped: fFlightSpeed (the __HACK_1023 ride speed check, AC-07)
+}
+
+// legacy MOVEITEM 0x00FF0006 (C2S): swap two bag slots (ref/07a section 7.2, Plan/19 section 5.13.1). src !=
+// dst, both < 168, the destination empty or usable, the source usable. Answer: MoveItemNtf to self.
+message MoveItemReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF0006
+    name: "MOVEITEM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M3";
+  // ignored; the client sends 0
+  uint32 item_type = 1 [(flyff.legacy_type) = "u8 nItemType"];
+  // SLOT index (not an object id)
+  uint32 src_slot = 2 [(flyff.legacy_type) = "u8 nSrcIndex"];
+  // SLOT index (not an object id)
+  uint32 dst_slot = 3 [(flyff.legacy_type) = "u8 nDstIndex"];
+}
+
+// legacy DROPITEM 0x00FF0007 (C2S): drop part of a stack (ref/07a section 7.3, Plan/19 section 5.14). With
+// events.drop_item_remove (shipped) the items are destroyed instead of spawning a ground item. num <= 0 is
+// ignored, num is clamped to the stack (VR-028). The legacy DROPGOLD is dropped (it returned immediately).
+message DropItem {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF0007
+    name: "DROPITEM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M3";
+  // ignored
+  uint32 item_type = 1 [(flyff.legacy_type) = "u32 dwItemType"];
+  // inventory object id
+  uint32 obj_id = 2 [(flyff.legacy_type) = "u32 dwItemId"];
+  // count to drop
+  sint32 num = 3 [(flyff.legacy_type) = "i16 nDropNum"];
+  // client-chosen ground position; the server clamps it to at most 3 m from the player (PL-078)
+  Vec3 pos = 4 [(flyff.legacy_type) = "vec3 vPos"];
+}
+
+// legacy DOEQUIP 0x00FF000B (C2S): equip or unequip an item (ref/07a section 7.1, Plan/19 section 5.13.2).
+// part >= 31 is ignored; an equipped item is only unequipped with an explicit part. Answer: DoEquipNtf to
+// near.
+message DoEquipReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF000B
+    name: "DOEQUIP"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M3";
+  // inventory object id
+  uint32 obj_id = 1 [(flyff.legacy_type) = "u32 nId"];
+  // -1 = automatic slot, otherwise the explicit part (second ring, dual wield ...)
+  sint32 part = 2 [(flyff.legacy_type) = "i32 nPart"];
+  // dropped: fFlightSpeed (the __HACK_1023 ride speed check, AC-07)
+}
+
+// legacy DO_USE_ITEM_TARGET 0x70000004 (C2S): apply a scroll onto another item (awakening, blessing, level
+// down, pet resurrection ...; ref/07b section 8.7, Plan/19 section 12.6). Both items must be usable and the
+// target not equipped.
+message DoUseItemTarget {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x70000004
+    name: "DO_USE_ITEM_TARGET"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // inventory object id of the scroll
+  uint32 material_obj_id = 1 [(flyff.legacy_type) = "u32 dwMaterial"];
+  // inventory object id of the item it is applied to
+  uint32 target_obj_id = 2 [(flyff.legacy_type) = "u32 dwTarget"];
+}
+
+// legacy DO_USE_ITEM_INPUT 0x8FFFFF00 (C2S; __AZRIA_1023): use an item that needs a text (a ticket layer
+// number, a pet name; ref/07c section 22, Plan/19 section 5.9).
+message DoUseItemInput {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x8FFFFF00
+    name: "DO_USE_ITEM_INPUT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // MAKELONG(ITYPE_ITEM = 0, inventory obj_id)
+  uint32 data = 1 [(flyff.legacy_type) = "u32 dwItemId"];
+  // the text (MAX_INPUT_LEN 100)
+  string input = 2 [
+    (flyff.legacy_type) = "str<=99",
+    (flyff.max_len) = 100
+  ];
+}
+
+// legacy REMOVEINVENITEM 0x00FF0019 (C2S): destroy items from the bag (ref/07b section 8.15, Plan/19 section
+// 5.13.3). num <= 0, an equipped or in-use item, num above the stack or an undestructable item are ignored.
+// Answer: DefinedText TID_GAME_SUCCESS_REMOVE_ITEM and the UpdateItem.
+message RemoveInvenItem {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF0019
+    name: "REMOVEINVENITEM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M3";
+  // inventory object id
+  uint32 obj_id = 1 [(flyff.legacy_type) = "u32 dwId"];
+  // count to destroy
+  sint32 num = 2 [(flyff.legacy_type) = "i32 nNum"];
+}
+
+// legacy QUERYEQUIP 0xF000D009 (C2S): inspect another player's equipment (ref/07b section 9.2, Plan/19
+// section 5.13.5). VR-051: the target must be in the visibility set; EQUIP_DENIAL_MODE refuses it for non-GM
+// requesters.
+message QueryEquipReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000D009
+    name: "QUERYEQUIP"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // object id of the inspected player
+  uint32 target = 1 [(flyff.legacy_type) = "u32 objid"];
+}
+
+// legacy SORT_INVENTORY 0xAA000002 (C2S; custom): sort the bag by item kind (ref/07c section 30.1, Plan/19
+// section 3.4). The answer is a MoveItemNtf per swap. No payload.
+message SortInventory {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xAA000002
+    name: "SORT_INVENTORY"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy AVAIL_POCKET 0x70000006 (C2S): make a pocket (bag) available with a pocket item (ref/07c section
+// 16, Plan/19 section 3.5). A no-op while features.perm_extrabags is on.
+message AvailPocket {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x70000006
+    name: "AVAIL_POCKET"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // pocket index 1..2 (pocket 0 is always available)
+  sint32 pocket = 1 [(flyff.legacy_type) = "i32 nPocket"];
+  // inventory object id of the pocket item
+  sint32 item_obj_id = 2 [(flyff.legacy_type) = "i32 nItem"];
+}
+
+// legacy MOVE_ITEM_POCKET 0x70000007 (C2S): move items between the bag and a pocket or between two pockets
+// (ref/07c section 16, Plan/19 section 3.5). Rejected for the same pocket, num <= 0 or above the stack
+// (VR-025), an equipped or in-use source.
+message MoveItemPocket {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x70000007
+    name: "MOVE_ITEM_POCKET"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // source pocket, -1 = the inventory
+  sint32 pocket_from = 1 [(flyff.legacy_type) = "i32 nPocket1"];
+  // object id in the source container
+  sint32 obj_id = 2 [(flyff.legacy_type) = "i32 nItem"];
+  sint32 num = 3 [(flyff.legacy_type) = "i16 nNum"];
+  // destination pocket, -1 = the inventory
+  sint32 pocket_to = 4 [(flyff.legacy_type) = "i32 nPocket2"];
+}
+
+// legacy QUERY_START_COLLECTING 0xF000F800 (C2S): start collecting with the collector weapon (ref/07c
+// section 14, Plan/19 section 14). The region must allow collecting. Answer: StartCollecting to near. No
+// payload.
+message QueryStartCollecting {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F800
+    name: "QUERY_START_COLLECTING"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy QUERY_STOP_COLLECTING 0xF000F801 (C2S): stop collecting. Answer: StopCollecting to near. No
+// payload.
+message QueryStopCollecting {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F801
+    name: "QUERY_STOP_COLLECTING"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy CREATEMONSTER 0x0000002A (C2S): use a monster-summon item at a ground position (ref/07b section
+// 8.16, Plan/19 section 5.10). The spawn rules (15 m, area, limit) are Plan/18 section 14.
+message CreateMonster {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x2A
+    name: "CREATEMONSTER"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // MAKELONG(ITYPE_ITEM = 0, inventory obj_id)
+  uint32 data = 1 [(flyff.legacy_type) = "u32 dwItemIdRec"];
+  // spawn position chosen by the client
+  Vec3 pos = 2 [(flyff.legacy_type) = "vec3 vPos"];
+}
+
+// legacy DO_ESCAPE 0x00000020 (C2S): the free "escape" command (the Blinkwing escape without an item;
+// ref/07b section 15.1, Plan/19 section 5.7). The client refuses it in the guild-war world. No payload.
+message DoEscape {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x20
+    name: "DO_ESCAPE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy RETURNSCROLL 0xF000D010 (C2S): choose the destination of a return scroll (ref/07b section 15.2,
+// Plan/19 section 5.7.3). VR-004: -1..2. Answer: ReturnScrollNtf.
+message ReturnScrollReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000D010
+    name: "RETURNSCROLL"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // -1 go back to the saved position, 0 Flaris, 1 Saint Morning, 2 Darkon
+  sint32 select = 1 [(flyff.legacy_type) = "i32 nSelect"];
+}
+
+// legacy SEALCHAR_REQ 0xF000F811 (C2S): start sealing the character into a scroll (ref/07c section 15.2).
+// Deferred feature (PL-144, PD-20): refused with DefinedText TID_SBEVE_NOTUSEITEM. No payload.
+message SealCharReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F811
+    name: "SEALCHAR_REQ"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M8";
+}
+
+// legacy SEALCHARCONM_REQ 0xF000F812 (C2S): confirm sealing the character towards a destination player
+// (ref/07c section 15.2). Deferred feature (PL-144, PD-20).
+message SealCharConmReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F812
+    name: "SEALCHARCONM_REQ"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M8";
+  // the destination player id
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32 objidSend"];
+}
+
+// legacy SEALCHARGET_REQ 0xF000F814 (C2S): unseal a sealed character from its scroll (ref/07c section 15.2).
+// Deferred feature (PL-144, PD-20).
+message SealCharGetReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F814
+    name: "SEALCHARGET_REQ"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M8";
+  // MAKELONG(ITYPE_ITEM = 0, inventory obj_id of the sealed-character item)
+  uint32 data = 1 [(flyff.legacy_type) = "u32 dwData"];
+}
+
+// legacy CREATEITEM 0x0003 (S2C); obj_id: 0 (self). Items were added to the bag (pickup, shop, reward, split
+// or merge result; ref/09a section 5.3, Plan/19 section 4.1). The client copies the template into every
+// listed storage id with the matching stack count: the server decides slots and ids, and one item may be
+// split over several stacks. The legacy u8 count is the list length (nums has the same length).
+message CreateItem {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x3
+    name: "CREATEITEM"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M3";
+  // always 0 (ITYPE_ITEM)
+  uint32 item_type = 1 [(flyff.legacy_type) = "u8 nItemType"];
+  // the template item (its num is overridden by `nums`)
+  ItemElem item = 2 [(flyff.legacy_type) = "CItemElem::Serialize"];
+  // storage object ids, one per touched stack
+  repeated uint32 obj_ids = 3 [(flyff.legacy_type) = "u8 n + u8[n]"];
+  // stack count of each entry, parallel to obj_ids
+  repeated sint32 nums = 4 [(flyff.legacy_type) = "i16[n]"];
+}
+
+// legacy MOVEITEM 0x0004 (S2C); obj_id: 0 (self). Two bag slots were swapped (answer of MoveItemReq, and one
+// message per swap of SortInventory); the client swaps them in its own container (ref/09a section 5.3).
+message MoveItemNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x4
+    name: "MOVEITEM"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M3";
+  // ignored (0)
+  uint32 item_type = 1 [(flyff.legacy_type) = "u8 nItemType"];
+  // SLOT index
+  uint32 src_slot = 2 [(flyff.legacy_type) = "u8 nSrcIndex"];
+  // SLOT index
+  uint32 dst_slot = 3 [(flyff.legacy_type) = "u8 nDstIndex"];
+}
+
+// legacy DOEQUIP 0x0006 (S2C); obj_id: the wearer. An item was equipped or unequipped (ref/08 section 12.1,
+// ref/09a section 5.3). Audience: near including self. The wearer's client equips by `obj_id` from its own
+// inventory; the others update the visual from `info`. Only the legacy CUserMng layout is ported (the dead
+// CUser::AddDoEquip layout is not).
+message DoEquipNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x6
+    name: "DOEQUIP"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M3";
+  // inventory object id of the item (in the wearer's bag)
+  uint32 obj_id = 1 [(flyff.legacy_type) = "u8 nId"];
+  // always 0
+  uint32 id_guild = 2 [(flyff.legacy_type) = "u32 idGuild"];
+  // true = equipped, false = unequipped
+  bool equip = 3 [(flyff.legacy_type) = "u8 fEquip"];
+  // item id, option and flag for the visual
+  EquipInfo info = 4 [(flyff.legacy_type) = "raw(EQUIP_INFO) 12 B"];
+  // -1 = derive the part from the item
+  sint32 part = 5 [(flyff.legacy_type) = "i32 nPart"];
+}
+
+// legacy UPDATE_ITEM 0x0018 (S2C); obj_id: 0 (self). One property of one bag item changed (count,
+// durability, upgrade, piercing, cooldown, flags, expiry ...; ref/09a section 5.3, Plan/19 section 4.1). The
+// client applies `param` to the item with that object id; for UI_COOLTIME it also starts the cooldown
+// display of the item group.
+//
+// `param` is one of the UI_* values (_Common/Mover.h): UI_NUM 0 (count; <= 0 deletes the item), UI_HP 1
+// (durability / collector battery), UI_RN 2 (repair number), UI_AO 3 (ability option +N), UI_RAO 4 (resist
+// ability option), UI_IR 5 (item resist element), UI_PIERCING_SIZE 6 (socket count), UI_PIERCING 7 (socket
+// LOWORD(value) = card HIWORD(value)), UI_COOLTIME 8 (like NUM, starts the cooldown), UI_FLAG 9 (value =
+// MAKELONG(slot index, flags); the client applies HIWORD to the item and to the EquipInfo of LOWORD - 168),
+// UI_RANDOMOPTITEMID 10 (stat id, low byte; the 64-bit word travels in UpdateItemEx), UI_KEEPTIME 11
+// (minutes until expiry), UI_REPAIR_NUM 12, UI_ULTIMATE_PIERCING_SIZE 13, UI_ULTIMATE_PIERCING 14 (gem
+// socket LOWORD = ability item HIWORD), UI_PETVIS_SIZE 15, UI_PETVIS_ITEM 16 (slot LOWORD = vis item HIWORD,
+// `time` = minutes), UI_PETVIS_ITEMSWAP 17 (swap slots LOWORD / HIWORD), UI_TRANSFORM_VISPET 18.
+message UpdateItem {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x18
+    name: "UPDATE_ITEM"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M3";
+  // unused by the client, 0
+  sint32 type = 1 [(flyff.legacy_type) = "i8 cType"];
+  // inventory object id
+  uint32 obj_id = 2 [(flyff.legacy_type) = "u8 nId"];
+  // UI_* parameter, see above
+  sint32 param = 3 [(flyff.legacy_type) = "i8 cParam"];
+  // the new value (meaning per param)
+  uint32 value = 4 [(flyff.legacy_type) = "u32 dwValue"];
+  // (__PETVIS) minutes for UI_PETVIS_ITEM, otherwise 0
+  uint32 time = 5 [(flyff.legacy_type) = "u32 dwTime"];
+}
+
+// legacy UPDATE_ITEM_EX 0x0140 (S2C); obj_id: 0 (self). A 64-bit property of one bag item changed: the
+// packed random-option / awakening word (param UI_RANDOMOPTITEMID 10; Plan/19 section 2.2) or the carved
+// couple-ring partner id. The value is bit-packed (bits 62 and 63 are used), so it has no
+// (flyff.js_safe_number) and stays a bigint in TypeScript like ItemElem.random_opt_item_id (Plan/11 section
+// 4.3).
+message UpdateItemEx {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x140
+    name: "UPDATE_ITEM_EX"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // inventory object id
+  uint32 obj_id = 1 [(flyff.legacy_type) = "u8 id"];
+  // UI_* parameter (10 = UI_RANDOMOPTITEMID)
+  sint32 param = 2 [(flyff.legacy_type) = "i8 cParam"];
+  // the 64-bit word
+  sint64 value = 3 [(flyff.legacy_type) = "i64 iValue"];
+}
+
+// legacy QUERYEQUIP 0x00AC (S2C); obj_id: the inspected player. The answer of QueryEquipReq to the requester
+// only: the inspectable data of every equipped part (ref/07b section 9.2, Plan/19 section 5.13.5). The
+// legacy i32 count is the list length.
+message QueryEquipNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xAC
+    name: "QUERYEQUIP"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // one entry per equipped part
+  repeated QueryEquipEntry entries = 1 [(flyff.legacy_type) = "i32 n + n x {...}"];
+}
+
+// legacy POCKET_ATTRIBUTE 0x0200 (S2C); obj_id: 0 (self). Pocket availability or expiry changed (only with
+// features.perm_extrabags off; ref/08 section 12.7, Plan/19 section 3.5).
+message PocketAttribute {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x200
+    name: "POCKET_ATTRIBUTE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  sint32 attribute = 1 [(flyff.legacy_type) = "i32"];
+  sint32 pocket = 2 [(flyff.legacy_type) = "i32"];
+  sint32 data = 3 [(flyff.legacy_type) = "i32"];
+}
+
+// legacy POCKET_ADD_ITEM 0x0201 (S2C); obj_id: 0 (self). An item was put into a pocket.
+message PocketAddItem {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x201
+    name: "POCKET_ADD_ITEM"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  sint32 pocket = 1 [(flyff.legacy_type) = "i32"];
+  ItemElem item = 2 [(flyff.legacy_type) = "CItemElem::Serialize"];
+}
+
+// legacy POCKET_REMOVE_ITEM 0x0202 (S2C); obj_id: 0 (self). Items were taken out of a pocket.
+message PocketRemoveItem {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x202
+    name: "POCKET_REMOVE_ITEM"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  sint32 pocket = 1 [(flyff.legacy_type) = "i32"];
+  sint32 obj_id = 2 [(flyff.legacy_type) = "i32"];
+  sint32 num = 3 [(flyff.legacy_type) = "i16"];
+}
+
+// legacy START_COLLECTING 0x0123 (S2C); obj_id: the collector. Audience: near including self. No payload.
+message StartCollecting {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x123
+    name: "START_COLLECTING"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy STOP_COLLECTING 0x0124 (S2C); obj_id: the collector. Audience: near including self. No payload.
+message StopCollecting {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x124
+    name: "STOP_COLLECTING"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy RESTART_COLLECTING 0x0143 (S2C); obj_id: 0 (self; the legacy header is the player). One item was
+// collected and the next collecting cycle starts (ref/07c section 14).
+message RestartCollecting {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x143
+    name: "RESTART_COLLECTING"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the collected item id
+  uint32 item_id = 1 [(flyff.legacy_type) = "u32"];
+}
+
+// legacy RETURNSCORLL 0x00AD (S2C); obj_id: 0 (self). The answer of ReturnScrollReq 0..2: the client then
+// uses the return scroll item normally (ref/07b section 15.2). No payload.
+message ReturnScrollNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xAD
+    name: "RETURNSCORLL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy SEALCHAR_REQ 0x0144 (S2C); obj_id: 0 (self). The other characters of the account to choose the
+// sealing destination from (ref/09b section 3.12). Deferred feature (PL-144, PD-20): never emitted. The
+// legacy i16 count is the list length.
+message SealCharNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x144
+    name: "SEALCHAR_REQ"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M8";
+  repeated SealCharEntry entries = 1 [(flyff.legacy_type) = "i16 n + n x {i32, u32, str}"];
+}
+
+// legacy SEALCHARGET_REQ 0x0145 (S2C); obj_id: 0 (self). The character was sealed: the client shows
+// TID_DIAG_0023 and returns to the login screen. Deferred feature (PL-144, PD-20): never emitted. No
+// payload.
+message SealCharGetNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x145
+    name: "SEALCHARGET_REQ"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M8";
+}
+
+// One equipped part of QueryEquipNtf.
+message QueryEquipEntry {
+  // equip part 0..30
+  sint32 part = 1 [(flyff.legacy_type) = "i32"];
+  // the packed random-option word; bit-packed like ItemElem.random_opt_item_id, no js_safe_number
+  sint64 random_opt_item_id = 2 [(flyff.legacy_type) = "i64"];
+  Piercing piercing = 3 [(flyff.legacy_type) = "SerializePiercing"];
+  // element
+  uint32 item_resist = 4 [(flyff.legacy_type) = "u8 m_bItemResist"];
+  sint32 resist_ability_option = 5 [(flyff.legacy_type) = "i32 m_nResistAbilityOption"];
+}
+
+// One character of the account in SealCharNtf.
+message SealCharEntry {
+  // character slot
+  sint32 slot = 1 [(flyff.legacy_type) = "i32 nPlayerSlot"];
+  uint32 id_player = 2 [(flyff.legacy_type) = "u32 idPlayer"];
+  string name = 3 [(flyff.legacy_type) = "str<=42"];
+}

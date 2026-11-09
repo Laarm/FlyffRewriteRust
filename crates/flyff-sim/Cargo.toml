@@ -1,0 +1,25 @@
+[package]
+name = "flyff-sim"
+description = "Deterministic action state machine, kinematics, collision, motion clock, pose evaluation (Plan/31; tier S)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+default = []
+# The command/input recorder behind `SimWorld::debug_record`/`debug_export` (Plan/31 §20.6; the export is a
+
+[dependencies]
+flyff-common = { workspace = true }
+flyff-formats = { workspace = true }
+libm = { workspace = true }
+glam = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
+

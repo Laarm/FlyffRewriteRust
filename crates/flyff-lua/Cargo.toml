@@ -1,0 +1,26 @@
+[package]
+name = "flyff-lua"
+description = "mlua (Lua 5.3, vendored) host, VFS-backed dofile, ScriptLib, dialog runtime (Plan/20; tier G)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+default = []
+
+[dependencies]
+flyff-common = { workspace = true, features = ["rt"] }
+flyff-vfs = { workspace = true }
+flyff-data = { workspace = true, features = ["load"] }
+# `serde`: `LuaSerdeExt` for the typed results of `call` / `global` (Plan/20 §3.1 `value.rs`)
+mlua = { workspace = true, features = ["serde"] }
+serde = { workspace = true }
+sha2 = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+

@@ -1,0 +1,59 @@
+# Additional lint set for tier G (game thread): flyff-game, flyff-lua (Plan/02 §11.3).
+
+[[disallowed-types]]
+path = "std::sync::Mutex"
+reason = "game state is owned by the game thread (D2): use channels"
+
+[[disallowed-types]]
+path = "std::sync::RwLock"
+reason = "game state is owned by the game thread (D2): use channels"
+
+[[disallowed-types]]
+path = "parking_lot::Mutex"
+crate = "parking_lot"
+reason = "game state is owned by the game thread (D2): use channels"
+
+[[disallowed-types]]
+path = "parking_lot::RwLock"
+crate = "parking_lot"
+reason = "game state is owned by the game thread (D2): use channels"
+
+[[disallowed-methods]]
+path = "std::thread::spawn"
+reason = "the game thread never spawns"
+
+[[disallowed-methods]]
+path = "std::thread::sleep"
+reason = "the game thread never blocks (except the tick wait)"
+
+[[disallowed-methods]]
+path = "std::fs::read"
+reason = "all resource access goes through flyff-vfs"
+
+[[disallowed-methods]]
+path = "std::fs::read_to_string"
+reason = "all resource access goes through flyff-vfs"
+
+[[disallowed-methods]]
+path = "std::fs::File::open"
+reason = "all resource access goes through flyff-vfs"
+
+[[disallowed-methods]]
+path = "std::fs::File::create"
+reason = "persistence goes through the persistence actor"
+
+[[disallowed-methods]]
+path = "std::fs::write"
+reason = "persistence goes through the persistence actor"
+
+[[disallowed-methods]]
+path = "std::env::var"
+reason = "configuration comes from the Config struct"
+
+[[disallowed-methods]]
+path = "std::env::vars"
+reason = "configuration comes from the Config struct"
+
+[[disallowed-methods]]
+path = "std::process::exit"
+reason = "controlled shutdown (D2)"

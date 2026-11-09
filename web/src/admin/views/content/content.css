@@ -1,0 +1,236 @@
+/* The World & Content tabs (Plan/25 section 7): rates, event flags, modifiers, weather, spawn lines, census, content panels. */
+.content-tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.content-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.content-h {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+.content-h4 {
+  margin: var(--s-3) 0 var(--s-2);
+  font-size: var(--fs);
+  font-weight: 600;
+}
+
+.content-section p {
+  margin: 0;
+}
+
+.content-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s-3);
+}
+
+.content-toolbar .adm-field {
+  min-width: 180px;
+}
+
+.content-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s-3);
+}
+
+.content-rate {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.content-slider {
+  width: 160px;
+  accent-color: var(--accent);
+}
+
+.content-rate__input {
+  width: 90px;
+}
+
+.content-effective {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-lg);
+}
+
+.content-state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.content-running {
+  margin: 0;
+  padding-left: var(--s-4);
+}
+
+.content-weather {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s-3);
+}
+
+.content-bar {
+  display: inline-block;
+  width: 60px;
+  height: 6px;
+  margin-left: var(--s-2);
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--surface-3);
+  vertical-align: middle;
+}
+
+.content-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.content-alive {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-variant-numeric: tabular-nums;
+}
+
+.content-low {
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.content-area {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.content-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--s-3);
+}
+
+.content-card {
+  padding: var(--s-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.content-card h4 {
+  margin: 0 0 var(--s-1);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.content-card__value {
+  font-size: var(--fs-xl);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.content-two {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s-4);
+  align-items: start;
+}
+
+@media (max-width: 1000px) {
+  .content-two {
+    grid-template-columns: 1fr;
+  }
+}
+
+.content-panels {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: var(--s-4);
+  align-items: start;
+}
+
+@media (max-width: 800px) {
+  .content-panels {
+    grid-template-columns: 1fr;
+  }
+}
+
+.content-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.content-nav__item {
+  width: 100%;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.content-nav__item:hover {
+  background: var(--surface-2);
+}
+
+.content-nav__item.is-selected {
+  border-color: var(--border-strong);
+  background: var(--accent-soft);
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* table cells do not wrap; a long text wraps inside its own box */
+.content-wrap {
+  display: inline-block;
+  max-width: 54ch;
+  white-space: normal;
+}
+
+/* The name of a spawn line wraps, so a long boss name does not push the last column off the screen. */
+.content-what {
+  max-width: 30ch;
+}
+
+.content-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--s-2) var(--s-4);
+  margin: var(--s-3) 0 0;
+}
+
+.content-facts dt {
+  color: var(--text-muted);
+}
+
+.content-facts dd {
+  margin: 0;
+}
+
+.content-facts ul {
+  margin: 0;
+  padding-left: var(--s-4);
+}

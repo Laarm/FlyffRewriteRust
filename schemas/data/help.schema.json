@@ -1,0 +1,231 @@
+{
+  "$defs": {
+    "GuideStep": {
+      "description": "One step of the guide system (`GUIDE_STRUCT`).",
+      "properties": {
+        "beginner": {
+          "description": "`BEGINNER`.",
+          "type": "boolean"
+        },
+        "condition": {
+          "description": "`CONDITION` (`NO_CONDITION` 0 ... `OPEN_WINDOW` 7).",
+          "format": "int32",
+          "type": "integer"
+        },
+        "event": {
+          "description": "The first token: a `GUIDE_EVENT_*` or `APP_*` value (`m_nEventMsg`).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "flag": {
+          "description": "`FLAG`.",
+          "type": "boolean"
+        },
+        "input_char": {
+          "description": "`INPUTCHAR`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "input_str": {
+          "description": "`INPUTSTR` (the string and any further tokens up to the closing brace, concatenated).",
+          "type": "string"
+        },
+        "key": {
+          "description": "`KEY`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "level": {
+          "description": "`LEVEL` (the tutorial level the step belongs to).",
+          "format": "int32",
+          "type": "integer"
+        },
+        "sequence": {
+          "description": "`SEQUENCE` (0 = an event guide).",
+          "format": "int32",
+          "type": "integer"
+        },
+        "show_level": {
+          "description": "`SHOWLEVEL`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "text": {
+          "description": "The guide text (IDS key resolved).",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event",
+        "beginner",
+        "show_level",
+        "flag",
+        "key",
+        "text",
+        "sequence",
+        "level",
+        "condition",
+        "input_char",
+        "input_str"
+      ],
+      "type": "object"
+    },
+    "HelpBundle": {
+      "description": "`help` (lazy): the help family, the guide and the text panels.",
+      "properties": {
+        "faq": {
+          "description": "The FAQ (answers carry four leading spaces).",
+          "items": {
+            "$ref": "#/$defs/HelpEntry"
+          },
+          "type": "array"
+        },
+        "guide": {
+          "description": "The guide steps.",
+          "items": {
+            "$ref": "#/$defs/GuideStep"
+          },
+          "type": "array"
+        },
+        "instant": {
+          "description": "Instant-help lines.",
+          "items": {
+            "$ref": "#/$defs/HelpEntry"
+          },
+          "type": "array"
+        },
+        "notice": {
+          "description": "The login notice.",
+          "type": "string"
+        },
+        "panels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The text panels of `Client/` by lower-case file stem (without the login notice).",
+          "type": "object"
+        },
+        "tips": {
+          "description": "Login tips (four leading spaces).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "topics": {
+          "description": "Help topics in file order.",
+          "items": {
+            "$ref": "#/$defs/HelpTopic"
+          },
+          "type": "array"
+        },
+        "tree": {
+          "description": "The help tree.",
+          "items": {
+            "$ref": "#/$defs/HelpTreeNode"
+          },
+          "type": "array"
+        },
+        "tutorial": {
+          "description": "Tutorial pages.",
+          "items": {
+            "$ref": "#/$defs/HelpEntry"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "topics",
+        "tree",
+        "faq",
+        "tips",
+        "instant",
+        "tutorial",
+        "guide",
+        "panels",
+        "notice"
+      ],
+      "title": "HelpBundle",
+      "type": "object"
+    },
+    "HelpEntry": {
+      "description": "A titled text: an FAQ entry, an instant-help line, a tutorial page.",
+      "properties": {
+        "key": {
+          "description": "The question or title.",
+          "type": "string"
+        },
+        "text": {
+          "description": "The answer or content.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "text"
+      ],
+      "type": "object"
+    },
+    "HelpTopic": {
+      "description": "One help topic (`help.inc`).",
+      "properties": {
+        "key": {
+          "description": "The topic key.",
+          "type": "string"
+        },
+        "text": {
+          "description": "`\"   \" + join(strings, \"\\n\\n   \")`.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "text"
+      ],
+      "type": "object"
+    },
+    "HelpTreeNode": {
+      "description": "A node of the help tree (`treeHelp.inc`).",
+      "properties": {
+        "children": {
+          "description": "The sub-nodes (depth at most 3 in the data).",
+          "items": {
+            "$ref": "#/$defs/HelpTreeNode"
+          },
+          "type": "array"
+        },
+        "key": {
+          "description": "The keyword shown in the tree (also the key of a help topic).",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "children"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`help.<h16>.json`: the envelope of the `help` bundle (schema version 1).",
+  "properties": {
+    "bundle": {
+      "const": "help"
+    },
+    "data": {
+      "$ref": "#/$defs/HelpBundle"
+    },
+    "schema": {
+      "const": 1
+    }
+  },
+  "required": [
+    "bundle",
+    "schema",
+    "data"
+  ],
+  "title": "HelpBundleEnvelope",
+  "type": "object"
+}

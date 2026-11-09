@@ -1,0 +1,832 @@
+// Envelopes (Plan/11 section 3.1). The session, lobby, world, movement, character, taskbar, combat, skill, pvp,
+// inventory, upgrade, shop, trade, bank, mail, pet, npc, quest, chat and notice blocks are filled;
+// WP-PROTO-04 generates the remaining entries from Plan/11a. Each file's entries are fenced by BEGIN/END
+// comments so parallel WPs never touch the same lines (Plan/11 section 3.1): add a message only inside the
+// fence of its own file, with the tag of Plan/11a section 6. A tag is never reused.
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+import "flyff/v1/bank.proto";
+import "flyff/v1/character.proto";
+import "flyff/v1/chat.proto";
+import "flyff/v1/combat.proto";
+import "flyff/v1/event.proto";
+import "flyff/v1/gm.proto";
+import "flyff/v1/guild.proto";
+import "flyff/v1/guild_siege.proto";
+import "flyff/v1/guild_war.proto";
+import "flyff/v1/housing.proto";
+import "flyff/v1/inventory.proto";
+import "flyff/v1/lobby.proto";
+import "flyff/v1/lord.proto";
+import "flyff/v1/mail.proto";
+import "flyff/v1/messenger.proto";
+import "flyff/v1/movement.proto";
+import "flyff/v1/notice.proto";
+import "flyff/v1/npc.proto";
+import "flyff/v1/party.proto";
+import "flyff/v1/pet.proto";
+import "flyff/v1/pvp.proto";
+import "flyff/v1/quest.proto";
+import "flyff/v1/relation.proto";
+import "flyff/v1/secret_room.proto";
+import "flyff/v1/session.proto";
+import "flyff/v1/shop.proto";
+import "flyff/v1/skill.proto";
+import "flyff/v1/taskbar.proto";
+import "flyff/v1/trade.proto";
+import "flyff/v1/upgrade.proto";
+import "flyff/v1/world.proto";
+
+// C->S: exactly one message per WebSocket binary message.
+message ClientEnvelope {
+  oneof msg {
+    // BEGIN hot range (tags 1..15)
+    PlayerMoveState player_move_state = 1;
+    DestPosReq dest_pos_req = 2;
+    SetDestObjReq set_dest_obj_req = 3;
+    MeleeAttackReq melee_attack_req = 4;
+    UseSkillReq use_skill_req = 5;
+    ChatReq chat_req = 6;
+    MotionReq motion_req = 7;
+    SetTargetReq set_target_req = 8;
+    DoUseItem do_use_item = 9;
+    MagicAttackReq magic_attack_req = 10;
+    RangeAttackReq range_attack_req = 11;
+    MoveItemReq move_item_req = 12;
+    ServerTimeReq server_time_req = 13;
+    ScriptDlg script_dlg = 14;
+    // END hot range
+    // BEGIN session.proto (tags 16..47)
+    Hello hello = 16;
+    ClientUiSave client_ui_save = 17;
+    // END session.proto
+    // BEGIN lobby.proto (tags 48..79)
+    CreatePlayer create_player = 48;
+    DelPlayer del_player = 49;
+    EnterWorld enter_world = 50;
+    ReqLeave req_leave = 51;
+    ReturnToCharSelect return_to_char_select = 52;
+    // END lobby.proto
+    // BEGIN world.proto (tags 80..111)
+    CtrlCoolTimeCancel ctrl_cool_time_cancel = 80;
+    // END world.proto
+    // BEGIN movement.proto (tags 112..143)
+    // END movement.proto
+    // BEGIN character.proto (tags 144..191)
+    IncStatLevel inc_stat_level = 144;
+    ModifyStatus modify_status = 145;
+    UpdateJob update_job = 146;
+    StateModeReq state_mode_req = 147;
+    ChangeMode change_mode = 148;
+    TutorialState tutorial_state = 149;
+    ExpStop exp_stop = 150;
+    HideCoatReq hide_coat_req = 151;
+    OptionEnableRenderMask option_enable_render_mask = 152;
+    QueryEquipSetting query_equip_setting = 153;
+    // END character.proto
+    // BEGIN combat.proto (tags 192..223)
+    RevivalReq revival_req = 192;
+    RevivalToLodestarReq revival_to_lodestar_req = 193;
+    SetLodelight set_lodelight = 194;
+    ResurrectionOk resurrection_ok = 195;
+    ResurrectionCancel resurrection_cancel = 196;
+    // END combat.proto
+    // BEGIN skill.proto (tags 224..255)
+    DoUseSkillPointReq do_use_skill_point_req = 224;
+    LegendSkillUpStart legend_skill_up_start = 225;
+    TeleSkill tele_skill = 226;
+    EndSkillQueueReq end_skill_queue_req = 227;
+    SendToServerAp send_to_server_ap = 228;
+    // END skill.proto
+    // BEGIN pvp.proto (tags 256..287)
+    // reserved 262 to 265 (was WantedGold, WantedListReq, WantedInfoReq, WantedNameReq)
+    DuelRequestReq duel_request_req = 256;
+    DuelYes duel_yes = 257;
+    DuelNoReq duel_no_req = 258;
+    DuelPartyRequestReq duel_party_request_req = 259;
+    DuelPartyYes duel_party_yes = 260;
+    DuelPartyNoReq duel_party_no_req = 261;
+    // END pvp.proto
+    // BEGIN inventory.proto (tags 288..319)
+    DropItem drop_item = 288;
+    DoEquipReq do_equip_req = 289;
+    DoUseItemTarget do_use_item_target = 290;
+    DoUseItemInput do_use_item_input = 291;
+    RemoveInvenItem remove_inven_item = 292;
+    QueryEquipReq query_equip_req = 293;
+    SortInventory sort_inventory = 294;
+    AvailPocket avail_pocket = 295;
+    MoveItemPocket move_item_pocket = 296;
+    QueryStartCollecting query_start_collecting = 297;
+    QueryStopCollecting query_stop_collecting = 298;
+    CreateMonster create_monster = 299;
+    DoEscape do_escape = 300;
+    ReturnScrollReq return_scroll_req = 301;
+    SealCharReq seal_char_req = 302;
+    SealCharConmReq seal_char_conm_req = 303;
+    SealCharGetReq seal_char_get_req = 304;
+    // END inventory.proto
+    // BEGIN upgrade.proto (tags 320..351)
+    Enchant enchant = 320;
+    SmeltSafetyReq smelt_safety_req = 321;
+    PiercingSize piercing_size = 322;
+    PiercingReq piercing_req = 323;
+    PiercingRemove piercing_remove = 324;
+    RemoveAttributeReq remove_attribute_req = 325;
+    ChangeAttribute change_attribute = 326;
+    RandomScroll random_scroll = 327;
+    ItemTransy item_transy = 328;
+    RemoveItemLevelDown remove_item_level_down = 329;
+    CommercialElemReq commercial_elem_req = 330;
+    Awakening awakening = 331;
+    BlessednessCancel blessedness_cancel = 332;
+    ItemSelectAwakeningValueReq item_select_awakening_value_req = 333;
+    RandomOptionRetry random_option_retry = 334;
+    UltimateMakeItem ultimate_make_item = 335;
+    UltimateMakeGem ultimate_make_gem = 336;
+    UltimateTransWeapon ultimate_trans_weapon = 337;
+    UltimateEnchantWeapon ultimate_enchant_weapon = 338;
+    UltimateSetGem ultimate_set_gem = 339;
+    UltimateRemoveGem ultimate_remove_gem = 340;
+    ExchangeReq exchange_req = 341;
+    // END upgrade.proto
+    // BEGIN shop.proto (tags 352..383)
+    SetHairReq set_hair_req = 352;
+    ChangeFaceReq change_face_req = 353;
+    OpenShopWndReq open_shop_wnd_req = 354;
+    CloseShopWnd close_shop_wnd = 355;
+    BuyItem buy_item = 356;
+    BuyChipItem buy_chip_item = 357;
+    SellItem sell_item = 358;
+    QuickSell quick_sell = 359;
+    // END shop.proto
+    // BEGIN trade.proto (tags 384..415)
+    ConfirmTradeReq confirm_trade_req = 384;
+    ConfirmTradeCancelReq confirm_trade_cancel_req = 385;
+    TradeReq trade_req = 386;
+    TradePutReq trade_put_req = 387;
+    TradePullReq trade_pull_req = 388;
+    TradePutGoldReq trade_put_gold_req = 389;
+    TradeOkReq trade_ok_req = 390;
+    TradeConfirm trade_confirm = 391;
+    TradeCancelReq trade_cancel_req = 392;
+    PVendorOpenReq p_vendor_open_req = 393;
+    PVendorCloseReq p_vendor_close_req = 394;
+    RegisterPVendorItemReq register_p_vendor_item_req = 395;
+    UnregisterPVendorItemReq unregister_p_vendor_item_req = 396;
+    QueryPVendorItem query_p_vendor_item = 397;
+    BuyPVendorItem buy_p_vendor_item = 398;
+    EnterChatting enter_chatting = 399;
+    ChattingReq chatting_req = 400;
+    OpenChattingRoom open_chatting_room = 401;
+    CloseChattingRoom close_chatting_room = 402;
+    // END trade.proto
+    // BEGIN bank.proto (tags 416..447)
+    OpenBankWnd open_bank_wnd = 416;
+    CloseBankWnd close_bank_wnd = 417;
+    PutItemBack put_item_back = 418;
+    GetItemBack get_item_back = 419;
+    PutGoldBack put_gold_back = 420;
+    GetGoldBack get_gold_back = 421;
+    PutBackToBank put_back_to_bank = 422;
+    ChangeBankPassReq change_bank_pass_req = 423;
+    ConfirmBank confirm_bank = 424;
+    // END bank.proto
+    // BEGIN mail.proto (tags 448..479)
+    QueryPostMail query_post_mail = 448;
+    QueryRemoveMail query_remove_mail = 449;
+    QueryGetMailItem query_get_mail_item = 450;
+    QueryGetMailGold query_get_mail_gold = 451;
+    ReadMail read_mail = 452;
+    QueryMailBoxReq query_mail_box_req = 453;
+    // END mail.proto
+    // BEGIN pet.proto (tags 480..511)
+    PetReleaseReq pet_release_req = 480;
+    UsePetFeed use_pet_feed = 481;
+    MakePetFeed make_pet_feed = 482;
+    PetTamerMistake pet_tamer_mistake = 483;
+    PetTamerMiracle pet_tamer_miracle = 484;
+    FeedPocketInactive feed_pocket_inactive = 485;
+    QuePetResurrection que_pet_resurrection = 486;
+    PickupPetAwakeningCancel pickup_pet_awakening_cancel = 487;
+    ClearPetName clear_pet_name = 488;
+    TransformItem transform_item = 489;
+    VisPetRemoveVis vis_pet_remove_vis = 490;
+    VisPetSwapVis vis_pet_swap_vis = 491;
+    PetFilter pet_filter = 492;
+    CreateAngel create_angel = 493;
+    AngelBuff angel_buff = 494;
+    // END pet.proto
+    // BEGIN npc.proto (tags 512..543)
+    NpcBuff npc_buff = 512;
+    Teleporter teleporter = 513;
+    Tele16 tele16 = 514;
+    HeavenTowerTeleport heaven_tower_teleport = 515;
+    ArenaEnter arena_enter = 516;
+    ArenaExit arena_exit = 517;
+    // END npc.proto
+    // BEGIN quest.proto (tags 544..575)
+    RemoveQuestReq remove_quest_req = 544;
+    QuestCheck quest_check = 545;
+    QuestHelperReqNpcPos quest_helper_req_npc_pos = 546;
+    // END quest.proto
+    // BEGIN chat.proto (tags 576..607)
+    BlockReq block_req = 576;
+    // END chat.proto
+    // BEGIN notice.proto (tags 608..639)
+    // END notice.proto
+    // BEGIN party.proto (tags 640..671)
+    MemberRequest member_request = 640;
+    MemberRequestCancel member_request_cancel = 641;
+    AddPartyMember add_party_member = 642;
+    RemovePartyMember remove_party_member = 643;
+    ChangeTroup change_troup = 644;
+    ChanPartyName chan_party_name = 645;
+    PartyChangeItemModeReq party_change_item_mode_req = 646;
+    PartyChangeExpModeReq party_change_exp_mode_req = 647;
+    PartyChangeLeader party_change_leader = 648;
+    PartySkillUse party_skill_use = 649;
+    JoinPartyReq join_party_req = 650;
+    PartyAllowJoinReq party_allow_join_req = 651;
+    SetNaviPointReq set_navi_point_req = 652;
+    // END party.proto
+    // BEGIN guild.proto (tags 672..719)
+    GuildInviteReq guild_invite_req = 672;
+    IgnoreGuildInvite ignore_guild_invite = 673;
+    AddGuildMemberReq add_guild_member_req = 674;
+    RemoveGuildMemberReq remove_guild_member_req = 675;
+    DestroyGuildReq destroy_guild_req = 676;
+    GuildMemberLevelReq guild_member_level_req = 677;
+    GuildClassReq guild_class_req = 678;
+    GuildNicknameReq guild_nickname_req = 679;
+    ChgMasterReq chg_master_req = 680;
+    GuildAuthorityReq guild_authority_req = 681;
+    GuildPenyaReq guild_penya_req = 682;
+    GuildSetNameReq guild_set_name_req = 683;
+    GuildLogoReq guild_logo_req = 684;
+    GuildContributionReq guild_contribution_req = 685;
+    GuildNoticeReq guild_notice_req = 686;
+    CreateGuildCloak create_guild_cloak = 687;
+    QuerySetGuildName query_set_guild_name = 688;
+    GuildBankWndReq guild_bank_wnd_req = 689;
+    GuildBankWndClose guild_bank_wnd_close = 690;
+    PutItemGuildBankReq put_item_guild_bank_req = 691;
+    GetItemGuildBankReq get_item_guild_bank_req = 692;
+    GuildBankMoveItem guild_bank_move_item = 693;
+    GuildLogViewReq guild_log_view_req = 694;
+    // END guild.proto
+    // BEGIN guild_war.proto (tags 720..751)
+    DeclGuildWarReq decl_guild_war_req = 720;
+    AcptGuildWarReq acpt_guild_war_req = 721;
+    SurrenderReq surrender_req = 722;
+    QueryTruceReq query_truce_req = 723;
+    AcptTruce acpt_truce = 724;
+    // END guild_war.proto
+    // BEGIN guild_siege.proto (tags 752..783)
+    InGuildCombat in_guild_combat = 752;
+    OutGuildCombat out_guild_combat = 753;
+    JoinGuildCombat join_guild_combat = 754;
+    SelectPlayerGuildCombat select_player_guild_combat = 755;
+    RequestStatus request_status = 756;
+    SelectMapGuildCombat select_map_guild_combat = 757;
+    GetPenyaGuildGuildCombat get_penya_guild_guild_combat = 758;
+    GetPenyaPlayerGuildCombat get_penya_player_guild_combat = 759;
+    TeleGuildCombat tele_guild_combat = 760;
+    PlayerPointGuildCombat player_point_guild_combat = 761;
+    Gc1to1TenderOpenWndReq gc1to1_tender_open_wnd_req = 762;
+    Gc1to1TenderViewReq gc1to1_tender_view_req = 763;
+    Gc1to1Tender gc1to1_tender = 764;
+    Gc1to1TenderCancel gc1to1_tender_cancel = 765;
+    Gc1to1TenderFailed gc1to1_tender_failed = 766;
+    Gc1to1MemberLineUpOpenWndReq gc1to1_member_line_up_open_wnd_req = 767;
+    Gc1to1MemberLineUp gc1to1_member_line_up = 768;
+    Gc1to1TeleportToNpc gc1to1_teleport_to_npc = 769;
+    Gc1to1TeleportToStage gc1to1_teleport_to_stage = 770;
+    // END guild_siege.proto
+    // BEGIN messenger.proto (tags 784..815)
+    AddFriendReq add_friend_req = 784;
+    AddFriendRequestReq add_friend_request_req = 785;
+    AddFriendCancelReq add_friend_cancel_req = 786;
+    AddFriendNameRequestReq add_friend_name_request_req = 787;
+    GetFriendStateReq get_friend_state_req = 788;
+    SetFriendStateReq set_friend_state_req = 789;
+    FriendInterceptStateReq friend_intercept_state_req = 790;
+    RemoveFriendReq remove_friend_req = 791;
+    QueryPlayerDataReq query_player_data_req = 792;
+    QueryPlayerData2 query_player_data2 = 793;
+    QuerySetPlayerNameReq query_set_player_name_req = 794;
+    SendTag send_tag = 795;
+    SummonFriend summon_friend = 796;
+    SummonFriendConfirm summon_friend_confirm = 797;
+    SummonFriendCancel summon_friend_cancel = 798;
+    SummonParty summon_party = 799;
+    SummonPartyConfirm summon_party_confirm = 800;
+    // END messenger.proto
+    // BEGIN relation.proto (tags 816..847)
+    Propose propose = 816;
+    Refuse refuse = 817;
+    CoupleReq couple_req = 818;
+    Decouple decouple = 819;
+    CampusInviteReq campus_invite_req = 820;
+    CampusAccept campus_accept = 821;
+    CampusRefuse campus_refuse = 822;
+    CampusRemoveMember campus_remove_member = 823;
+    HonorListReq honor_list_req = 824;
+    HonorChangeReq honor_change_req = 825;
+    Cheering cheering = 826;
+    // END relation.proto
+    // BEGIN event.proto (tags 848..879)
+    KawibawiboStart kawibawibo_start = 848;
+    KawibawiboGetItem kawibawibo_get_item = 849;
+    ReassembleStart reassemble_start = 850;
+    ReassembleOpenWnd reassemble_open_wnd = 851;
+    AlphabetOpenWnd alphabet_open_wnd = 852;
+    AlphabetStart alphabet_start = 853;
+    FiveSystemOpenWnd five_system_open_wnd = 854;
+    FiveSystemDestroyWnd five_system_destroy_wnd = 855;
+    FiveSystemBet five_system_bet = 856;
+    FiveSystemStart five_system_start = 857;
+    QuizEntrance quiz_entrance = 858;
+    QuizTeleport quiz_teleport = 859;
+    RainbowRacePrevRankingOpenWndReq rainbow_race_prev_ranking_open_wnd_req = 860;
+    RainbowRaceApplicationOpenWndReq rainbow_race_application_open_wnd_req = 861;
+    RainbowRaceApplication rainbow_race_application = 862;
+    RainbowRaceMiniGamePacket rainbow_race_mini_game_packet = 863;
+    RainbowRaceReqFinish rainbow_race_req_finish = 864;
+    // END event.proto
+    // BEGIN lord.proto (tags 880..911)
+    ElectionAddDepositReq election_add_deposit_req = 880;
+    ElectionSetPledgeReq election_set_pledge_req = 881;
+    ElectionIncVoteReq election_inc_vote_req = 882;
+    LEventCreateReq l_event_create_req = 883;
+    LordSkillUseReq lord_skill_use_req = 884;
+    TaxSetTaxRate tax_set_tax_rate = 885;
+    // END lord.proto
+    // BEGIN secret_room.proto (tags 912..943)
+    SecretRoomTender secret_room_tender = 912;
+    SecretRoomLineUpMember secret_room_line_up_member = 913;
+    SecretRoomTenderOpenWndReq secret_room_tender_open_wnd_req = 914;
+    SecretRoomLineUpOpenWndReq secret_room_line_up_open_wnd_req = 915;
+    SecretRoomEntrance secret_room_entrance = 916;
+    SecretRoomTeleportToNpc secret_room_teleport_to_npc = 917;
+    SecretRoomTenderViewReq secret_room_tender_view_req = 918;
+    SecretRoomTenderCancelReturn secret_room_tender_cancel_return = 919;
+    SecretRoomTeleportToDungeon secret_room_teleport_to_dungeon = 920;
+    // END secret_room.proto
+    // BEGIN housing.proto (tags 944..975)
+    HousingSetupFurnitureReq housing_setup_furniture_req = 944;
+    HousingVisitRoom housing_visit_room = 945;
+    HousingSetVisitAllowReq housing_set_visit_allow_req = 946;
+    HousingReqVisitableList housing_req_visitable_list = 947;
+    HousingGoOut housing_go_out = 948;
+    GuildHouseBuy guild_house_buy = 949;
+    GuildHousePacketReq guild_house_packet_req = 950;
+    GuildHouseEnter guild_house_enter = 951;
+    GuildHouseGoOut guild_house_go_out = 952;
+    // END housing.proto
+    // BEGIN gm.proto (tags 976..1007)
+    MoverFocusReq mover_focus_req = 976;
+    // END gm.proto
+    // BEGIN taskbar.proto (tags 1008..1039)
+    AddAppletTaskBar add_applet_task_bar = 1008;
+    RemoveAppletTaskBar remove_applet_task_bar = 1009;
+    AddItemTaskBar add_item_task_bar = 1010;
+    RemoveItemTaskBar remove_item_task_bar = 1011;
+    SkillTaskBar skill_task_bar = 1012;
+    // END taskbar.proto
+  }
+  // pvp.proto: the wanted board was dropped (Plan/11a R1-1, PL-142); the tags are never reused
+  reserved 262 to 265;
+}
+
+// S->C: one WebSocket binary message per session per flush.
+message ServerBatch {
+  // appended entry by entry (Plan/11 section 3.4)
+  repeated ServerMsg msgs = 1;
+  // 60 Hz sim frames completed at the flush: 4*(n+1) after tick n; written last, once
+  uint64 server_frame = 2 [(flyff.js_safe_number) = true];
+}
+
+message ServerMsg {
+  // subject object (legacy per-entry OBJID); 0 = none (legacy NULL_ID)
+  uint32 obj_id = 1;
+  oneof msg {
+    // BEGIN hot range (tags 2..15)
+    MoverStateNtf mover_state_ntf = 2;
+    MoverKeyframe mover_keyframe = 3;
+    DestPosNtf dest_pos_ntf = 4;
+    SetDestObjNtf set_dest_obj_ntf = 5;
+    Damage damage = 6;
+    SetPointParam set_point_param = 7;
+    MeleeAttackNtf melee_attack_ntf = 8;
+    DelObj del_obj = 9;
+    SpawnNpc spawn_npc = 10;
+    SpawnPlayer spawn_player = 11;
+    SpawnItem spawn_item = 12;
+    MotionNtf motion_ntf = 13;
+    ProjectileSpawn projectile_spawn = 14;
+    ChatNtf chat_ntf = 15;
+    // END hot range
+    // BEGIN session.proto (tags 16..47)
+    ServerTime server_time = 16;
+    HelloAck hello_ack = 17;
+    Kick kick = 18;
+    AssetsPreparing assets_preparing = 19;
+    ClientUiLoad client_ui_load = 20;
+    // END session.proto
+    // BEGIN lobby.proto (tags 48..79)
+    LobbyError lobby_error = 48;
+    CharList char_list = 49;
+    // END lobby.proto
+    // BEGIN world.proto (tags 80..111)
+    WorldReadInfo world_read_info = 80;
+    SpawnSelf spawn_self = 81;
+    SpawnCtrl spawn_ctrl = 82;
+    Replace replace = 83;
+    GameTimer game_timer = 84;
+    Environment environment = 85;
+    EnvironmentAll environment_all = 86;
+    CreateSfxObj create_sfx_obj = 87;
+    RemoveSfxObj remove_sfx_obj = 88;
+    PlayMusic play_music = 89;
+    PlaySound play_sound = 90;
+    CommonPlace common_place = 91;
+    ExpBoxCoolTime exp_box_cool_time = 92;
+    ExpBoxCoolTimeCancel exp_box_cool_time_cancel = 93;
+    // END world.proto
+    // BEGIN movement.proto (tags 112..143)
+    DestAngle dest_angle = 112;
+    SetMovePattern set_move_pattern = 113;
+    SetSpeedFactor set_speed_factor = 114;
+    MotionArrive motion_arrive = 115;
+    SetPos set_pos = 116;
+    PushPower push_power = 117;
+    SendActMsg send_act_msg = 118;
+    // END movement.proto
+    // BEGIN character.proto (tags 144..191)
+    SetDestParam set_dest_param = 144;
+    ResetDestParam reset_dest_param = 145;
+    ResetDestParamSync reset_dest_param_sync = 146;
+    SetExperience set_experience = 147;
+    SetLevel set_level = 148;
+    SetFxp set_fxp = 149;
+    SetFlightLevel set_flight_level = 150;
+    SetGrowthLearningPoint set_growth_learning_point = 151;
+    SetStatLevel set_stat_level = 152;
+    SetState set_state = 153;
+    JobChanged job_changed = 154;
+    SmMode sm_mode = 155;
+    SmModeAll sm_mode_all = 156;
+    ResistSmMode resist_sm_mode = 157;
+    SetFame set_fame = 158;
+    ModifyMode modify_mode = 159;
+    StateModeNtf state_mode_ntf = 160;
+    SetFuel set_fuel = 161;
+    SetTutorialState set_tutorial_state = 162;
+    HideCoatNtf hide_coat_ntf = 163;
+    SetScale set_scale = 164;
+    Disguise disguise = 165;
+    NoDisguise no_disguise = 166;
+    AddGameJoin add_game_join = 167;
+    // END character.proto
+    // BEGIN combat.proto (tags 192..223)
+    MagicAttackNtf magic_attack_ntf = 192;
+    RangeAttackNtf range_attack_ntf = 193;
+    SpAttack sp_attack = 194;
+    MoverDeath mover_death = 195;
+    RevivalNtf revival_ntf = 196;
+    RevivalToLodestarNtf revival_to_lodestar_ntf = 197;
+    Resurrection resurrection = 198;
+    ResurrectionMessage resurrection_message = 199;
+    SetTargetNtf set_target_ntf = 200;
+    ClearTarget clear_target = 201;
+    SetStun set_stun = 202;
+    DpsUpdate dps_update = 203;
+    ProjectileHit projectile_hit = 204;
+    // END combat.proto
+    // BEGIN skill.proto (tags 224..255)
+    UseSkillNtf use_skill_ntf = 224;
+    ClearUseSkill clear_use_skill = 225;
+    DoApplyUseSkill do_apply_use_skill = 226;
+    SetSkillState set_skill_state = 227;
+    RemoveSkillInfluence remove_skill_influence = 228;
+    RemoveAllSkillInfluence remove_all_skill_influence = 229;
+    SetSkillLevel set_skill_level = 230;
+    CmdSetSkillLevel cmd_set_skill_level = 231;
+    InitSkillPoint init_skill_point = 232;
+    DoUseSkillPointNtf do_use_skill_point_ntf = 233;
+    LegendSkillUpResult legend_skill_up_result = 234;
+    CommonSkill common_skill = 235;
+    EndSkillQueueNtf end_skill_queue_ntf = 236;
+    SetActionPoint set_action_point = 237;
+    // END skill.proto
+    // BEGIN pvp.proto (tags 256..287)
+    // reserved 268 to 270 (was WantedListNtf, WantedInfoNtf, WantedNameNtf)
+    DuelRequestNtf duel_request_ntf = 256;
+    DuelNoNtf duel_no_ntf = 257;
+    DuelPartyRequestNtf duel_party_request_ntf = 258;
+    DuelPartyNoNtf duel_party_no_ntf = 259;
+    DuelStart duel_start = 260;
+    DuelCancel duel_cancel = 261;
+    DuelPartyStart duel_party_start = 262;
+    DuelPartyCancel duel_party_cancel = 263;
+    DuelPartyResult duel_party_result = 264;
+    SetDuel set_duel = 265;
+    DuelCount duel_count = 266;
+    PkRelation pk_relation = 267;
+    // END pvp.proto
+    // BEGIN inventory.proto (tags 288..319)
+    CreateItem create_item = 288;
+    MoveItemNtf move_item_ntf = 289;
+    DoEquipNtf do_equip_ntf = 290;
+    UpdateItem update_item = 291;
+    UpdateItemEx update_item_ex = 292;
+    QueryEquipNtf query_equip_ntf = 293;
+    PocketAttribute pocket_attribute = 294;
+    PocketAddItem pocket_add_item = 295;
+    PocketRemoveItem pocket_remove_item = 296;
+    StartCollecting start_collecting = 297;
+    StopCollecting stop_collecting = 298;
+    RestartCollecting restart_collecting = 299;
+    ReturnScrollNtf return_scroll_ntf = 300;
+    SealCharNtf seal_char_ntf = 301;
+    SealCharGetNtf seal_char_get_ntf = 302;
+    // END inventory.proto
+    // BEGIN upgrade.proto (tags 320..351)
+    SmeltSafetyNtf smelt_safety_ntf = 320;
+    RemoveAttributeNtf remove_attribute_ntf = 321;
+    CommercialElemNtf commercial_elem_ntf = 322;
+    ItemSelectAwakeningValueNtf item_select_awakening_value_ntf = 323;
+    Ultimate ultimate = 324;
+    ExchangeNtf exchange_ntf = 325;
+    // END upgrade.proto
+    // BEGIN shop.proto (tags 352..383)
+    SetHairNtf set_hair_ntf = 352;
+    ChangeFaceNtf change_face_ntf = 353;
+    SexChange sex_change = 354;
+    OpenShopWndNtf open_shop_wnd_ntf = 355;
+    Vendor vendor = 356;
+    UpdateVendor update_vendor = 357;
+    // END shop.proto
+    // BEGIN trade.proto (tags 384..415)
+    ConfirmTradeNtf confirm_trade_ntf = 384;
+    ConfirmTradeCancelNtf confirm_trade_cancel_ntf = 385;
+    TradeNtf trade_ntf = 386;
+    TradePutNtf trade_put_ntf = 387;
+    TradePutError trade_put_error = 388;
+    TradePullNtf trade_pull_ntf = 389;
+    TradePutGoldNtf trade_put_gold_ntf = 390;
+    TradeOkNtf trade_ok_ntf = 391;
+    TradeLastConfirm trade_last_confirm = 392;
+    TradeLastConfirmOk trade_last_confirm_ok = 393;
+    TradeConsent trade_consent = 394;
+    TradeCancelNtf trade_cancel_ntf = 395;
+    PVendorOpenNtf p_vendor_open_ntf = 396;
+    PVendorCloseNtf p_vendor_close_ntf = 397;
+    RegisterPVendorItemNtf register_p_vendor_item_ntf = 398;
+    UnregisterPVendorItemNtf unregister_p_vendor_item_ntf = 399;
+    PVendorItem p_vendor_item = 400;
+    PVendorItemNum p_vendor_item_num = 401;
+    ChattingNtf chatting_ntf = 402;
+    // END trade.proto
+    // BEGIN bank.proto (tags 416..447)
+    PutItemBank put_item_bank = 416;
+    GetItemBank get_item_bank = 417;
+    PutGoldBank put_gold_bank = 418;
+    MoveBankItem move_bank_item = 419;
+    ChangeBankPassNtf change_bank_pass_ntf = 420;
+    ConfirmBankPass confirm_bank_pass = 421;
+    UpdateBankItem update_bank_item = 422;
+    BankIsFull bank_is_full = 423;
+    BankWindow bank_window = 424;
+    // END bank.proto
+    // BEGIN mail.proto (tags 448..479)
+    PostMail post_mail = 448;
+    RemoveMail remove_mail = 449;
+    QueryMailBoxNtf query_mail_box_ntf = 450;
+    QueryMailBoxReqNtf query_mail_box_req_ntf = 451;
+    // END mail.proto
+    // BEGIN pet.proto (tags 480..511)
+    PetCall pet_call = 480;
+    PetReleaseNtf pet_release_ntf = 481;
+    PetLevelup pet_levelup = 482;
+    PetSetExp pet_set_exp = 483;
+    Pet pet = 484;
+    PetState pet_state = 485;
+    PetFeed pet_feed = 486;
+    PetMill pet_mill = 487;
+    QuePetResurrectionResult que_pet_resurrection_result = 488;
+    SetPetName set_pet_name = 489;
+    VisPetActivate vis_pet_activate = 490;
+    MoverChangeSfx mover_change_sfx = 491;
+    Angel angel = 492;
+    // END pet.proto
+    // BEGIN npc.proto (tags 512..543)
+    DialogOps dialog_ops = 512;
+    // END npc.proto
+    // BEGIN quest.proto (tags 544..575)
+    SetQuest set_quest = 544;
+    RemoveQuestNtf remove_quest_ntf = 545;
+    QuestTextTime quest_text_time = 546;
+    QuestChecked quest_checked = 547;
+    QuestHelperNpcPos quest_helper_npc_pos = 548;
+    SetGuildQuest set_guild_quest = 549;
+    RemoveGuildQuest remove_guild_quest = 550;
+    // END quest.proto
+    // BEGIN chat.proto (tags 576..607)
+    Shout shout = 576;
+    Whisper whisper = 577;
+    Say say = 578;
+    ReturnSay return_say = 579;
+    PartyChat party_chat = 580;
+    GuildChat guild_chat = 581;
+    BlockNtf block_ntf = 582;
+    ChatSettingsNtf chat_settings_ntf = 583;
+    // END chat.proto
+    // BEGIN notice.proto (tags 608..639)
+    DefinedText defined_text = 608;
+    Text text = 609;
+    SystemNotice system_notice = 610;
+    Caption caption = 611;
+    WorldMsg world_msg = 612;
+    EventMessage event_message = 613;
+    // END notice.proto
+    // BEGIN party.proto (tags 640..671)
+    PartyChangeItemModeNtf party_change_item_mode_ntf = 640;
+    PartyChangeExpModeNtf party_change_exp_mode_ntf = 641;
+    AddPartyChangeLeader add_party_change_leader = 642;
+    PartyAllowJoinNtf party_allow_join_ntf = 643;
+    PartyFinderRefresh party_finder_refresh = 644;
+    PartyMember party_member = 645;
+    PartyRequest party_request = 646;
+    PartyRequestCancel party_request_cancel = 647;
+    PartyExp party_exp = 648;
+    PartyChangeTroup party_change_troup = 649;
+    PartyChangeName party_change_name = 650;
+    PartySkillCall party_skill_call = 651;
+    PartySkillBlitz party_skill_blitz = 652;
+    PartySkillRetreat party_skill_retreat = 653;
+    PartySkillSphereCircle party_skill_sphere_circle = 654;
+    SetPartyMode set_party_mode = 655;
+    SetPartyMemberParam set_party_member_param = 656;
+    AddPartyName add_party_name = 657;
+    PartyMapInfo party_map_info = 658;
+    ErrorParty error_party = 659;
+    SetNaviPointNtf set_navi_point_ntf = 660;
+    // END party.proto
+    // BEGIN guild.proto (tags 672..719)
+    GuildInviteNtf guild_invite_ntf = 672;
+    AddGuildMemberNtf add_guild_member_ntf = 673;
+    RemoveGuildMemberNtf remove_guild_member_ntf = 674;
+    DestroyGuildNtf destroy_guild_ntf = 675;
+    CreateGuild create_guild = 676;
+    SetGuild set_guild = 677;
+    Guild guild = 678;
+    AllGuilds all_guilds = 679;
+    GuildMemberLevelNtf guild_member_level_ntf = 680;
+    GuildClassNtf guild_class_ntf = 681;
+    GuildNicknameNtf guild_nickname_ntf = 682;
+    ChgMasterNtf chg_master_ntf = 683;
+    GuildAuthorityNtf guild_authority_ntf = 684;
+    GuildPenyaNtf guild_penya_ntf = 685;
+    GuildSetNameNtf guild_set_name_ntf = 686;
+    GuildLogoNtf guild_logo_ntf = 687;
+    GuildContributionNtf guild_contribution_ntf = 688;
+    GuildNoticeNtf guild_notice_ntf = 689;
+    GuildRealPenya guild_real_penya = 690;
+    GuildGameLogin guild_game_login = 691;
+    GuildGameJoin guild_game_join = 692;
+    GuildError guild_error = 693;
+    GuildBankWndNtf guild_bank_wnd_ntf = 694;
+    PutItemGuildBankNtf put_item_guild_bank_ntf = 695;
+    GetItemGuildBankNtf get_item_guild_bank_ntf = 696;
+    RemoveGuildBankItem remove_guild_bank_item = 697;
+    GuildLogViewNtf guild_log_view_ntf = 698;
+    // END guild.proto
+    // BEGIN guild_war.proto (tags 720..751)
+    DeclGuildWarNtf decl_guild_war_ntf = 720;
+    AcptGuildWarNtf acpt_guild_war_ntf = 721;
+    SurrenderNtf surrender_ntf = 722;
+    QueryTruceNtf query_truce_ntf = 723;
+    WarDead war_dead = 724;
+    WarEnd war_end = 725;
+    War war = 726;
+    SetWar set_war = 727;
+    // END guild_war.proto
+    // BEGIN guild_siege.proto (tags 752..783)
+    GuildCombat guild_combat = 752;
+    Gc1to1TenderOpenWndNtf gc1to1_tender_open_wnd_ntf = 753;
+    Gc1to1TenderViewNtf gc1to1_tender_view_ntf = 754;
+    Gc1to1MemberLineUpOpenWndNtf gc1to1_member_line_up_open_wnd_ntf = 755;
+    Gc1to1NowState gc1to1_now_state = 756;
+    Gc1to1WarResult gc1to1_war_result = 757;
+    // END guild_siege.proto
+    // BEGIN messenger.proto (tags 784..815)
+    AddFriendNtf add_friend_ntf = 784;
+    AddFriendRequestNtf add_friend_request_ntf = 785;
+    AddFriendCancelNtf add_friend_cancel_ntf = 786;
+    AddFriendNameRequestNtf add_friend_name_request_ntf = 787;
+    AddFriendNameNotFound add_friend_name_not_found = 788;
+    AddFriendError add_friend_error = 789;
+    AddFriendGameJoin add_friend_game_join = 790;
+    GetFriendStateNtf get_friend_state_ntf = 791;
+    SetFriendStateNtf set_friend_state_ntf = 792;
+    FriendInterceptStateNtf friend_intercept_state_ntf = 793;
+    FriendNoIntercept friend_no_intercept = 794;
+    RemoveFriendNtf remove_friend_ntf = 795;
+    RemoveFriendState remove_friend_state = 796;
+    AddFriendJoin add_friend_join = 797;
+    AddFriendLogout add_friend_logout = 798;
+    OneFriendState one_friend_state = 799;
+    PresenceLogout presence_logout = 800;
+    QueryPlayerDataNtf query_player_data_ntf = 801;
+    UpdatePlayerData update_player_data = 802;
+    QuerySetPlayerNameNtf query_set_player_name_ntf = 803;
+    Tag tag = 804;
+    InsertTagResult insert_tag_result = 805;
+    Summon summon = 806;
+    // END messenger.proto
+    // BEGIN relation.proto (tags 816..847)
+    CoupleNtf couple_ntf = 816;
+    ProposeResult propose_result = 817;
+    CoupleResult couple_result = 818;
+    DecoupleResult decouple_result = 819;
+    AddCoupleExperience add_couple_experience = 820;
+    CampusInviteNtf campus_invite_ntf = 821;
+    CampusUpdate campus_update = 822;
+    CampusRemove campus_remove = 823;
+    CampusUpdatePoint campus_update_point = 824;
+    HonorListAck honor_list_ack = 825;
+    HonorChangeAck honor_change_ack = 826;
+    SetCheerParam set_cheer_param = 827;
+    // END relation.proto
+    // BEGIN event.proto (tags 848..879)
+    EventLuaDesc event_lua_desc = 848;
+    FlyffEvent flyff_event = 849;
+    SetLocalEvent set_local_event = 850;
+    GameRate game_rate = 851;
+    CallTheRoll call_the_roll = 852;
+    EventCoupon event_coupon = 853;
+    MiniGame mini_game = 854;
+    QuizState quiz_state = 855;
+    QuizMessage quiz_message = 856;
+    QuizQuestion quiz_question = 857;
+    QuizNotice quiz_notice = 858;
+    RainbowRacePrevRankingOpenWndNtf rainbow_race_prev_ranking_open_wnd_ntf = 859;
+    RainbowRaceApplicationOpenWndNtf rainbow_race_application_open_wnd_ntf = 860;
+    RainbowRaceNowState rainbow_race_now_state = 861;
+    RainbowRaceMiniGameState rainbow_race_mini_game_state = 862;
+    RainbowRaceMiniGameExtState rainbow_race_mini_game_ext_state = 863;
+    // END event.proto
+    // BEGIN lord.proto (tags 880..911)
+    ElectionAddDepositNtf election_add_deposit_ntf = 880;
+    ElectionSetPledgeNtf election_set_pledge_ntf = 881;
+    ElectionIncVoteNtf election_inc_vote_ntf = 882;
+    ElectionBeginCandidacy election_begin_candidacy = 883;
+    ElectionBeginVote election_begin_vote = 884;
+    ElectionEndVote election_end_vote = 885;
+    Lord lord = 886;
+    LEventCreateNtf l_event_create_ntf = 887;
+    LEventInitialize l_event_initialize = 888;
+    LEventTick l_event_tick = 889;
+    LordSkillUseNtf lord_skill_use_ntf = 890;
+    LordSkillTick lord_skill_tick = 891;
+    TaxAllInfo tax_all_info = 892;
+    TaxSetTaxRateOpenWnd tax_set_tax_rate_open_wnd = 893;
+    // END lord.proto
+    // BEGIN secret_room.proto (tags 912..943)
+    SecretRoomTenderOpenWndNtf secret_room_tender_open_wnd_ntf = 912;
+    SecretRoomLineUpOpenWndNtf secret_room_line_up_open_wnd_ntf = 913;
+    SecretRoomTenderViewNtf secret_room_tender_view_ntf = 914;
+    SecretRoomMngState secret_room_mng_state = 915;
+    SecretRoomInfo secret_room_info = 916;
+    // END secret_room.proto
+    // BEGIN housing.proto (tags 944..975)
+    HousingSetupFurnitureNtf housing_setup_furniture_ntf = 944;
+    HousingSetVisitAllowNtf housing_set_visit_allow_ntf = 945;
+    HousingVisitableList housing_visitable_list = 946;
+    HousingAllInfo housing_all_info = 947;
+    HousingFurnitureList housing_furniture_list = 948;
+    HousingPaperingInfo housing_papering_info = 949;
+    GuildHousePacketNtf guild_house_packet_ntf = 950;
+    GuildHouseAllInfo guild_house_all_info = 951;
+    GuildHouseRemove guild_house_remove = 952;
+    GuildHouseRestPoint guild_house_rest_point = 953;
+    // END housing.proto
+    // BEGIN gm.proto (tags 976..1007)
+    MoverFocusNtf mover_focus_ntf = 976;
+    GetPlayerAddr get_player_addr = 977;
+    GetPlayerCount get_player_count = 978;
+    GetCorePlayer get_core_player = 979;
+    Snoop snoop = 980;
+    // END gm.proto
+    // BEGIN taskbar.proto (tags 1008..1039)
+    TaskBar task_bar = 1008;
+    // END taskbar.proto
+  }
+  // pvp.proto: the wanted board was dropped (Plan/11a R1-1, PL-142); the tags are never reused
+  reserved 268 to 270;
+}

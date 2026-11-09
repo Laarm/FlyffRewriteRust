@@ -1,0 +1,218 @@
+{
+  "$defs": {
+    "MotionClipRow": {
+      "description": "One clip row of the `motions` projection.",
+      "properties": {
+        "attrs": {
+          "description": "`[index, frame, flags, sound]` of every attribute with flags.",
+          "items": {
+            "items": {
+              "format": "double",
+              "type": "number"
+            },
+            "maxItems": 4,
+            "minItems": 4,
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "bones": {
+          "description": "The bone count of an `.ani`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "file": {
+          "description": "The `.ani` (source 0) or `.o3d` (source 1) VFS path.",
+          "type": "string"
+        },
+        "frames": {
+          "description": "The frame count.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "per_slerp_raw": {
+          "description": "The raw `perSlerp` f32 of the file.",
+          "format": "float",
+          "type": "number"
+        },
+        "source": {
+          "description": "0 `.ani`, 1 built-in `.o3d` animation.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "file",
+        "source",
+        "frames",
+        "per_slerp_raw",
+        "bones",
+        "attrs"
+      ],
+      "type": "object"
+    },
+    "MotionModelRow": {
+      "description": "One model row of the `motions` projection.",
+      "properties": {
+        "builtin": {
+          "description": "The clip of the model's own `.o3d` animation (-1 = none).",
+          "format": "int32",
+          "type": "integer"
+        },
+        "empty": {
+          "description": "The clip used for an empty slot (-1 = none).",
+          "format": "int32",
+          "type": "integer"
+        },
+        "index": {
+          "description": "The registry index.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "max": {
+          "description": "`m_nMax`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "ot": {
+          "description": "The object type.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "slots": {
+          "description": "`[mti, clip]` of every non-empty slot (clip -1 = missing).",
+          "items": {
+            "items": {
+              "format": "int32",
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "ot",
+        "index",
+        "max",
+        "empty",
+        "builtin",
+        "slots"
+      ],
+      "type": "object"
+    },
+    "MotionsBundle": {
+      "description": "`motions`: the JSON projection of the binary motion table (built by `flyff-assets`, doc 24 §10.5).",
+      "properties": {
+        "clips": {
+          "$ref": "#/$defs/RowTable_MotionClipRow",
+          "description": "Source-0 rows first (sorted by file), then source-1 rows: row index = `ClipId`."
+        },
+        "models": {
+          "$ref": "#/$defs/RowTable_MotionModelRow",
+          "description": "One row per registry model that can animate, sorted by `(ot, index)`."
+        }
+      },
+      "required": [
+        "clips",
+        "models"
+      ],
+      "title": "MotionsBundle",
+      "type": "object"
+    },
+    "RowTable_MotionClipRow": {
+      "description": "A columnar table: `columns` names the fields of each row, `rows` holds one array of cells per row (14 §10.2).",
+      "properties": {
+        "columns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "rows": {
+          "items": {
+            "type": "array"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "columns",
+        "rows"
+      ],
+      "type": "object",
+      "x-flyff-columns": [
+        "file",
+        "source",
+        "frames",
+        "per_slerp_raw",
+        "bones",
+        "attrs"
+      ],
+      "x-flyff-row": {
+        "$ref": "#/$defs/MotionClipRow"
+      }
+    },
+    "RowTable_MotionModelRow": {
+      "description": "A columnar table: `columns` names the fields of each row, `rows` holds one array of cells per row (14 §10.2).",
+      "properties": {
+        "columns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "rows": {
+          "items": {
+            "type": "array"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "columns",
+        "rows"
+      ],
+      "type": "object",
+      "x-flyff-columns": [
+        "ot",
+        "index",
+        "max",
+        "empty",
+        "builtin",
+        "slots"
+      ],
+      "x-flyff-row": {
+        "$ref": "#/$defs/MotionModelRow"
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`motions.<h16>.json`: the envelope of the `motions` bundle (schema version 1).",
+  "properties": {
+    "bundle": {
+      "const": "motions"
+    },
+    "data": {
+      "$ref": "#/$defs/MotionsBundle"
+    },
+    "schema": {
+      "const": 1
+    }
+  },
+  "required": [
+    "bundle",
+    "schema",
+    "data"
+  ],
+  "title": "MotionsBundleEnvelope",
+  "type": "object"
+}

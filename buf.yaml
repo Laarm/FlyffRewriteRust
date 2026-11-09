@@ -1,0 +1,19 @@
+# buf v2 workspace (Plan/02 section 5, Plan/11 section 4.1). The module is `proto/`.
+# Orchestrated only through `cargo xtask gen-proto`; no npm script or build.rs calls buf.
+version: v2
+modules:
+  - path: proto
+lint:
+  use:
+    - STANDARD
+  ignore_only:
+    # options.proto declares the unversioned custom-option package `flyff` (Plan/11 section 5.6).
+    PACKAGE_VERSION_SUFFIX:
+      - proto/flyff/options.proto
+    # The admin protocol (Plan/25 section 3.16) names its enum values without the enum prefix (`PLAYER`,
+    # `FORBIDDEN`, `LOGOUT`, ...) and the plan fixes the names; the wire format does not depend on them.
+    ENUM_VALUE_PREFIX:
+      - proto/flyff/admin/v1/admin.proto
+breaking:
+  use:
+    - WIRE

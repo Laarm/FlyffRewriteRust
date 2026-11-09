@@ -1,0 +1,724 @@
+// Messenger, presence and player data messages (Plan/11 section 4.2, WP-PROTO-24; tag block 784-815). Transcribed from
+// ref/08 section 13.2, ref/03 section 9, ref/07a sections 16.4-16.8, ref/07b sections 14 and 18, ref/09a section 5.11,
+// ref/09b sections 3.8, 3.10, 3.12 and 4.6 and Plan/21 sections 3, 4.11 and 9. The records are Messenger / FriendEntry
+// / PlayerData / PlayerDataVersion (social_types.proto). Friend states (FRS_*): ONLINE 0, OFFLINE 1, BLOCK 2, ABSENT 3,
+// HARDPLAY 4, EAT 5, REST 6, MOVE 7, DIE 8, DANGER 9, OFFLINEBLOCK 10, AUTOABSENT 11. A packed `data` word is the
+// legacy MAKELONG(ITYPE_ITEM = 0, inventory object id of the scroll) (the object id is the HIGH word); the server
+// writes it in the S2C messages and the client echoes it back. Every C2S message acts for the session character
+// (VR-001): the legacy leading own-id fields are dropped.
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+import "flyff/v1/social_types.proto";
+
+// legacy ADDFRIEND 0xFFFFFF60 (C2S): accept a friend request (ref/03 section 9.1, ref/09b section 4.6, Plan/21
+// section 9.2). Needs a live request from that player (FIX VR-042). Answer: AddFriendNtf to both players.
+message AddFriendReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF60
+    name: "ADDFRIEND"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // the player who asked (character id)
+  uint32 requester = 1 [(flyff.legacy_type) = "u32 idRequester"];
+  // dropped: _self (u32), sexReq, sexSelf (u8, u8), jobReq, jobSelf (i32, i32): the session and the directory
+  // supply them
+}
+
+// legacy ADDFRIENDREQEST 0xFFFFFF61 (C2S): ask a player to become a friend (ref/07a section 16.4, Plan/21
+// section 9.2). Answer: AddFriendRequestNtf to the target.
+message AddFriendRequestReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF61
+    name: "ADDFRIENDREQEST"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: idSelf (u32, the session character)
+  // the asked player (character id)
+  uint32 target = 1 [(flyff.legacy_type) = "u32 idTarget"];
+}
+
+// legacy ADDFRIENDCANCEL 0xFFFFFF62 (C2S): decline a friend request (ref/07a section 16.6, Plan/21 section
+// 9.2). Answer: AddFriendCancelNtf to the requester.
+message AddFriendCancelReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF62
+    name: "ADDFRIENDCANCEL"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // the player who asked (character id)
+  uint32 requester = 1 [(flyff.legacy_type) = "u32 idRequester"];
+  // dropped: idSelf (u32, the session character)
+}
+
+// legacy ADDFRIENDNAMEREQEST 0xFFFFFF6B (C2S): ask a player by name to become a friend (ref/07a section 16.5,
+// Plan/21 section 9.2). Answers: AddFriendNameRequestNtf to the target, or AddFriendError /
+// AddFriendNameNotFound.
+message AddFriendNameRequestReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF6B
+    name: "ADDFRIENDNAMEREQEST"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: idSelf (u32, the session character)
+  // the character name
+  string name = 1 [
+    (flyff.legacy_type) = "str<=63",
+    (flyff.max_len) = 63
+  ];
+}
+
+// legacy GETFRIENDSTATE 0xFFFFFF64 (C2S): ask for the state of every friend (ref/03 section 9.1, Plan/21
+// section 9.2). No payload. Answer: GetFriendStateNtf.
+message GetFriendStateReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF64
+    name: "GETFRIENDSTATE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: idSelf (u32, the session character)
+}
+
+// legacy SETFRIENDSTATE 0xFFFFFF67 (C2S): set the own messenger state (ref/03 section 9.1, Plan/21 section
+// 9.2). A state above 11 is ignored (FIX). Answer: SetFriendStateNtf to the player and the friends.
+message SetFriendStateReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF67
+    name: "SETFRIENDSTATE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: idSelf (u32, the session character)
+  // FRS_* state 0..11
+  sint32 state = 1 [(flyff.legacy_type) = "i32 state"];
+}
+
+// legacy FRIENDINTERCEPTSTATE 0xFFFFFF68 (C2S): toggle the block flag of a friend (ref/03 section 9.1, Plan/21
+// section 9.2). Answer: FriendInterceptStateNtf (block) or FriendNoIntercept (unblock).
+message FriendInterceptStateReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF68
+    name: "FRIENDINTERCEPTSTATE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: idSelf (u32, the session character)
+  // the friend whose block flag toggles
+  uint32 id_friend = 1 [(flyff.legacy_type) = "u32 idTarget"];
+}
+
+// legacy REMOVEFRIEND 0xFFFFFF6A (C2S): remove a friend (ref/03 section 9.1, Plan/21 section 9.2). Answer:
+// RemoveFriendNtf to the player, RemoveFriendState and RemoveFriendNtf to the friend.
+message RemoveFriendReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF6A
+    name: "REMOVEFRIEND"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: idSelf (u32, the session character)
+  // the friend to remove
+  uint32 id_friend = 1 [(flyff.legacy_type) = "u32 idTarget"];
+}
+
+// legacy QUERY_PLAYER_DATA 0xF000F802 (C2S): ask for the name and data of a character (ref/07a section 16.7,
+// Plan/21 section 3.2). Answered only when the client's cached version is stale. Answer: QueryPlayerDataNtf.
+message QueryPlayerDataReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F802
+    name: "QUERY_PLAYER_DATA"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32 idPlayer"];
+  // the version the client has cached
+  sint32 version = 2 [(flyff.legacy_type) = "i32 nVer"];
+}
+
+// legacy QUERY_PLAYER_DATA2 0xF000F807 (C2S): the same for many characters (ref/07a section 16.8, Plan/21
+// section 3.2). At most 1024 entries. Answer: one QueryPlayerDataNtf per stale entry.
+message QueryPlayerData2 {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F807
+    name: "QUERY_PLAYER_DATA2"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // dropped: nSize (i32, the list length)
+  // id and cached version of each character
+  repeated PlayerDataVersion entries = 1 [
+    (flyff.legacy_type) = "i32 n + n x PDVer",
+    (flyff.max_len) = 1024
+  ];
+}
+
+// legacy QUERYSETPLAYERNAME 0x00000012 (C2S): rename the character with a rename scroll (ref/07b section 14.1,
+// Plan/21 section 3.3). An invalid name stops the request (FIX VR-046). Answer: QuerySetPlayerNameNtf to
+// everyone.
+message QuerySetPlayerNameReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x12
+    name: "QUERYSETPLAYERNAME"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // LOWORD = inventory object id of the rename scroll (0xFFFF = the forced rename without a scroll), HIWORD =
+  // mode (unused)
+  uint32 data = 1 [(flyff.legacy_type) = "u32 dwData"];
+  // the new character name
+  string name = 2 [
+    (flyff.legacy_type) = "str<=41",
+    (flyff.max_len) = 41
+  ];
+}
+
+// legacy SENDTAG 0xF000B007 (C2S): leave an offline note for a friend (ref/03 section 9.1, Plan/21 section
+// 9.6). Needs a friend who is offline and has fewer than 20 undelivered notes. Answer: InsertTagResult.
+message SendTag {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B007
+    name: "SENDTAG"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // the friend (character id)
+  uint32 to = 1 [(flyff.legacy_type) = "u32 uidTo"];
+  // the note
+  string text = 2 [
+    (flyff.legacy_type) = "str<=255",
+    (flyff.max_len) = 255
+  ];
+}
+
+// legacy SUMMON_FRIEND 0xF000E001 (C2S): use a friend summon scroll on a friend (ref/07b section 18.1, Plan/21
+// section 4.11). Answer: Summon (confirm) to the friend.
+message SummonFriend {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000E001
+    name: "SUMMON_FRIEND"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // MAKELONG(ITYPE_ITEM, inventory object id of the scroll)
+  uint32 data = 1 [(flyff.legacy_type) = "u32 dwData"];
+  // name of the friend
+  string name = 2 [
+    (flyff.legacy_type) = "str<=41",
+    (flyff.max_len) = 41
+  ];
+}
+
+// legacy SUMMON_FRIEND_CONFIRM 0xF000E002 (C2S): the friend accepts to be summoned (ref/07b section 18.2,
+// Plan/21 section 4.11). Needs a matching pending summon (FIX VR-027).
+message SummonFriendConfirm {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000E002
+    name: "SUMMON_FRIEND_CONFIRM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // object id of the summoner
+  uint32 summoner_obj = 1 [(flyff.legacy_type) = "u32 objid"];
+  // the packed scroll word of the summon request
+  uint32 data = 2 [(flyff.legacy_type) = "u32 dwData"];
+}
+
+// legacy SUMMON_FRIEND_CANCEL 0xF000E005 (C2S): the friend declines to be summoned (ref/07b section 18.3,
+// Plan/21 section 4.11). Needs a matching pending summon (FIX VR-027).
+message SummonFriendCancel {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000E005
+    name: "SUMMON_FRIEND_CANCEL"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // object id of the summoner
+  uint32 summoner_obj = 1 [(flyff.legacy_type) = "u32 objid"];
+  // the packed scroll word of the summon request
+  uint32 data = 2 [(flyff.legacy_type) = "u32 dwData"];
+}
+
+// legacy SUMMON_PARTY 0xF000E003 (C2S): the party leader uses the party summon scroll (ref/07b section 18.4,
+// Plan/21 section 4.11). Answer: Summon (party confirm) to every online member.
+message SummonParty {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000E003
+    name: "SUMMON_PARTY"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // MAKELONG(ITYPE_ITEM, inventory object id of the scroll)
+  uint32 data = 1 [(flyff.legacy_type) = "u32 dwData"];
+}
+
+// legacy SUMMON_PARTY_CONFIRM 0xF000E004 (C2S): a member accepts the party summon (ref/07b section 18.5,
+// Plan/21 section 4.11).
+message SummonPartyConfirm {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000E004
+    name: "SUMMON_PARTY_CONFIRM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // object id of the party leader
+  uint32 leader_obj = 1 [(flyff.legacy_type) = "u32 objid"];
+  // the packed scroll word of the summon request
+  uint32 data = 2 [(flyff.legacy_type) = "u32 dwData"];
+}
+
+// legacy ADDFRIEND 0x0070 (S2C); obj_id: 0 (self). A friend was added (ref/08 section 13.2, ref/09a section
+// 5.11, Plan/21 section 9.2).
+message AddFriendNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x70
+    name: "ADDFRIEND"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // the new friend
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32"];
+  string name = 2 [(flyff.legacy_type) = "str<=42"];
+}
+
+// legacy ADDFRIENDREQEST 0x0071 (S2C); obj_id: 0 (self). A friend request for the receiver (ref/08 section
+// 13.2, ref/09a section 5.11, Plan/21 section 9.2).
+message AddFriendRequestNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x71
+    name: "ADDFRIENDREQEST"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 requester = 1 [(flyff.legacy_type) = "u32 requesterId"];
+  uint32 sex = 2 [(flyff.legacy_type) = "u8 requesterSex"];
+  sint32 job = 3 [(flyff.legacy_type) = "i32 requesterJob"];
+  // name of the requester
+  string name = 4 [(flyff.legacy_type) = "str<=64"];
+}
+
+// legacy ADDFRIENDCANCEL 0x0072 (S2C); obj_id: 0 (self). The asked player declined (ref/08 section 13.2,
+// ref/09a section 5.11). No payload.
+message AddFriendCancelNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x72
+    name: "ADDFRIENDCANCEL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+}
+
+// legacy ADDFRIENDNAMEREQEST 0xFFFFFF6B (S2C); obj_id: 0 (self). A friend request that was made by name
+// (ref/03 section 9.2, ref/09b section 3.10, Plan/21 section 9.2).
+message AddFriendNameRequestNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF6B
+    name: "ADDFRIENDNAMEREQEST"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 requester = 1 [(flyff.legacy_type) = "u32 idRequester"];
+  uint32 target = 2 [(flyff.legacy_type) = "u32 idTarget"];
+  sint32 job = 3 [(flyff.legacy_type) = "i32 requesterJob"];
+  uint32 sex = 4 [(flyff.legacy_type) = "u8 requesterSex"];
+  string requester_name = 5 [(flyff.legacy_type) = "str<=64"];
+}
+
+// legacy ADDFRIENDNAMENOTFOUND 0xFFFFFF6C (S2C); obj_id: 0 (self). The asked player is not online (ref/03
+// section 9.2, ref/09a section 5.11).
+message AddFriendNameNotFound {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF6C
+    name: "ADDFRIENDNAMENOTFOUND"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  string name = 1 [(flyff.legacy_type) = "str<=64"];
+}
+
+// legacy ADDFRIENDERROR 0x0076 (S2C); obj_id: 0 (self). A friend request failed (ref/08 section 13.2, ref/09a
+// section 5.11, Plan/21 section 2.5).
+message AddFriendError {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x76
+    name: "ADDFRIENDERROR"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // 1 = already a friend, 2 = no such character
+  uint32 error = 1 [(flyff.legacy_type) = "u8 nError"];
+  string name = 2 [(flyff.legacy_type) = "str<=64"];
+}
+
+// legacy ADDFRIENDGAMEJOIN 0x0074 (S2C); obj_id: 0 (self). The friend list at login (CRTMessenger::Serialize;
+// ref/08 section 13.2, ref/09a section 5.11, Plan/21 section 3.5).
+message AddFriendGameJoin {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x74
+    name: "ADDFRIENDGAMEJOIN"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // the own state and the friends with their block flag and state
+  Messenger messenger = 1 [(flyff.legacy_type) = "CRTMessenger::Serialize"];
+}
+
+// legacy GETFRIENDSTATE 0xFFFFFF64 (S2C); obj_id: 0 (self). The state of every friend, split by the own block
+// flag (ref/03 section 9.2, ref/09a section 5.11, Plan/21 section 9.2).
+message GetFriendStateNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF64
+    name: "GETFRIENDSTATE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: nFriend, nBlock (i32, i32; the list lengths)
+  // friends that are not blocked
+  repeated FriendPresence friends = 1 [(flyff.legacy_type) = "nFriend x {u32, u32, u32}"];
+  // friends that are blocked
+  repeated FriendPresence blocked = 2 [(flyff.legacy_type) = "nBlock x {u32, u32, u32}"];
+
+  // State and channel of one friend.
+  message FriendPresence {
+    uint32 id_friend = 1 [(flyff.legacy_type) = "u32 id"];
+    // FRS_* state; OFFLINE if the friend is offline or has blocked the receiver
+    uint32 state = 2 [(flyff.legacy_type) = "u32 state"];
+    // 1 = online, 100 = offline
+    uint32 multi_no = 3 [(flyff.legacy_type) = "u32 channel"];
+  }
+}
+
+// legacy SETFRIENDSTATE 0xFFFFFF67 (S2C); obj_id: 0 (self). A messenger state changed, the own one or a
+// friend's (ref/03 section 9.2, ref/09a section 5.11).
+message SetFriendStateNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF67
+    name: "SETFRIENDSTATE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32 id"];
+  // FRS_* state
+  uint32 state = 2 [(flyff.legacy_type) = "u32 state"];
+}
+
+// legacy FRIENDINTERCEPTSTATE 0xFFFFFF68 (S2C); obj_id: 0 (self). A block: the receiver blocked a friend, or
+// was blocked by one (ref/03 section 9.2, ref/09a section 5.11).
+message FriendInterceptStateNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF68
+    name: "FRIENDINTERCEPTSTATE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // the player who set the block
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32 idPlayer"];
+  // the blocked friend
+  uint32 id_friend = 2 [(flyff.legacy_type) = "u32 idFriend"];
+}
+
+// legacy FRIENDNOINTERCEPT 0xFFFFFF69 (S2C); obj_id: 0 (self). A friend was unblocked (ref/03 section 9.2,
+// ref/09a section 5.11; the V15 client reads only the id).
+message FriendNoIntercept {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF69
+    name: "FRIENDNOINTERCEPT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 id_friend = 1 [(flyff.legacy_type) = "u32"];
+  // the friend's state after the unblock
+  sint32 state = 2 [(flyff.legacy_type) = "i32 state"];
+}
+
+// legacy REMOVEFRIEND 0x0075 (S2C); obj_id: 0 (self). A friend was removed (ref/08 section 13.2, ref/09a
+// section 5.11).
+message RemoveFriendNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x75
+    name: "REMOVEFRIEND"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32"];
+}
+
+// legacy REMOVEFRIENDSTATE 0xFFFFFF6D (S2C); obj_id: 0 (self). A friend removed the receiver (ref/03 section
+// 9.2, ref/09a section 5.11).
+message RemoveFriendState {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF6D
+    name: "REMOVEFRIENDSTATE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // the player who removed the receiver
+  uint32 remover = 1 [(flyff.legacy_type) = "u32"];
+}
+
+// legacy ADDFRIENDJOIN 0xFFFFFF65 (S2C); obj_id: 0 (self). A friend logged in or was unblocked (ref/03 section
+// 9.2, ref/09a section 5.11, Plan/21 section 3.4).
+message AddFriendJoin {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF65
+    name: "ADDFRIENDJOIN"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 id_friend = 1 [(flyff.legacy_type) = "u32 idFriend"];
+  // FRS_* state of the friend
+  uint32 state = 2 [(flyff.legacy_type) = "u32 dwState"];
+  // the channel number, 1
+  uint32 multi_no = 3 [(flyff.legacy_type) = "u32 uLogin"];
+}
+
+// legacy ADDFRIENDLOGOUT 0xFFFFFF66 (S2C); obj_id: 0 (self). A friend logged out (ref/03 section 9.2, ref/09a
+// section 5.11, Plan/21 section 3.4).
+message AddFriendLogout {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF66
+    name: "ADDFRIENDLOGOUT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 id_friend = 1 [(flyff.legacy_type) = "u32"];
+}
+
+// legacy ONEFRIEMDSTATE 0xFFFFFF6E (S2C); obj_id: 0 (self). The state of one friend (ref/09a section 5.11,
+// Plan/21 section 9.3).
+message OneFriendState {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF6E
+    name: "ONEFRIEMDSTATE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32 uidPlayer"];
+  // FRS_* state
+  uint32 state = 2 [(flyff.legacy_type) = "u32 dwState"];
+}
+
+// legacy LOGOUT 0x7000000B (S2C); obj_id: 0 (self). A guild member, party member or friend logged out (ref/03
+// section 9.2, Plan/21 section 3.4). Named PresenceLogout (Plan/11 section 5.1 rule 6).
+message PresenceLogout {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x7000000B
+    name: "LOGOUT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32"];
+}
+
+// legacy QUERY_PLAYER_DATA 0x0141 (S2C); obj_id: 0 (NULL_ID). The name and data of a character (ref/08 section
+// 13.2, ref/09b section 3.8, Plan/21 section 3.2); sent to the asker, and to everyone when a character logs in
+// or changes level or job.
+message QueryPlayerDataNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x141
+    name: "QUERY_PLAYER_DATA"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32"];
+  string name = 2 [(flyff.legacy_type) = "str<=42"];
+  // job, level, sex, version and login
+  PlayerData data = 3 [(flyff.legacy_type) = "raw sPlayerData"];
+}
+
+// legacy UPDATE_PLAYER_DATA 0xF000F808 (S2C); obj_id: 0 (self). The data of a guild member, party member or
+// friend changed (ref/03 section 9.2, Plan/21 section 3.2).
+message UpdatePlayerData {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F808
+    name: "UPDATE_PLAYER_DATA"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32 id"];
+  PlayerData data = 2 [(flyff.legacy_type) = "raw sPlayerData"];
+}
+
+// legacy QUERYSETPLAYERNAME 0x00000012 (S2C); obj_id: 0 (self). A character was renamed; broadcast to everyone
+// (ref/03 section 9.2, ref/09b section 3.8, Plan/21 section 3.3).
+message QuerySetPlayerNameNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x12
+    name: "QUERYSETPLAYERNAME"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32"];
+  // the new name
+  string name = 2 [(flyff.legacy_type) = "str<=42"];
+}
+
+// legacy TAG 0x00F7 (S2C); obj_id: 0 (self). The offline notes of the receiver, at most 20, oldest first, in
+// the join batch (ref/08 section 14, ref/09b section 3.3, Plan/21 sections 3.5 and 9.6).
+message Tag {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xF7
+    name: "TAG"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: n (i16, the list length)
+  // the undelivered notes
+  repeated Note notes = 1 [(flyff.legacy_type) = "i16 n + n x {str, u32, str}"];
+
+  // One offline note.
+  message Note {
+    // name of the sender
+    string from_name = 1 [(flyff.legacy_type) = "str<=65"];
+    // the day the note was left as the integer YYYYMMDD
+    uint32 date = 2 [(flyff.legacy_type) = "u32 date"];
+    string text = 3 [(flyff.legacy_type) = "str<=256"];
+  }
+}
+
+// legacy INSERTTAG_RESULT 0xF000B008 (S2C); obj_id: 0 (self). The result of SendTag (ref/03 section 9.2,
+// ref/09a section 5.11, Plan/21 section 9.6).
+message InsertTagResult {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B008
+    name: "INSERTTAG_RESULT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // true = the note was stored; false = refused (blocked, mailbox of 20 full)
+  bool ok = 1 [(flyff.legacy_type) = "u8 result"];
+}
+
+// legacy SUMMON 0x00ED (S2C); obj_id: 0 (self). The summon scroll multiplexer (ref/09b section 3.12, Plan/21
+// section 4.11). The legacy `u8 sub` selects the payload; the field number is sub + 1: SOMMON_FRIEND 0,
+// SOMMON_FRIEND_CONFIRM 1, SOMMON_PARTY_CONFIRM 16. The nested messages drop the SOMMON_ prefix (they would
+// repeat the C2S names).
+message Summon {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xED
+    name: "SUMMON"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  oneof sub {
+    // SOMMON_FRIEND 0
+    Friend friend = 1;
+    // SOMMON_FRIEND_CONFIRM 1
+    FriendConfirm friend_confirm = 2;
+    // SOMMON_PARTY_CONFIRM 16
+    PartyConfirm party_confirm = 17;
+  }
+
+  // the scroll was used: the client asks for the friend's name and answers with SummonFriend
+  message Friend {
+    // MAKELONG(ITYPE_ITEM, inventory object id of the scroll)
+    uint32 data = 1 [(flyff.legacy_type) = "u32"];
+    // inventory object id of the scroll (the same id as the HIGH word of data)
+    uint32 item_obj_id = 2 [(flyff.legacy_type) = "OBJID"];
+  }
+
+  message FriendConfirm {
+    // object id of the summoner
+    uint32 summoner_obj = 1 [(flyff.legacy_type) = "OBJID objid"];
+    // the packed scroll word, echoed in the answer
+    uint32 data = 2 [(flyff.legacy_type) = "u32 dwData"];
+    string summoner_name = 3 [(flyff.legacy_type) = "str<=64"];
+    // name of the world the friend is summoned to
+    string world_name = 4 [(flyff.legacy_type) = "str<=128"];
+  }
+
+  message PartyConfirm {
+    // object id of the party leader
+    uint32 leader_obj = 1 [(flyff.legacy_type) = "OBJID objid"];
+    // the packed scroll word, echoed in the answer
+    uint32 data = 2 [(flyff.legacy_type) = "u32 dwData"];
+    // name of the world the party is summoned to
+    string world_name = 3 [(flyff.legacy_type) = "str<=256"];
+  }
+}

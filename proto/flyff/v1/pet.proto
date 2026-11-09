@@ -1,0 +1,482 @@
+// Pet messages (Plan/11 section 4.2, WP-PROTO-18; tag block 480-511): system pets (eggs), feeding, tamer items,
+// resurrection, egg transform, vis pets, the pet filter and the angel. Transcribed from ref/07c sections 6 and
+// 11, ref/08 sections 9.1 and 15.1, ref/09b sections 3.13 and 7.7, ref/13 section 19 and Plan/19 sections 5.12
+// and 13.
+//
+// A pet's data is `PetData` (item_types.proto) inside the egg / pet ItemElem. Pet levels PL_EGG 0, D 1, C 2, B
+// 3, A 4, S 5. The summoned system pet is named by the inventory object id of its item (`item_obj_id`); other
+// players only learn `MAKELONG(kind, level)` (`PetLevelup.pet_id`).
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+import "flyff/v1/item_types.proto";
+
+// legacy PET_RELEASE 0xF000F600 (C2S): dismiss the summoned system pet (ref/07c section 11, Plan/19 section
+// 13.1). Needs an active pet (TID_GAME_PET_NOT_FOUND). No payload. Answer: PetReleaseNtf to near.
+message PetReleaseReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F600
+    name: "PET_RELEASE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy USE_PET_FEED 0xF000F601 (C2S): feed the summoned pet with a feed stack; the server uses as much of
+// the stack as the pet needs (ref/07c section 11, Plan/19 section 13.4). Eggs cannot be fed with
+// features.sys_petleveling_mobkill. Answer: PetSetExp (egg) or PetFeed (pet), UpdateItem,
+// TID_GAME_PETFEED_S01.
+message UsePetFeed {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F601
+    name: "USE_PET_FEED"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the feed item (inventory object id)
+  uint32 feed_obj_id = 1 [(flyff.legacy_type) = "u32 dwFeedId"];
+}
+
+// legacy MAKE_PET_FEED 0xF000F605 (C2S): grind gems into pet feed with a feed maker or at the pet food mill
+// NPC (ref/07c section 11, Plan/19 section 13.4). Answer: PetMill + CreateItem.
+message MakePetFeed {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F605
+    name: "MAKE_PET_FEED"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the material item (a gem)
+  uint32 material_obj_id = 1 [(flyff.legacy_type) = "u32 dwMaterialId"];
+  // the II_SYS_SYS_FEED_MAKER item, NULL_ID = via the NPC (kept verbatim)
+  uint32 tool_obj_id = 2 [(flyff.legacy_type) = "u32 dwToolId"];
+  // the number of materials to grind (clamped to the stack)
+  sint32 num = 3 [(flyff.legacy_type) = "i16 nNum"];
+}
+
+// legacy PET_TAMER_MISTAKE 0xF000F602 (C2S): the pet-tamer "mistake" scroll lowers the pet one level and
+// (repack __PET_AUTO_LEVEL_UP) immediately levels it up again, which re-rolls the current level's stat
+// (ref/07c section 11, Plan/19 section 13.4). Answer: Pet (PF_PET_LEVEL_DOWN), PetLevelup.
+message PetTamerMistake {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F602
+    name: "PET_TAMER_MISTAKE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the scroll item (inventory object id)
+  uint32 obj_id = 1 [(flyff.legacy_type) = "u32 dwId"];
+}
+
+// legacy PET_TAMER_MIRACLE 0xF000F603 (C2S): the pet-tamer "miracle" scroll re-rolls the stats of the current
+// and the previous level (ref/07c section 11, Plan/19 section 13.4). Answer: Pet (PF_PET_GET_AVAIL),
+// PetLevelup.
+message PetTamerMiracle {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F603
+    name: "PET_TAMER_MIRACLE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the scroll item (inventory object id)
+  uint32 obj_id = 1 [(flyff.legacy_type) = "u32 dwId"];
+}
+
+// legacy FEED_POCKET_INACTIVE 0xF000F604 (C2S): switch the auto-feed pocket buff off (ref/07c section 11,
+// Plan/19 section 13.4). No payload.
+message FeedPocketInactive {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F604
+    name: "FEED_POCKET_INACTIVE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M5";
+}
+
+// legacy QUE_PETRESURRECTION 0x70000009 (C2S): turn a B..S pet into a resurrection quest fragment (ref/07c
+// section 11, Plan/19 section 13.4). Answer: QuePetResurrectionResult.
+message QuePetResurrection {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x70000009
+    name: "QUE_PETRESURRECTION"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the pet item (inventory object id)
+  sint32 obj_id = 1 [(flyff.legacy_type) = "i32 nItem"];
+}
+
+// legacy PICKUP_PET_AWAKENING_CANCEL 0x8FFF000F (C2S): remove the eat-pet awakening from an item at the
+// pet-awakening cancel NPC (MMI_PET_AWAK_CANCEL within range; ref/07c section 11, Plan/19 section 12.6.5).
+message PickupPetAwakeningCancel {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x8FFF000F
+    name: "PICKUP_PET_AWAKENING_CANCEL"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the item (inventory object id)
+  uint32 obj_id = 1 [(flyff.legacy_type) = "u32 dwItem"];
+}
+
+// legacy CLEAR_PET_NAME 0x8FFFFF01 (C2S): clear the name of the summoned pet (ref/07c section 11). No
+// payload. Answer: SetPetName (empty) to near.
+message ClearPetName {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x8FFFFF01
+    name: "CLEAR_PET_NAME"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy TRANSFORM_ITEM 0x8FFF000D (C2S): the egg transformer: turn a fixed number of distinct eggs into a
+// random result (ref/07c section 11, ref/09b section 7.7, Plan/19 section 13.4). FIX (VR-025): only
+// `transform_id == 0` exists; the result is rolled before any egg is removed.
+message TransformItem {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x8FFF000D
+    name: "TRANSFORM_ITEM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the transform kind and the eggs (item_types.proto)
+  TransformStuff stuff = 1 [(flyff.legacy_type) = "CTransformStuff"];
+}
+
+// legacy VISPET_REMOVEVIS 0x88000000 (C2S): destroy the vis charm in one socket of the active vis pet
+// (ref/07c section 11, Plan/19 section 13.5). FIX (VR-025): `0 <= pos < socket count`.
+message VisPetRemoveVis {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x88000000
+    name: "VISPET_REMOVEVIS"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the vis socket
+  sint32 pos = 1 [(flyff.legacy_type) = "i32 nPos"];
+}
+
+// legacy VISPET_SWAPVIS 0x88000001 (C2S): swap two vis sockets of the active vis pet (ref/07c section 11,
+// Plan/19 section 13.5). Both positions must be inside the socket count.
+message VisPetSwapVis {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x88000001
+    name: "VISPET_SWAPVIS"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the first socket
+  sint32 pos1 = 1 [(flyff.legacy_type) = "i32 nPos1"];
+  // the second socket
+  sint32 pos2 = 2 [(flyff.legacy_type) = "i32 nPos2"];
+}
+
+// legacy PETFILTER 0xAA000011 (C2S; repack __PET_FILTER): the loot categories the pet must skip (ref/07c
+// section 11, Plan/19 sections 6.8 and 13.5). Held in memory only; the client resends it after every login.
+message PetFilter {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xAA000011
+    name: "PETFILTER"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // bit mask (Resource/defineFilter.h): 1 HPFOOD, 2 MPFOOD, 4 FPFOOD, 8 WEAPON, 16 ARMOR, 32 JEWELRY, 64 EGG,
+  // 128 SUNSTONE, 256 MOONSTONE, 512 QUESTITEM, 1024 ELECARDS, 2048 SOCKETCARD; a set bit = skip
+  uint32 filter = 1 [(flyff.legacy_type) = "u32 dwPetFilter"];
+}
+
+// legacy CREATEANGEL 0x00FFF000 (C2S): summon an angel from Orichalcum and moonstones (ref/07c section 6.1,
+// Plan/19 section 5.12). FIX (ref/07c port note 4, Plan/11 section 5.5, VR-025): the legacy payload was ONE
+// string built by the client, the concatenation of "<objid>D<count>DD" per material, parsed with an
+// off-by-one buffer overflow; it is transcribed as a typed list. The handler checks (not generated limits):
+// at most 20 entries, distinct ids, 1 <= count <= stack, only II_GEN_MAT_ORICHALCUM01/_1 and
+// II_GEN_MAT_MOONSTONE/_1; a bad list is refused, not kicked. The colour of the angel is rolled from the
+// total count (Plan/19 section 5.12).
+message CreateAngel {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFF000
+    name: "CREATEANGEL"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the materials placed in the summon window (MAX_MATDIE 20 slots)
+  repeated AngelMaterial materials = 1 [
+    (flyff.legacy_type) = "str<=1024 \"<objid>D<count>DD\" ...",
+    (flyff.max_len) = 20
+  ];
+}
+
+// legacy ANGELBUFF 0x00FFF002 (C2S): redeem a finished angel buff for a 100 % angel item (ref/07c section
+// 6.2, Plan/19 section 5.12). No payload.
+message AngelBuff {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFF002
+    name: "ANGELBUFF"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M5";
+}
+
+// legacy PET_CALL 0x0110 (S2C); obj_id: the owner. A pet was summoned; audience near including self (ref/08
+// section 15.1, ref/09b section 3.13, Plan/19 section 13.1). The owner's client stores the item id; the
+// others only kind and level.
+message PetCall {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x110
+    name: "PET_CALL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the pet item (the owner's inventory object id)
+  uint32 item_obj_id = 1 [(flyff.legacy_type) = "u32 petItemObjId"];
+  // the pet's mover (model) index
+  uint32 mover_index = 2 [(flyff.legacy_type) = "u32 petMoverIndex"];
+  // PL_EGG 0 .. PL_S 5
+  uint32 level = 3 [(flyff.legacy_type) = "u8 petLevel"];
+  // the pet name, at most 16 bytes (MAX_PET_NAME 17 buffer)
+  string name = 4 [(flyff.legacy_type) = "str<=16"];
+}
+
+// legacy PET_RELEASE 0x0111 (S2C); obj_id: the owner. The pet was dismissed; audience near including self
+// (ref/08 section 15.1). No payload.
+message PetReleaseNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x111
+    name: "PET_RELEASE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy PET_LEVELUP 0x0112 (S2C); obj_id: the owner. The pet changed level (or stats); audience near without
+// self (ref/08 section 15.1, Plan/19 section 13.3).
+message PetLevelup {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x112
+    name: "PET_LEVELUP"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // MAKELONG(mover index, level)
+  uint32 pet_id = 1 [(flyff.legacy_type) = "u32 petId"];
+}
+
+// legacy PET_SET_EXP 0x0113 (S2C); obj_id: 0 (self). The summoned pet's experience (ref/08 section 15.1,
+// Plan/19 section 13.3).
+message PetSetExp {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x113
+    name: "PET_SET_EXP"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the experience (egg to 50000, pet to 100000)
+  uint32 exp = 1 [(flyff.legacy_type) = "u32 dwExp"];
+}
+
+// legacy PET 0x0114 (S2C); obj_id: 0 (self). The whole pet data of the summoned pet item (ref/08 section
+// 15.1, Plan/19 sections 13.1-13.4). The legacy CPet is `PetData` (item_types.proto).
+message Pet {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x114
+    name: "PET"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the pet
+  PetData pet = 1 [(flyff.legacy_type) = "CPet::Serialize"];
+  // PF_PET 0 (first summon), PF_PET_LEVEL_UP 1, PF_PET_LEVEL_DOWN 2, PF_PET_GET_AVAIL 3
+  uint32 flag = 2 [(flyff.legacy_type) = "u8 nPetLevelup"];
+}
+
+// legacy PET_STATE 0x0115 (S2C); obj_id: 0 (self). Life, energy and experience of the summoned pet, sent
+// about once a second (ref/08 section 15.1, Plan/19 section 13.2). A life increase shows TID_GAME_PET_LIFE.
+message PetState {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x115
+    name: "PET_STATE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the pet item (inventory object id)
+  uint32 item_obj_id = 1 [(flyff.legacy_type) = "u32 petItemObjId"];
+  // the life
+  uint32 life = 2 [(flyff.legacy_type) = "u16 wLife"];
+  // the energy
+  uint32 energy = 3 [(flyff.legacy_type) = "u16 wEnergy"];
+  // the experience
+  uint32 exp = 4 [(flyff.legacy_type) = "u32 dwExp"];
+}
+
+// legacy PET_FEED 0x0116 (S2C); obj_id: the owner. The pet's energy after feeding; audience near including
+// self (ref/08 section 15.1).
+message PetFeed {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x116
+    name: "PET_FEED"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the energy
+  uint32 energy = 1 [(flyff.legacy_type) = "u16 wEnergy"];
+}
+
+// legacy PET_MILL 0x0117 (S2C); obj_id: 0 (self). The result of MakePetFeed (ref/08 section 15.1, Plan/19
+// section 13.4).
+message PetMill {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x117
+    name: "PET_MILL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the CreateItem result code
+  sint32 result = 1 [(flyff.legacy_type) = "i32 nResult"];
+  // the number of feed items made
+  sint32 count = 2 [(flyff.legacy_type) = "i32 nCount"];
+}
+
+// legacy QUE_PETRESURRECTION_RESULT 0x0203 (S2C); obj_id: 0 (the legacy header is NULL_ID). The answer of
+// QuePetResurrection; the client shows TID_GAME_PETTRADE_OK / _FAIL (ref/08 section 12.8).
+message QuePetResurrectionResult {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x203
+    name: "QUE_PETRESURRECTION_RESULT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // true = the pet became a fragment
+  bool ok = 1 [(flyff.legacy_type) = "BOOL bResult"];
+}
+
+// legacy SET_PET_NAME 0x9100 (S2C); obj_id: the owner. The pet's name changed (empty = cleared); audience
+// near including self (ref/08 section 15.1, ref/07c section 22).
+message SetPetName {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9100
+    name: "SET_PET_NAME"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the pet name, at most 16 bytes
+  string name = 1 [(flyff.legacy_type) = "str<=16"];
+}
+
+// legacy VISPET_ACTIVATE 0x8801 (S2C); obj_id: 0 (self). A vis pet was summoned or dismissed; the client
+// ignores the header and applies it to itself (ref/08 section 15.1, ref/09b section 3.13, Plan/19 section
+// 13.5).
+message VisPetActivate {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8801
+    name: "VISPET_ACTIVATE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the vis-pet item (inventory object id)
+  uint32 vis_pet_item_obj_id = 1 [(flyff.legacy_type) = "u32 objIdVisPetItem"];
+  // the eat pet's object id (ref/09b calls it eatPetObjId)
+  uint32 eat_pet_obj_id = 2 [(flyff.legacy_type) = "u32 objIdVisPetId"];
+}
+
+// legacy MOVER_CHANGESFX 0x8800 (S2C); obj_id: the mover (the pet owner). The effect attached to a vis pet
+// changed; audience near (ref/08 section 15.1, Plan/19 section 13.5).
+message MoverChangeSfx {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8800
+    name: "MOVER_CHANGESFX"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the XI_* effect id, 0 = none
+  uint32 sfx_id = 1 [(flyff.legacy_type) = "u32 m_dwMoverSfxId"];
+}
+
+// legacy ANGEL 0x00B1 (S2C); obj_id: 0 (self). The angel experience of the player, sent whenever it changes
+// (ref/08 section 15.3, ref/09b section 3.13, Plan/19 section 5.12). The legacy `u8 sub` has one live value:
+// ANGEL_INFO 1 (ANGEL_WNDCREATE 0 is commented out in the client); it is kept as `state`.
+message Angel {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xB1
+    name: "ANGEL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M5";
+  // ANGEL_INFO = 1, the only state the client handles
+  uint32 state = 1 [(flyff.legacy_type) = "u8 nState"];
+  // the angel experience
+  sint64 angel_exp = 2 [
+    (flyff.legacy_type) = "i64 m_nAngelExp",
+    (flyff.js_safe_number) = true
+  ];
+  // the angel level
+  sint32 angel_level = 3 [(flyff.legacy_type) = "i32 m_nAngelLevel"];
+  // true = the angel is complete: the client prints TID_GAME_COMPLETE_ANGEL
+  bool complete = 4 [(flyff.legacy_type) = "BOOL bComplete"];
+}
+
+// One material of CreateAngel.
+message AngelMaterial {
+  // the inventory object id of the material stack
+  uint32 obj_id = 1 [(flyff.legacy_type) = "OBJID"];
+  // how many units of that stack are used
+  uint32 count = 2 [(flyff.legacy_type) = "int"];
+}

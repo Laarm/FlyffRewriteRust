@@ -1,0 +1,47 @@
+{
+  "$defs": {
+    "SoundsBundle": {
+      "description": "`sounds`: `SND_`/`VOC_` id to `sound/<file>` (a canonical path), `null` = the file is missing, `\"\"` =\nsilent. An id that the file does not define is absent.",
+      "properties": {
+        "sounds": {
+          "additionalProperties": false,
+          "description": "id to file.",
+          "patternProperties": {
+            "^\\d+$": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "sounds"
+      ],
+      "title": "SoundsBundle",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`sounds.<h16>.json`: the envelope of the `sounds` bundle (schema version 1).",
+  "properties": {
+    "bundle": {
+      "const": "sounds"
+    },
+    "data": {
+      "$ref": "#/$defs/SoundsBundle"
+    },
+    "schema": {
+      "const": 1
+    }
+  },
+  "required": [
+    "bundle",
+    "schema",
+    "data"
+  ],
+  "title": "SoundsBundleEnvelope",
+  "type": "object"
+}

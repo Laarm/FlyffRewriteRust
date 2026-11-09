@@ -1,0 +1,182 @@
+// Session messages (Plan/11 section 8.1; tag block 16-47, plus the hot-range ServerTimeReq).
+// Extension messages: ids 0xFE000001..0xFE000006 (Plan/11a section 5).
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+
+// ext 0xFE000001; legacy GETPLAYERLIST 0x000000F6 (merged). First WS message of every session.
+message Hello {
+  option (flyff.ext_id) = 0xFE000001;
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF6
+    name: "GETPLAYERLIST"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "12";
+  option (flyff.milestone) = "M1";
+  // from POST /api/login (opaque, <=128 B)
+  string token = 1 [(flyff.max_len) = 128];
+  // 16 hex chars, must equal the server's PROTO_HASH (Plan/11 section 4.4)
+  string proto_hash = 2 [(flyff.max_len) = 16];
+  // e.g. "0.4.0+3f2a9c1", <=64 B, logged only
+  string client_build = 3 [(flyff.max_len) = 64];
+  // client 60 Hz frame counter at send (first clock sample)
+  uint32 client_frame = 4;
+  // reconnect after reload/crash; logged only, the server decides by the entry state (Plan/11 section 2.3 rule 5)
+  bool reattach = 5;
+}
+
+message SessionLimits {
+  // 8192
+  uint32 max_client_msg_bytes = 1;
+  // 60
+  uint32 client_msgs_per_sec = 2;
+  // 120
+  uint32 client_msgs_burst = 3;
+  // 67
+  uint32 flush_interval_ms = 4;
+  // 15
+  uint32 ws_ping_interval_s = 5;
+}
+
+// ext 0xFE000002
+message HelloAck {
+  option (flyff.ext_id) = 0xFE000002;
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "12";
+  option (flyff.milestone) = "M1";
+  enum Result {
+    RESULT_UNSPECIFIED = 0;
+    RESULT_OK = 1;
+    RESULT_RELOAD_REQUIRED = 2;
+    RESULT_BAD_TOKEN = 3;
+    RESULT_SERVER_FULL = 4;
+    RESULT_SHUTTING_DOWN = 5;
+    RESULT_BANNED = 6;
+  }
+  Result result = 1;
+  string server_build = 2;
+  // wall clock at send
+  sint64 server_unix_ms = 3 [(flyff.js_safe_number) = true];
+  // current 60 Hz frame estimate
+  uint64 server_frame = 4 [(flyff.js_safe_number) = true];
+  // Hello.client_frame
+  uint32 client_frame_echo = 5;
+  string account = 6;
+  // AUTH_* letter as number ('F' = 70 ... 'P' = 80); UI gating only
+  uint32 authority = 7;
+  SessionLimits limits = 8;
+  // replaces SRVR_LIST
+  string server_name = 9;
+  // true: skip CharSelect, join batch follows
+  bool reattached = 10;
+  // client data-bundle version (Plan/14 section 10.3); a client whose loaded manifest differs reloads
+  string data_version = 11;
+}
+
+// ext 0xFE000003
+message Kick {
+  option (flyff.ext_id) = 0xFE000003;
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "10";
+  option (flyff.milestone) = "M1";
+  enum Reason {
+    REASON_UNSPECIFIED = 0;
+    REASON_PROTOCOL_ERROR = 1;
+    REASON_RATE_LIMIT = 2;
+    REASON_MESSAGE_TOO_BIG = 3;
+    REASON_INVALID_STATE = 4;
+    REASON_DUPLICATE_LOGIN = 5;
+    REASON_TIMEOUT = 6;
+    REASON_GM_KICK = 7;
+    REASON_BANNED = 8;
+    REASON_SHUTDOWN = 9;
+    REASON_SERVER_ERROR = 10;
+    REASON_SLOW_CONSUMER = 11;
+    REASON_RELOAD_REQUIRED = 12;
+    REASON_SESSION_EXPIRED = 13;
+  }
+  Reason reason = 1;
+  // TID_* for the message box, 0 = default text for reason
+  sint32 tid = 2;
+  // <=255 B, logs / GM text
+  string detail = 3;
+  // 0 = do not auto-reconnect (SHUTDOWN may set e.g. 30000)
+  uint32 reconnect_after_ms = 4;
+}
+
+// ext 0xFE000004; legacy QUERYTICKCOUNT 0x0000000B. Also the application-level liveness probe: the
+// protocol has no kicking ping (D3), the gateway answers this immediately with ServerTime.
+message ServerTimeReq {
+  option (flyff.ext_id) = 0xFE000004;
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x0B
+    name: "QUERYTICKCOUNT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "10";
+  option (flyff.milestone) = "M1";
+  uint32 client_frame = 1;
+  // performance.now() at send
+  double client_perf_ms = 2;
+}
+
+// ext 0xFE000005; legacy QUERYTICKCOUNT reply
+message ServerTime {
+  option (flyff.ext_id) = 0xFE000005;
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x0B
+    name: "QUERYTICKCOUNT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "10";
+  option (flyff.milestone) = "M1";
+  uint32 client_frame_echo = 1;
+  double client_perf_ms_echo = 2;
+  // frame estimate at reply
+  uint64 server_frame = 3 [(flyff.js_safe_number) = true];
+  sint64 server_unix_ms = 4 [(flyff.js_safe_number) = true];
+}
+
+// ext 0xFE000006; owner doc 24
+message AssetsPreparing {
+  option (flyff.ext_id) = 0xFE000006;
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "24";
+  option (flyff.milestone) = "M1";
+  // derived-asset kind being built, e.g. "collision", "bundle"
+  string kind = 1;
+  uint32 done = 2;
+  uint32 total = 3;
+  bool finished = 4;
+  // item name for display (optional)
+  string current = 5;
+}
+
+// ext 0xFE000008 (optional, M8); obj_id: 0. The entering character's stored UI layout, sent in the join
+// batch after EnterWorld or re-attach, only when `client.ui` is set (Plan/11a section 8 R1-5, Plan/40 section 11.4).
+message ClientUiLoad {
+  option (flyff.ext_id) = 0xFE000008;
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "40";
+  option (flyff.milestone) = "M8";
+  // SettingsDoc.values["client.ui"] of the entering character, verbatim (Plan/13 section 6.12)
+  string layout_json = 1;
+}
+
+// ext 0xFE000009 (optional, M8). Stores the UI layout JSON in the character's `client.ui` setting.
+message ClientUiSave {
+  option (flyff.ext_id) = 0xFE000009;
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "40";
+  option (flyff.milestone) = "M8";
+  // Opaque to the server, stored verbatim. 8000 keeps the whole WS message under net.max_client_msg_bytes = 8192
+  // (Plan/11 section 1.2); a longer value is a generated-limit violation (Kick PROTOCOL_ERROR), so the client
+  // MUST NOT send it (it keeps a larger layout local only).
+  string layout_json = 1 [(flyff.max_len) = 8000];
+}

@@ -1,0 +1,347 @@
+// Skill messages (Plan/11 section 4.2, WP-PROTO-12; tag block 224-255 plus the hot tag 5). Transcribed from
+// ref/08 sections 9.1 and 10.1, ref/07a section 9.2 and appendix A.1, ref/07c sections 4.1 and 12.2, ref/09a
+// section 5.6, ref/09b sections 3.1/3.4/4.2 and Plan/17 (ownership in 17 section 0.2, behaviour in 6 and 7.10).
+//
+// Skill slots: the job skills of a player are the 45 `m_aJobSkill` slots in server order (0-2 vagrant, 3-22
+// expert, 23-42 pro, 43 master, 44 hero; Plan/13 SkillsDoc); a `Skill` with skill_id NULL_ID (0xFFFFFFFF) is an
+// empty slot. SKILLUSETYPE: SUT_NORMAL 0, SUT_QUEUESTART 1 (first skill of an action-slot chain), SUT_QUEUEING 2.
+// Buff types (CBuffMgr): BUFF_ITEM 0, SKILL 1, PET 2, ITEM2 3 (real-time expiry), EQUIP 4.
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+import "flyff/v1/common.proto";
+import "flyff/v1/mover_types.proto";
+
+// legacy USESKILL 0x00FF0020 (C2S): use the skill in one job-skill slot (ref/07c section 4.1, Plan/17
+// section 6.3). Refused with ClearUseSkill (to self) while vending or before the character is fully loaded,
+// for slot >= 45, an empty slot, effective level 0 or above the maximum, and for use_type > 2 (VR-004).
+message UseSkillReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF0020
+    name: "USESKILL"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // meaningless since 2005, ignored (the server forces 0)
+  uint32 type = 1 [(flyff.legacy_type) = "u16 wType"];
+  // index 0..44 into the 45 job-skill slots
+  uint32 slot = 2 [(flyff.legacy_type) = "u16 wId"];
+  // target object id (NULL_ID allowed for self and area skills)
+  uint32 target = 3 [(flyff.legacy_type) = "u32 objid"];
+  // SKILLUSETYPE 0..2
+  sint32 use_type = 4 [(flyff.legacy_type) = "i32 nUseType"];
+  // (__S8_PK) Ctrl held = force a PK attack on a player
+  bool control = 5 [(flyff.legacy_type) = "BOOL bControl"];
+}
+
+// legacy DOUSESKILLPOINT 0x000F0003 (C2S): spend skill points; the complete desired job-skill table in the
+// server slot order (ref/07a section 9.2). The server validates it with
+// flyff_rules::skill_points::validate_skill_plan (VR-086: same skill per slot, no level down, level and
+// prerequisite rules, enough points) and answers DoUseSkillPointNtf, or DefinedText TID_RESKILLPOINT_ERROR.
+message DoUseSkillPointReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF0003
+    name: "DOUSESKILLPOINT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // exactly 45 entries, positional (a shorter or longer list is refused)
+  repeated Skill skills = 1 [
+    (flyff.legacy_type) = "45 x {u32 dwSkill, u32 dwLevel}",
+    (flyff.max_len) = 45
+  ];
+}
+
+// legacy LEGENDSKILLUP_START 0xF000F500 (C2S): the hero skill-up with five gems (ref/07c section 12.2,
+// Plan/17 section 6.2). Answer: LegendSkillUpResult.
+message LegendSkillUpStart {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F500
+    name: "LEGENDSKILLUP_START"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // exactly 5 inventory object ids, in the order diamond, emerald, sapphire, ruby, topaz
+  repeated uint32 item_obj_ids = 1 [
+    (flyff.legacy_type) = "5 x OBJID",
+    (flyff.max_len) = 5
+  ];
+}
+
+// legacy TELESKILL 0x00FF0025 (C2S): the Blinkpool jump target, sent after the UseSkillReq paid the cost
+// (ref/07a section 11.15, Plan/17 section 6.14). VR-082: the position must lie inside the world bounds.
+message TeleSkill {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF0025
+    name: "TELESKILL"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // target position
+  Vec3 pos = 1 [(flyff.legacy_type) = "vec3 vPos"];
+}
+
+// legacy ENDSKILLQUEUE 0x00FF00D5 (C2S): abort the action-slot skill chain (ref/07b section 7.6). Answer:
+// EndSkillQueueNtf. No payload.
+message EndSkillQueueReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00D5
+    name: "ENDSKILLQUEUE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+}
+
+// legacy SEND_TO_SERVER_AP 0x00000F33 (C2S): the client action points. VR-004: clamped to 0..100, negative
+// is ignored. The V15 client has no call site; kept for protocol completeness (Plan/17 section 6.13).
+message SendToServerAp {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF33
+    name: "SEND_TO_SERVER_AP"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  sint32 action_point = 1 [(flyff.legacy_type) = "i32 nAP"];
+}
+
+// legacy USESKILL 0x0019 (S2C); obj_id: the caster. A skill was accepted and started (ref/08 section 10.1,
+// Plan/17 section 6.3). Audience: near including the caster (the cast bar of the own player confirms the
+// predicted cast).
+message UseSkillNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x19
+    name: "USESKILL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  uint32 skill_id = 1 [(flyff.legacy_type) = "u32 dwSkill"];
+  // effective skill level
+  uint32 level = 2 [(flyff.legacy_type) = "u32 dwLevel"];
+  // target object id
+  uint32 target = 3 [(flyff.legacy_type) = "u32 objid"];
+  // SKILLUSETYPE
+  sint32 use_type = 4 [(flyff.legacy_type) = "i32 nUseType"];
+  // casting time in server ticks (15 Hz): remote clients start the cast with casting_time * 4 frames at
+  // server_frame, the cast bar lasts casting_time * 66.667 ms
+  sint32 casting_time = 5 [(flyff.legacy_type) = "i32 nCastingTime"];
+  // added (Plan/11 section 9.4): the sim frame at which the server started the action
+  uint64 server_frame = 100 [(flyff.js_safe_number) = true];
+  // added (Plan/11 section 8.6): the caster animation speed when the action started on the server
+  float ani_speed = 101;
+}
+
+// legacy CLEAR_USESKILL 0x001A (S2C); obj_id: the player (self). A skill request was rejected: the client
+// cancels the predicted cast animation. No payload.
+message ClearUseSkill {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x1A
+    name: "CLEAR_USESKILL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+}
+
+// legacy DOAPPLYUSESKILL 0x00D7 (S2C); obj_id: the casting object (an NPC buffer, a trap or area ctrl). A
+// skill effect is applied without a cast animation (ref/09b section 3.1). Audience: near of the caster.
+message DoApplyUseSkill {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xD7
+    name: "DOAPPLYUSESKILL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  uint32 target = 1 [(flyff.legacy_type) = "u32 idTarget"];
+  uint32 skill_id = 2 [(flyff.legacy_type) = "u32"];
+  uint32 level = 3 [(flyff.legacy_type) = "u32"];
+}
+
+// legacy SETSKILLSTATE 0x004C (S2C), the CUserMng layout only (Plan/11a); obj_id: the center mover whose
+// visibility receives it. A buff was added or refreshed (ref/08 section 10.1, Plan/17 section 7.10).
+// Audience: near including self.
+message SetSkillState {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x4C
+    name: "SETSKILLSTATE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M4";
+  // the buffed mover
+  uint32 target = 1 [(flyff.legacy_type) = "u32 targetObjId"];
+  // BUFF_ITEM 0, SKILL 1, PET 2, ITEM2 3, EQUIP 4
+  uint32 buff_type = 2 [(flyff.legacy_type) = "u16"];
+  // skill or item id
+  uint32 buff_id = 3 [(flyff.legacy_type) = "u16"];
+  // skill or item level; for BUFF_ITEM2 the seconds remaining (legacy level - now)
+  sint32 level = 4 [(flyff.legacy_type) = "u32 level / i32 secondsRemaining"];
+  // total duration in milliseconds
+  uint32 total_ms = 5 [(flyff.legacy_type) = "u32 totalTimeMs"];
+}
+
+// legacy REMOVESKILLINFULENCE 0x00F8 (S2C); obj_id: the buffed mover. A buff was removed or expired.
+// Audience: near including self.
+message RemoveSkillInfluence {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xF8
+    name: "REMOVESKILLINFULENCE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M4";
+  uint32 buff_type = 1 [(flyff.legacy_type) = "u16 wType"];
+  uint32 buff_id = 2 [(flyff.legacy_type) = "u16 wID"];
+}
+
+// legacy REMOVEALLSKILLINFULENCE 0x00F4 (S2C); obj_id: the mover. Every buff icon is cleared (death,
+// dispel); charged item buffs are re-sent after a revival (PL-082). Audience: near including self. No
+// payload.
+message RemoveAllSkillInfluence {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xF4
+    name: "REMOVEALLSKILLINFULENCE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy SETSKILLLEVEL 0x0026 (S2C); obj_id: the player. A visible skill level of another player changed;
+// the legacy client reads and ignores it. Audience: near minus self.
+message SetSkillLevel {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x26
+    name: "SETSKILLLEVEL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  uint32 skill_id = 1 [(flyff.legacy_type) = "u32 dwSkill"];
+  uint32 level = 2 [(flyff.legacy_type) = "u32 dwLevel"];
+}
+
+// legacy CMDSETSKILLLEVEL 0x006B (S2C); obj_id: 0 (self). A GM or script set a skill level: the client
+// updates the skill tree and shows TID_GAME_SKILLLEVELUP.
+message CmdSetSkillLevel {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x6B
+    name: "CMDSETSKILLLEVEL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  uint32 skill_id = 1 [(flyff.legacy_type) = "u32 dwSkill"];
+  uint32 level = 2 [(flyff.legacy_type) = "u32 dwSkillLevel"];
+}
+
+// legacy INITSKILLPOINT 0x007C (S2C); obj_id: 0 (self). The skills were reset: all non-master/hero levels
+// become 0 and the points are refunded (ref/09b section 3.4).
+message InitSkillPoint {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x7C
+    name: "INITSKILLPOINT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // the new skill point total
+  sint32 skill_point = 1 [(flyff.legacy_type) = "i32 nSkillPoint"];
+}
+
+// legacy DOUSESKILLPOINT 0x007D (S2C); obj_id: 0 (self). The skill table after spending points, built from
+// the server table (the legacy echoed the request, FIX), also after a master skill growth or a legend
+// skill-up.
+message DoUseSkillPointNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x7D
+    name: "DOUSESKILLPOINT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // exactly 45 entries, positional
+  repeated Skill skills = 1 [(flyff.legacy_type) = "45 x {u32 dwSkill, u32 dwLevel}"];
+  // remaining skill points
+  sint32 skill_point = 2 [(flyff.legacy_type) = "i32 nSkillPoint"];
+}
+
+// legacy LEGENDSKILLUP_RESULT 0x0120 (S2C); obj_id: 0 (self). Result of LegendSkillUpStart.
+message LegendSkillUpResult {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x120
+    name: "LEGENDSKILLUP_RESULT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // -1 refused (a hero skill is already at level 5), 0 failed, 1 success
+  sint32 result = 1 [(flyff.legacy_type) = "i32"];
+}
+
+// legacy COMMONSKILL 0x00DD (S2C); obj_id: the mover (self). A full-screen flash effect (SI_GEN_FLASH,
+// blind): the client reads dwCircleTime and dwSkillTime from the skill data (ref/09b section 3.1).
+message CommonSkill {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xDD
+    name: "COMMONSKILL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  uint32 skill_id = 1 [(flyff.legacy_type) = "u32 dwSkill"];
+  uint32 level = 2 [(flyff.legacy_type) = "u32 dwLevel"];
+}
+
+// legacy ENDSKILLQUEUE 0x00E5 (S2C); obj_id: 0 (self). The action-slot skill chain ended or was aborted. No
+// payload.
+message EndSkillQueueNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xE5
+    name: "ENDSKILLQUEUE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+}
+
+// legacy SETACTIONPOINT 0x00C5 (S2C); obj_id: 0 (self). The action points of the skill queue (0..100).
+message SetActionPoint {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xC5
+    name: "SETACTIONPOINT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  sint32 action_point = 1 [(flyff.legacy_type) = "i32 nAP"];
+}

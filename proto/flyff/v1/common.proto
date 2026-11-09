@@ -1,0 +1,61 @@
+// Common types (Plan/11 section 7.1). WP-PROTO-03 transcribes the remaining common files; this file
+// carries the types the envelope skeleton and the first generator tests need.
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+
+// D3D left-handed, world units
+message Vec3 {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+}
+
+// Start state attached to server-originated movement intents (D3/D4).
+message IntentStamp {
+  // frame in which the intent starts, F = 4n + i (tick n, sub-frame i; Plan/11 section 3.1); the start
+  // state below is valid at the start of F; clients fast-forward batch.server_frame - server_frame frames
+  uint64 server_frame = 1 [(flyff.js_safe_number) = true];
+  Vec3 start_pos = 2;
+  // yaw, degrees
+  float start_angle = 3;
+  // OBJSTA_* word (ref/08 section 8.3)
+  uint32 start_state = 4;
+  // OBJSTAF_*
+  uint32 start_state_flags = 5;
+  // pitch (flying), else 0
+  float start_angle_x = 6;
+}
+
+// Start state attached to player-originated intents (client-authoritative, D4).
+message ClientStamp {
+  // client 60 Hz frame counter when sampled
+  uint32 client_frame = 1;
+  Vec3 pos = 2;
+  float angle = 3;
+  uint32 state = 4;
+  uint32 state_flags = 5;
+}
+
+// legacy MS2 extras
+message FlyState {
+  float angle_x = 1;
+  float acc_power = 2;
+  float turn_angle = 3;
+}
+
+enum MoveReason {
+  MOVE_REASON_UNSPECIFIED = 0;
+  // legacy PLAYERMOVED(2) / MOVERMOVED(2): key-driven state change
+  MOVE_REASON_MOVED = 1;
+  // legacy PLAYERBEHAVIOR(2) / MOVERBEHAVIOR(2): discrete action (jump, walk toggle, forced pose)
+  MOVE_REASON_BEHAVIOR = 2;
+  // legacy PLAYERCORR(2) / MOVERCORR(2): hard correction after collision/drop
+  MOVE_REASON_CORR = 3;
+  // legacy PLAYERANGLE / MOVERANGLE: flying steering
+  MOVE_REASON_ANGLE = 4;
+  // new: 500 ms refresh while moving (D4)
+  MOVE_REASON_PERIODIC = 5;
+}

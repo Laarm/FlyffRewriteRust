@@ -1,0 +1,37 @@
+[package]
+name = "flyff-wasm"
+description = "wasm-bindgen API for the browser: decoders, SimWorld, rules (Plan/31, 30, 16, 40; tier S)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = []
+# Installs console_error_panic_hook.
+dev-panic-hook = ["dep:console_error_panic_hook"]
+
+[dependencies]
+flyff-common = { workspace = true }
+flyff-formats = { workspace = true, features = ["wasm"] }
+flyff-data = { workspace = true }
+flyff-rules = { workspace = true }
+flyff-sim = { workspace = true }
+libm = { workspace = true }
+wasm-bindgen = { workspace = true }
+js-sys = { workspace = true }
+# Allow-listed in the wasm closure (Plan/02 §11.5 rule 2): JSON bundles are parsed inside wasm and decoder
+# metas / RulesContext values cross the boundary through serde-wasm-bindgen. Present now so that
+# `cargo xtask dep-rules` exercises the allow-list on the real graph.
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde-wasm-bindgen = { workspace = true }
+console_error_panic_hook = { workspace = true, optional = true }
+

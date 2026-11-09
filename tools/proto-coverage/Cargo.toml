@@ -1,0 +1,30 @@
+[package]
+name = "proto-coverage"
+description = "Legacy-id coverage gate of the wire protocol: checks C1-C8 of Plan/11 section 11 and the importers of annex 11a and ref/99 appendix B (WP-PROTO-05; not shipped)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+name = "proto_coverage"
+path = "src/lib.rs"
+
+[[bin]]
+name = "proto-coverage"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+prost-reflect = { workspace = true }
+# the committed descriptor set (`flyff_proto::DESCRIPTOR_SET`), the default input of the gate
+flyff-proto = { workspace = true }
+

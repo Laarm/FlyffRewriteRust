@@ -1,0 +1,28 @@
+/* The two-factor dialog (WP-ADMIN-28): the setup key, the QR code, the countdown. */
+.adm-totp__qr {
+  display: block;
+  width: 200px;
+  height: 200px;
+  margin: 0 auto;
+  background: #fff; /* the QR code is dark on light whatever the theme */
+  border-radius: var(--radius);
+  image-rendering: pixelated;
+}
+
+.adm-totp__key {
+  font: var(--fs-lg) / 1.5 var(--mono);
+  letter-spacing: 0.06em;
+  padding: var(--s-2) var(--s-3);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  word-break: break-all;
+  user-select: all;
+}
+
+.adm-totp__bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-3);
+}

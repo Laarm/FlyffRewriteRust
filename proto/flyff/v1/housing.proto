@@ -1,0 +1,360 @@
+// Housing (mini room) and guild house messages (Plan/11 section 4.2, WP-PROTO-27; tag block 944-975). Transcribed from
+// ref/07c sections 24 and 28, ref/08 section 15.3, ref/09b sections 3.16 and 7.8, src:_Common/Housing.cpp and
+// GuildHouse.cpp and Plan/22 sections 12 and 13. Helper types: HousingInfo (HOUSINGINFO), GhFntrInfo (GH_Fntr_Info)
+// and GuildHouseInfo (the body of CGuildHouseBase::SerializeAllInfo). Remaining times of the legacy wire (seconds,
+// the client adds its clock) are wall-clock instants here (`*_at`, unix seconds; Plan/11 section 5.8). Guild house
+// packet operations (GuildHousePacketReq / Ntf `op`): LISTUP 0, LISTDROP 1, SETUP 2, REMOVE 3, RESET 4, REFRESH 5,
+// UPKEEP 6, EXPIRED 7. Every C2S message acts for the session character (VR-001).
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+import "flyff/v1/common.proto";
+
+// HOUSINGINFO (ref/09b section 7.8, Plan/11 section 5.5): one furniture item of a mini room.
+message HousingInfo {
+  uint32 item_id = 1 [(flyff.legacy_type) = "u32 dwItemId"];
+  // unix seconds when the item expires (the legacy remaining seconds)
+  sint64 expire_at = 2 [
+    (flyff.legacy_type) = "time_t tKeepTime",
+    (flyff.js_safe_number) = true
+  ];
+  // true = installed in the room
+  bool setup = 3 [(flyff.legacy_type) = "BOOL bSetup"];
+  Vec3 pos = 4 [(flyff.legacy_type) = "vec3 vPos"];
+  float angle = 5 [(flyff.legacy_type) = "f32 fAngle"];
+}
+
+// GH_Fntr_Info (CGuildHouseBase::GuildHouse_Furniture_Info; ref/09b section 7.8): one furniture item of a
+// guild house.
+message GhFntrInfo {
+  // UPKEEP requests reuse it for the number of days (Plan/22 section 12.4)
+  uint32 item_id = 1 [(flyff.legacy_type) = "u32 dwItemId"];
+  // true = installed
+  bool setup = 2 [(flyff.legacy_type) = "BOOL bSetup"];
+  Vec3 pos = 3 [(flyff.legacy_type) = "vec3 vPos"];
+  float angle = 4 [(flyff.legacy_type) = "f32 fAngle"];
+  // object id of the installed furniture; 0xFFFFFFFF (NULL_ID, kept) = none
+  uint32 ctrl_obj_id = 5 [(flyff.legacy_type) = "OBJID objId"];
+  // unix seconds when the item expires, 0 = unlimited / not started
+  sint64 expire_at = 6 [
+    (flyff.legacy_type) = "time_t tKeepTime",
+    (flyff.js_safe_number) = true
+  ];
+}
+
+// The body of CGuildHouseBase::SerializeAllInfo (ref/09b section 7.8): the guild house of the receiver's
+// guild.
+message GuildHouseInfo {
+  uint32 id_guild = 1 [(flyff.legacy_type) = "u32 m_dwGuildId"];
+  uint32 world_id = 2 [(flyff.legacy_type) = "u32 m_dwWorldId"];
+  // unix seconds until the upkeep is paid, 0 = expired
+  sint64 upkeep_at = 3 [
+    (flyff.legacy_type) = "time_t m_tUpkeepTime",
+    (flyff.js_safe_number) = true
+  ];
+  // dropped: __GUILD_HOUSE_MIDDLE only: ghId, areaIndex, ghLevel, name (middle and large houses are dropped,
+  // Plan/22 section 12.1)
+  // dropped: n (u32, the list length)
+  // the furniture list, list order = index
+  repeated GhFntrInfo furniture = 4 [(flyff.legacy_type) = "n x GH_Fntr_Info"];
+}
+
+// legacy HOUSING_SETUPFURNITURE 0x70003002 (C2S): install or remove a furniture item in the own mini room
+// (ref/07c section 24, Plan/22 section 13.2). The server's remaining time is kept; position and angle come
+// from the client. Answer: HousingSetupFurnitureNtf.
+message HousingSetupFurnitureReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x70003002
+    name: "HOUSING_SETUPFURNITURE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // the item, the wanted state and the position
+  HousingInfo info = 1 [(flyff.legacy_type) = "HOUSINGINFO"];
+}
+
+// legacy HOUSING_VISITROOM 0x70003004 (C2S): visit a friend's mini room (ref/07c section 24, Plan/22 section
+// 13.2). The owner must have allowed the visit.
+message HousingVisitRoom {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x70003004
+    name: "HOUSING_VISITROOM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // the room owner (character id)
+  uint32 owner = 1 [(flyff.legacy_type) = "u32 dwPlayerId"];
+}
+
+// legacy HOUSING_SETVISITALLOW 0x70003005 (C2S): allow or forbid a friend to visit the own room (ref/07c
+// section 24, Plan/22 section 13.2). The target must be a messenger friend and the value must change. Answer:
+// HousingSetVisitAllowNtf.
+message HousingSetVisitAllowReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x70003005
+    name: "HOUSING_SETVISITALLOW"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // the friend (character id)
+  uint32 target = 1 [(flyff.legacy_type) = "u32 dwPlayerId"];
+  bool allow = 2 [(flyff.legacy_type) = "BOOL bAllow"];
+}
+
+// legacy HOUSING_REQVISITABLELIST 0x70003006 (C2S): ask for the rooms the player may visit (ref/07c section
+// 24, Plan/22 section 13.2). No payload. Answer: HousingVisitableList.
+message HousingReqVisitableList {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x70003006
+    name: "HOUSING_REQVISITABLELIST"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy HOUSING_GOOUT 0x70003007 (C2S): leave the mini room for Madrigal (ref/07c section 24, Plan/22 section
+// 13.2). Only inside the mini room (FIX VR-062). No payload.
+message HousingGoOut {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x70003007
+    name: "HOUSING_GOOUT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy GUILDHOUSE_BUY 0x88100001 (C2S): the guild master buys the guild house (ref/07c section 28, Plan/22
+// section 12.2). Needs guild level 3, 12 members and 100000000 penya. No payload. Answer: GuildHouseAllInfo to
+// the members.
+message GuildHouseBuy {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x88100001
+    name: "GUILDHOUSE_BUY"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy GUILDHOUSE_PACKET 0x88100003 (C2S): manage the guild house furniture and upkeep (ref/07c section 28,
+// ref/09b section 4.8, Plan/22 section 12.4). LISTUP is ignored; the furniture is the server's entry at
+// `index`. Answer: GuildHousePacketNtf to the members.
+message GuildHousePacketReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x88100003
+    name: "GUILDHOUSE_PACKET"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // operation (see the file header)
+  sint32 op = 1 [(flyff.legacy_type) = "i32 nPacketType"];
+  // index in the furniture list
+  sint32 index = 2 [(flyff.legacy_type) = "i32 nIndex"];
+  // position and angle; UPKEEP: item_id is the number of days
+  GhFntrInfo info = 3 [(flyff.legacy_type) = "GH_Fntr_Info"];
+}
+
+// legacy GUILDHOUSE_ENTER 0x88100006 (C2S): enter the guild house (ref/07c section 28, Plan/22 section 12.2).
+// No payload.
+message GuildHouseEnter {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x88100006
+    name: "GUILDHOUSE_ENTER"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy GUILDHOUSE_GOOUT 0x88100007 (C2S): leave the guild house (ref/07c section 28, Plan/22 section 12.2).
+// No payload.
+message GuildHouseGoOut {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x88100007
+    name: "GUILDHOUSE_GOOUT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy HOUSING_SETUPFURNITURE 0x9202 (S2C); obj_id: 0 (self). A furniture item was installed or removed
+// (ref/08 section 15.3, ref/09b section 3.16, Plan/22 section 13.2).
+message HousingSetupFurnitureNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9202
+    name: "HOUSING_SETUPFURNITURE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  HousingInfo info = 1 [(flyff.legacy_type) = "HOUSINGINFO"];
+}
+
+// legacy HOUSING_SETVISITALLOW 0x9204 (S2C); obj_id: 0 (self). A friend may or may not visit (ref/08 section
+// 15.3, ref/09b section 3.16, Plan/22 section 13.2).
+message HousingSetVisitAllowNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9204
+    name: "HOUSING_SETVISITALLOW"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // the friend (character id)
+  uint32 target = 1 [(flyff.legacy_type) = "u32 idPlayer"];
+  bool allow = 2 [(flyff.legacy_type) = "BOOL"];
+}
+
+// legacy HOUSING_VISITABLELIST 0x9205 (S2C); obj_id: 0 (self). The rooms the receiver may visit; sent only
+// when not empty (ref/08 section 15.3, ref/07c section 24, Plan/22 section 13.2).
+message HousingVisitableList {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9205
+    name: "HOUSING_VISITABLELIST"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // dropped: n (u32, the list length)
+  // room owners (character ids)
+  repeated uint32 owners = 1 [(flyff.legacy_type) = "n x DWORD ownerId"];
+}
+
+// legacy HOUSING_ALLINFO 0x9200 (S2C); obj_id: 0 (self). The furniture list and the visit-allow list of the
+// own room, at login (CHousing::Serialize; ref/08 section 15.3, ref/09b section 7.8, Plan/22 section 13.2).
+// Boxed in ServerMsg.
+message HousingAllInfo {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9200
+    name: "HOUSING_ALLINFO"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // dropped: n (u32, the list length)
+  // the listed furniture
+  repeated HousingInfo items = 1 [(flyff.legacy_type) = "n x HOUSINGINFO"];
+  // dropped: m (u32, the list length)
+  // friends allowed to visit (character ids)
+  repeated uint32 visitors = 2 [(flyff.legacy_type) = "m x u32 idPlayer"];
+}
+
+// legacy HOUSING_FURNITURELIST 0x9201 (S2C); obj_id: 0 (self). A furniture item was added to or dropped from
+// the list (ref/08 section 15.3, ref/09b section 3.16, Plan/22 section 13.2).
+message HousingFurnitureList {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9201
+    name: "HOUSING_FURNITURELIST"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  HousingInfo info = 1 [(flyff.legacy_type) = "HOUSINGINFO"];
+  // true = added, false = removed or expired
+  bool add = 2 [(flyff.legacy_type) = "BOOL bAdd"];
+}
+
+// legacy HOUSING_PAPERINGINFO 0x9203 (S2C); obj_id: 0 (self). The wall paper or carpet of the room changed; to
+// everyone in that room (ref/08 section 15.3, ref/09b section 3.16, Plan/22 section 13.2).
+message HousingPaperingInfo {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9203
+    name: "HOUSING_PAPERINGINFO"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // the paper item; 0xFFFFFFFF (NULL_ID, kept) with setup = false resets wall and floor
+  uint32 item_id = 1 [(flyff.legacy_type) = "u32 itemId"];
+  bool setup = 2 [(flyff.legacy_type) = "BOOL bSetup"];
+}
+
+// legacy GUILDHOUSE_PACKET 0x8810 (S2C); obj_id: 0 (self). A furniture or upkeep change of the guild house
+// (ref/08 section 15.3, ref/09b section 3.16, Plan/22 section 12.4).
+message GuildHousePacketNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8810
+    name: "GUILDHOUSE_PACKET"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // operation (see the file header)
+  sint32 op = 1 [(flyff.legacy_type) = "i32 packetType"];
+  // index in the furniture list
+  sint32 index = 2 [(flyff.legacy_type) = "i32 index"];
+  // UPKEEP: expire_at is the new upkeep time
+  GhFntrInfo info = 3 [(flyff.legacy_type) = "GH_Fntr_Info"];
+}
+
+// legacy GUILDHOUSE_ALLINFO 0x8812 (S2C); obj_id: 0 (self). The guild house of the receiver's guild, in the
+// join batch and after buying one (ref/08 section 15.3, ref/09b section 7.8, Plan/22 section 12.2). The legacy
+// `BOOL hasHouse` is the presence of `house`.
+message GuildHouseAllInfo {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8812
+    name: "GUILDHOUSE_ALLINFO"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // the guild bank event is on
+  bool bank_enabled = 1 [(flyff.legacy_type) = "BOOL guildInventoryEnabled"];
+  // dropped: hasHouse (BOOL; the presence of house)
+  // absent = the guild has no house
+  GuildHouseInfo house = 2 [(flyff.legacy_type) = "CGuildHouseBase::SerializeAllInfo iff hasHouse"];
+}
+
+// legacy GUILDHOUSE_REMOVE 0x8813 (S2C); obj_id: 0 (self). The guild house is gone (ref/08 section 15.3,
+// ref/09b section 3.16, Plan/22 section 12.6). No payload.
+message GuildHouseRemove {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8813
+    name: "GUILDHOUSE_REMOVE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy GUILDHOUSE_RESTPOINT 0x8814 (S2C); obj_id: 0 (self). The rest points of the receiver, when they
+// change (ref/08 section 15.3, ref/09b section 3.16, Plan/22 section 12.7).
+message GuildHouseRestPoint {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8814
+    name: "GUILDHOUSE_RESTPOINT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // 0 .. 1000000
+  sint32 rest_point = 1 [(flyff.legacy_type) = "i32"];
+}

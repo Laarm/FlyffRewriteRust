@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="flyff-md5-salt" content="%FLYFF_MD5_SALT%">
+<title>Flyff admin (rescue page)</title>
+<style>
+:root{--bg:#f6f7f9;--fg:#1c2330;--muted:#5d6878;--card:#fff;--line:#d9dee6;--accent:#2f6fdd;--bad:#c0392b;--ok:#1e8449}
+@media (prefers-color-scheme:dark){:root{--bg:#10141b;--fg:#e3e8f0;--muted:#8a95a6;--card:#181e28;--line:#2a3342;--accent:#6da0ff;--bad:#ff7b6b;--ok:#5fd08a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,sans-serif}
+header{display:flex;gap:12px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;flex-wrap:wrap}
+header h1{font-size:16px;margin:0}
+main{max-width:1100px;margin:0 auto;padding:16px;display:grid;gap:16px}
+section{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px;min-width:0}
+h2{font-size:14px;margin:0 0 8px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:3px 8px 3px 0;border-bottom:1px solid var(--line);white-space:nowrap}
+.scroll{overflow-x:auto}
+input,button,select,textarea{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:4px 8px}
+button{cursor:pointer;background:var(--accent);color:#fff;border-color:var(--accent)}
+button.plain{background:transparent;color:var(--accent)}
+button.danger{background:var(--bad);border-color:var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0}
+.muted{color:var(--muted)}.bad{color:var(--bad)}.ok{color:var(--ok)}
+pre{margin:6px 0 0;padding:8px;background:var(--bg);border:1px solid var(--line);border-radius:5px;max-height:240px;overflow:auto;white-space:pre-wrap}
+#msg{min-height:1.4em}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><h1>Flyff admin</h1><span class="muted">rescue page</span><span id="state" class="muted">loading</span><span style="flex:1"></span>
+<span id="who" class="muted"></span><a id="consoleLink" href="/admin">Console</a><button id="signOut" class="plain" hidden>Sign out</button></header>
+<main>
+<div id="msg" class="muted" role="status"></div>
+<section id="login" hidden><h2>Sign in</h2>
+<p class="muted">With a game account of authority L or higher, or with the owner token (data/admin.token).</p>
+<form id="loginForm" class="row"><input id="acct" placeholder="account" autocomplete="username" size="16"><input id="pw" type="password" placeholder="password" autocomplete="current-password" size="16"><input id="totp" placeholder="code (if enrolled)" inputmode="numeric" autocomplete="one-time-code" size="8"><button>Sign in</button></form>
+<form id="tokenForm" class="row"><input id="tok" type="password" placeholder="owner token" autocomplete="off" size="40"><button class="plain">Use token</button></form></section>
+<section id="pwchange" hidden><h2>Change the password</h2>
+<p class="bad">This account must change its password before anything else works.</p>
+<form id="pwForm" class="row"><input id="oldPw" type="password" placeholder="current password" autocomplete="current-password" size="16"><input id="newPw" type="password" placeholder="new password (3 to 15 characters)" autocomplete="new-password" size="28"><button>Change</button></form></section>
+<div id="app" hidden style="display:grid;gap:16px">
+<section id="status"><h2>Status</h2><div id="statusText" class="muted">...</div></section>
+<section><h2>Online</h2><div class="scroll"><table id="online"><thead><tr><th>name</th><th>account</th><th>lvl</th><th>world</th><th>auth</th><th>ip</th><th></th></tr></thead><tbody></tbody></table></div></section>
+<section><h2>Broadcast</h2><div class="row"><input id="noticeText" size="60" maxlength="500" placeholder="notice to every player"><button id="noticeBtn">Send</button></div></section>
+<section><h2>Shutdown</h2><div class="row"><input id="shutSeconds" type="number" min="0" max="3600" value="60" style="width:6em"> s
+<input id="shutMessage" size="40" placeholder="message (optional)"><button id="shutStart" class="danger">Start countdown</button><button id="shutCancel" class="plain">Cancel</button></div></section>
+<section><h2>Rates</h2><div class="scroll"><table id="rates"><thead><tr><th>key</th><th>default</th><th>toml</th><th>override</th><th>effective</th><th></th></tr></thead><tbody></tbody></table></div></section>
+<section><h2>Events</h2><div class="scroll"><table id="events"><thead><tr><th>id</th><th>key</th><th>state</th><th></th></tr></thead><tbody></tbody></table></div>
+<div class="row"><input id="evId" type="number" min="0" max="499" placeholder="id" style="width:6em"><input id="evState" type="number" min="0" max="255" placeholder="state" style="width:6em"><button id="evSet">Set</button></div></section>
+<section><h2>Accounts</h2><div class="row"><input id="acctSearch" placeholder="name contains"><label><input id="acctGm" type="checkbox"> GM only</label><button id="acctList">Search</button></div>
+<div class="scroll"><table id="accounts"><thead><tr><th>name</th><th>auth</th><th>via</th><th>last login</th><th>ban</th><th>chars</th><th>online</th><th></th></tr></thead><tbody></tbody></table></div></section>
+<section><h2>Grants</h2><p class="muted">Item and gold grants are made in the console (Items &amp; Economy) or with the grant word of the console below.</p></section>
+<section><h2>Console</h2><div class="row"><input id="consoleLine" size="70" placeholder="status, sessions, set rates.monster_exp 2, /notice hello ..."><button id="consoleRun">Run</button></div><pre id="consoleOut"></pre></section>
+</div>
+</main>
+<script>
+(function(){
+'use strict';
+/*md5-begin*/
+var MD5K=[0xd76aa478,0xe8c7b756,0x242070db,0xc1bdceee,0xf57c0faf,0x4787c62a,0xa8304613,0xfd469501,0x698098d8,0x8b44f7af,0xffff5bb1,0x895cd7be,0x6b901122,0xfd987193,0xa679438e,0x49b40821,0xf61e2562,0xc040b340,0x265e5a51,0xe9b6c7aa,0xd62f105d,0x02441453,0xd8a1e681,0xe7d3fbc8,0x21e1cde6,0xc33707d6,0xf4d50d87,0x455a14ed,0xa9e3e905,0xfcefa3f8,0x676f02d9,0x8d2a4c8a,0xfffa3942,0x8771f681,0x6d9d6122,0xfde5380c,0xa4beea44,0x4bdecfa9,0xf6bb4b60,0xbebfbc70,0x289b7ec6,0xeaa127fa,0xd4ef3085,0x04881d05,0xd9d4d039,0xe6db99e5,0x1fa27cf8,0xc4ac5665,0xf4292244,0x432aff97,0xab9423a7,0xfc93a039,0x655b59c3,0x8f0ccc92,0xffeff47d,0x85845dd1,0x6fa87e4f,0xfe2ce6e0,0xa3014314,0x4e0811a1,0xf7537e82,0xbd3af235,0x2ad7d2bb,0xeb86d391];
+var MD5S=[7,12,17,22,7,12,17,22,7,12,17,22,7,12,17,22,5,9,14,20,5,9,14,20,5,9,14,20,5,9,14,20,4,11,16,23,4,11,16,23,4,11,16,23,4,11,16,23,6,10,15,21,6,10,15,21,6,10,15,21,6,10,15,21];
+function md5hex(text){
+  var bytes=new TextEncoder().encode(text),n=bytes.length;
+  var padded=new Uint8Array(((n+8)>>6)*64+64);padded.set(bytes);padded[n]=0x80;
+  var view=new DataView(padded.buffer);
+  view.setUint32(padded.length-8,(n<<3)>>>0,true);view.setUint32(padded.length-4,Math.floor(n/0x20000000)>>>0,true);
+  var a0=0x67452301,b0=0xefcdab89,c0=0x98badcfe,d0=0x10325476,m=new Uint32Array(16);
+  for(var off=0;off<padded.length;off+=64){
+    for(var i=0;i<16;i++)m[i]=view.getUint32(off+i*4,true);
+    var a=a0,b=b0,c=c0,d=d0;
+    for(i=0;i<64;i++){
+      var f,g;
+      if(i<16){f=(b&c)|(~b&d);g=i}else if(i<32){f=(d&b)|(~d&c);g=(5*i+1)&15}
+      else if(i<48){f=b^c^d;g=(3*i+5)&15}else{f=c^(b|~d);g=(7*i)&15}
+      var sum=(a+f+MD5K[i]+m[g])|0;a=d;d=c;c=b;b=(b+((sum<<MD5S[i])|(sum>>>(32-MD5S[i]))))|0;
+    }
+    a0=(a0+a)|0;b0=(b0+b)|0;c0=(c0+c)|0;d0=(d0+d)|0;
+  }
+  var out='',words=[a0,b0,c0,d0];
+  for(i=0;i<4;i++)for(var k=0;k<4;k++){var byte=(words[i]>>>(8*k))&255;out+=(byte<16?'0':'')+byte.toString(16)}
+  return out;
+}
+/*md5-end*/
+var saltMeta=document.querySelector('meta[name="flyff-md5-salt"]');
+var SALT=saltMeta?saltMeta.getAttribute('content'):'';
+function pwhash(password){return md5hex(SALT+password)}
+const $=id=>document.getElementById(id);
+function say(text,bad){const m=$('msg');m.textContent=text||'';m.className=bad?'bad':'muted'}
+/* every request carries the CSRF header of the console (25 §1.3): a staff cookie session needs it on mutations */
+async function api(method,path,body){
+  const headers={'Accept':'application/json','X-Flyff-Admin':'1'};
+  const init={method,headers,credentials:'same-origin',cache:'no-store'};
+  if(method!=='GET'){headers['Content-Type']='application/json';init.body=JSON.stringify(body||{})}
+  const r=await fetch(path,init);
+  const text=await r.text();
+  let data=null;try{data=JSON.parse(text)}catch(e){}
+  if(!r.ok){
+    /* the envelope of 25 §11.3 {error:{code,message,details}} or the older {error,detail} */
+    const e=data&&data.error;
+    let why=text||('HTTP '+r.status);
+    if(e&&typeof e==='object'){why=e.message||e.code;if(e.details&&e.details.cap)why+=' (needs '+e.details.cap+')'}
+    else if(data&&(data.detail||data.error))why=data.detail||data.error;
+    const err=new Error(r.status+': '+why);err.status=r.status;err.code=e&&e.code;throw err;
+  }
+  return data;
+}
+function cell(tr,text,cls){const td=document.createElement('td');td.textContent=text==null?'-':String(text);if(cls)td.className=cls;tr.appendChild(td);return td}
+function button(label,fn,cls){const b=document.createElement('button');b.textContent=label;b.className=cls||'plain';b.addEventListener('click',()=>run(fn));return b}
+function fill(tableId,rows,build){const tb=$(tableId).tBodies[0];tb.textContent='';for(const r of rows){const tr=document.createElement('tr');build(tr,r);tb.appendChild(tr)}}
+/* the message of the previous action goes first; an action may set its own ("notice sent") and it stays */
+async function run(fn){say('');try{await fn()}catch(e){say(e.message,true)}}
+function when(t){return t?new Date(t*1000).toISOString().replace('T',' ').slice(0,19):'-'}
+async function loadStatus(){
+  const s=await api('GET','/admin/api/status');
+  $('state').textContent=s.state+(s.shutdown_in_s!=null?' - shutdown in '+s.shutdown_in_s+' s':'');
+  $('state').className=s.state==='running'?'ok':'bad';
+  $('statusText').textContent='tick '+s.tick+' | uptime '+s.uptime_s+' s | in world '+s.in_world+' | lobby '+s.lobby+
+   ' | tick p50 '+(s.tick_p50_us/1000).toFixed(1)+' ms p99 '+(s.tick_p99_us/1000).toFixed(1)+' ms | db queue '+s.db_queue+(s.db_degraded?' | DB DEGRADED':'')+
+   ' | build '+s.build+' | sessions '+JSON.stringify(s.sessions);
+}
+async function loadOnline(){
+  const d=await api('GET','/admin/api/sessions?limit=200');
+  fill('online',d.in_world,(tr,p)=>{cell(tr,p.name);cell(tr,p.account_id);cell(tr,p.level);cell(tr,p.world);cell(tr,p.authority);cell(tr,p.ip);
+    const td=document.createElement('td');td.appendChild(button('Kick',async()=>{await api('POST','/admin/api/kick',{character:p.name});await loadOnline()}));tr.appendChild(td)});
+}
+async function loadRates(){
+  const rows=await api('GET','/admin/api/rates');
+  fill('rates',rows,(tr,r)=>{cell(tr,r.key);cell(tr,r.data_default);cell(tr,r.toml);cell(tr,r.overridden);cell(tr,r.effective);
+    const td=document.createElement('td');
+    const inp=document.createElement('input');inp.type='number';inp.step='any';inp.style.width='6em';inp.placeholder='value';td.appendChild(inp);
+    td.appendChild(button('Set',async()=>{await api('PUT','/admin/api/rates/'+r.key,{value:Number(inp.value)});await loadRates()}));
+    td.appendChild(button('Reset',async()=>{await api('PUT','/admin/api/rates/'+r.key,{value:null});await loadRates()}));
+    tr.appendChild(td)});
+}
+async function loadEvents(){
+  const rows=await api('GET','/admin/api/events');
+  fill('events',rows,(tr,e)=>{cell(tr,e.id);cell(tr,e.key);cell(tr,e.state+(e.overridden?' (override)':''));
+    const td=document.createElement('td');
+    td.appendChild(button('0',async()=>{await api('PUT','/admin/api/events/'+e.id,{state:0});await loadEvents()}));
+    td.appendChild(button('1',async()=>{await api('PUT','/admin/api/events/'+e.id,{state:1});await loadEvents()}));tr.appendChild(td)});
+}
+async function loadAccounts(){
+  const q=new URLSearchParams({limit:'200'});
+  if($('acctSearch').value)q.set('name',$('acctSearch').value);
+  if($('acctGm').checked)q.set('gm','true');
+  const rows=await api('GET','/admin/api/accounts?'+q);
+  fill('accounts',rows,(tr,a)=>{cell(tr,a.name);cell(tr,a.authority);cell(tr,a.created_via);cell(tr,when(a.last_login_at));
+    cell(tr,a.banned_until==null?'-':(a.banned_until==='permanent'?'permanent':when(a.banned_until)),a.banned_until==null?'':'bad');cell(tr,a.characters);cell(tr,a.online);
+    const td=document.createElement('td');
+    td.appendChild(button('Set auth',async()=>{const l=prompt('New authority level for '+a.name+' (F, L, M, N, O, P or gm1/gm2/gm3/operator/admin)',a.authority);if(l){await api('PUT','/admin/api/accounts/'+a.name+'/authority',{level:l,by:'admin_page'});await loadAccounts()}}));
+    td.appendChild(button('Ban',async()=>{const d=prompt('Ban '+a.name+' for how many hours? (empty = permanent)','24');if(d===null)return;const body={by:'admin_page'};if(d!=='')body.until=Math.floor(Date.now()/1000)+Math.round(Number(d)*3600);await api('POST','/admin/api/accounts/'+a.name+'/ban',body);await loadAccounts()}));
+    td.appendChild(button('Unban',async()=>{await api('DELETE','/admin/api/accounts/'+a.name+'/ban',{by:'admin_page'});await loadAccounts()}));
+    tr.appendChild(td)});
+}
+/* one failing section (a missing capability) does not hide the others: its message goes under its heading */
+function note(id,text){
+  const sec=$(id).closest('section');let p=sec.querySelector('.note');
+  if(!p){p=document.createElement('p');p.className='note bad';sec.insertBefore(p,sec.children[1]||null)}
+  p.textContent=text||'';p.hidden=!text;
+}
+async function section(fn,id){
+  try{await fn();note(id,'')}catch(e){
+    if(e.status===401||e.status===428)throw e;
+    note(id,e.status===403?'Not available to this account: '+e.message:e.message);
+  }
+}
+function refreshAll(){
+  const sec=(fn,id)=>section(fn,id).catch(e=>start(e));
+  sec(loadStatus,'status');sec(loadOnline,'online');sec(loadRates,'rates');sec(loadEvents,'events');sec(loadAccounts,'accounts');
+}
+function show(which){
+  $('login').hidden=which!=='login';
+  $('pwchange').hidden=which!=='pwchange';
+  $('app').hidden=which!=='app';
+}
+function identity(info){
+  $('who').textContent=info?('signed in as '+info.identity+' ('+info.authority+')'):'';
+  $('signOut').hidden=!(info&&info.idle_expires_at!=null);
+}
+/* the session decides what the page shows: login (401), the forced password change (428 rule), the sections */
+async function start(why){
+  try{
+    const info=await api('GET','/admin/api/session');
+    identity(info);
+    if(info.must_change_password){show('pwchange');return}
+    show('app');refreshAll();
+  }catch(e){
+    identity(null);
+    if(e.status===401){show('login');say(why&&why.status===401?'Your session ended: sign in again.':'')}
+    else{show('login');say(e.message,true)}
+  }
+}
+$('loginForm').addEventListener('submit',ev=>{ev.preventDefault();run(async()=>{
+  const body={account:$('acct').value.trim().toLowerCase(),pwhash:pwhash($('pw').value)};
+  const code=$('totp').value.trim();if(code)body.totp=code;
+  $('pw').value='';$('totp').value='';
+  await api('POST','/admin/api/session',body);await start();
+})});
+$('tokenForm').addEventListener('submit',ev=>{ev.preventDefault();run(async()=>{
+  const token=$('tok').value.trim();$('tok').value='';
+  await api('POST','/admin/api/session',{token});await start();
+})});
+$('pwForm').addEventListener('submit',ev=>{ev.preventDefault();run(async()=>{
+  const body={old_pwhash:pwhash($('oldPw').value),new_pwhash:pwhash($('newPw').value)};
+  $('oldPw').value='';$('newPw').value='';
+  await api('PUT','/admin/api/session/password',body);say('password changed');await start();
+})});
+$('signOut').addEventListener('click',()=>run(async()=>{await api('DELETE','/admin/api/session');await start()}));
+$('noticeBtn').addEventListener('click',()=>run(async()=>{await api('POST','/admin/api/notice',{text:$('noticeText').value});say('notice sent');$('noticeText').value=''}));
+$('shutStart').addEventListener('click',()=>run(async()=>{if(!confirm('Start the shutdown countdown?'))return;const r=await api('POST','/admin/api/shutdown',{countdown_s:Number($('shutSeconds').value),message:$('shutMessage').value||undefined});say('shutting down in '+r.countdown_s+' s');await loadStatus()}));
+$('shutCancel').addEventListener('click',()=>run(async()=>{await api('POST','/admin/api/shutdown',{cancel:true});say('shutdown cancelled');await loadStatus()}));
+$('evSet').addEventListener('click',()=>run(async()=>{await api('PUT','/admin/api/events/'+Number($('evId').value),{state:Number($('evState').value)});await loadEvents()}));
+$('acctList').addEventListener('click',()=>run(loadAccounts));
+function runConsole(){run(async()=>{const line=$('consoleLine').value;if(!line)return;const r=await api('POST','/admin/api/console',{line});const o=$('consoleOut');o.textContent+='> '+line+'\n'+r.lines.join('\n')+(r.lines.length?'\n':'');o.scrollTop=o.scrollHeight;$('consoleLine').value=''})}
+$('consoleRun').addEventListener('click',runConsole);
+$('consoleLine').addEventListener('keydown',e=>{if(e.key==='Enter')runConsole()});
+start();
+setInterval(()=>{if(!$('app').hidden){section(loadStatus,'status').catch(e=>start(e));section(loadOnline,'online').catch(e=>start(e))}},5000);
+})();
+</script>
+</body>
+</html>

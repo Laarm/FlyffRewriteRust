@@ -1,0 +1,31 @@
+[package]
+name = "flyff-common"
+description = "Ids, time types, deterministic collections, RNG wrappers, cross-thread contract plumbing (Plan/01 §5.5, 02 §1.2)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+default = []
+# Native-only plumbing: SessionSink, Reply/ReplyRx, Telemetry, ShutdownHandle (never compiled for wasm32).
+rt = ["dep:flume", "dep:bytes"]
+
+[dependencies]
+glam = { workspace = true }
+libm = { workspace = true }
+rustc-hash = { workspace = true }
+indexmap = { workspace = true }
+rand_core = { workspace = true }
+rand_pcg = { workspace = true }
+xxhash-rust = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+flume = { workspace = true, optional = true }
+bytes = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
+

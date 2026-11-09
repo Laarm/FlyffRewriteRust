@@ -1,0 +1,158 @@
+{
+  "$defs": {
+    "AtlasDto": {
+      "description": "One texture atlas.",
+      "properties": {
+        "color_key": {
+          "description": "The colour key (0 = none).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "multi_language": {
+          "description": "The path was a file name under `theme/`.",
+          "type": "boolean"
+        },
+        "size": {
+          "description": "The texture size (0, 0 when unknown).",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "sprites": {
+          "description": "The sub-images in file order.",
+          "items": {
+            "$ref": "#/$defs/AtlasSprite"
+          },
+          "type": "array"
+        },
+        "texture": {
+          "description": "The texture as a canonical VFS path; empty for the two non-atlas files.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "texture",
+        "color_key",
+        "multi_language",
+        "size",
+        "sprites"
+      ],
+      "type": "object"
+    },
+    "AtlasSprite": {
+      "description": "One sub-image of an atlas.",
+      "properties": {
+        "center": {
+          "description": "The draw centre of a `serialize` sprite.",
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "format": "int32",
+              "type": "integer"
+            },
+            {
+              "format": "int32",
+              "type": "integer"
+            }
+          ],
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "flip": {
+          "description": "0 none, 1 horizontal (`h`), 2 vertical (`v`), 3 both (`hv`).",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "h": {
+          "description": "Height in pixels.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "uv": {
+          "description": "`[uLT, vLT, uRT, vRT, uLB, vLB, uRB, vRB]` for the `data` and `datauv` forms (normalised, f32 as the\noriginal computed them); `None` for `pos` and `serialize`, whose corners follow from `x`, `y`, `w`,\n`h` and `flip`.",
+          "items": {
+            "format": "float",
+            "type": "number"
+          },
+          "maxItems": 8,
+          "minItems": 8,
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "w": {
+          "description": "Width in pixels.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "x": {
+          "description": "Left edge in pixels (the `LT` corner of the `data` forms).",
+          "format": "int32",
+          "type": "integer"
+        },
+        "y": {
+          "description": "Top edge in pixels.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "w",
+        "h",
+        "x",
+        "y",
+        "flip"
+      ],
+      "type": "object"
+    },
+    "UiAtlasesBundle": {
+      "description": "`ui-atlases`: all 39 atlas descriptors by the canonical path of their `.inc`.",
+      "properties": {
+        "atlases": {
+          "additionalProperties": {
+            "$ref": "#/$defs/AtlasDto"
+          },
+          "description": "The atlases.",
+          "type": "object"
+        }
+      },
+      "required": [
+        "atlases"
+      ],
+      "title": "UiAtlasesBundle",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`ui-atlases.<h16>.json`: the envelope of the `ui-atlases` bundle (schema version 1).",
+  "properties": {
+    "bundle": {
+      "const": "ui-atlases"
+    },
+    "data": {
+      "$ref": "#/$defs/UiAtlasesBundle"
+    },
+    "schema": {
+      "const": 1
+    }
+  },
+  "required": [
+    "bundle",
+    "schema",
+    "data"
+  ],
+  "title": "UiAtlasesBundleEnvelope",
+  "type": "object"
+}

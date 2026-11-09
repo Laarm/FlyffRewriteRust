@@ -1,0 +1,81 @@
+{
+  "$defs": {
+    "HonorBundle": {
+      "description": "`honor`: the 58 honor titles.",
+      "properties": {
+        "titles": {
+          "description": "The titles in file order.",
+          "items": {
+            "$ref": "#/$defs/HonorTitleRow"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "titles"
+      ],
+      "title": "HonorBundle",
+      "type": "object"
+    },
+    "HonorTitleRow": {
+      "description": "One honor title.",
+      "properties": {
+        "id": {
+          "description": "The first column of the row.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "large_group": {
+          "description": "`HI_*` large group.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "need": {
+          "description": "The count needed.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "small_group": {
+          "description": "`HS_*`/`JOB_*`/`MI_*` small group.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "title": {
+          "description": "The title text.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "large_group",
+        "small_group",
+        "need",
+        "title"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`honor.<h16>.json`: the envelope of the `honor` bundle (schema version 1).",
+  "properties": {
+    "bundle": {
+      "const": "honor"
+    },
+    "data": {
+      "$ref": "#/$defs/HonorBundle"
+    },
+    "schema": {
+      "const": 1
+    }
+  },
+  "required": [
+    "bundle",
+    "schema",
+    "data"
+  ],
+  "title": "HonorBundleEnvelope",
+  "type": "object"
+}

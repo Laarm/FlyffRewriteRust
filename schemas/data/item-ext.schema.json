@@ -1,0 +1,730 @@
+{
+  "$defs": {
+    "AccessoryDef": {
+      "description": "One accessory: the `(DST, adjust)` pairs of each upgrade level.",
+      "properties": {
+        "item": {
+          "description": "The accessory item.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "levels": {
+          "description": "`levels[level]` for level `0..=20`; always `MAX_AAO + 1` entries.",
+          "items": {
+            "items": {
+              "items": {
+                "format": "int32",
+                "type": "integer"
+              },
+              "maxItems": 2,
+              "minItems": 2,
+              "type": "array"
+            },
+            "type": "array"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "item",
+        "levels"
+      ],
+      "type": "object"
+    },
+    "EnchantDef": {
+      "description": "The enchant effect table (`propEnchant.inc`).",
+      "properties": {
+        "level_scale": {
+          "description": "`NORMAL_SCAL` and `ALL_SCAL` rows of ten scales.",
+          "items": {
+            "items": {
+              "format": "float",
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "limit_level": {
+          "description": "`NORMAL`, `AL`, `NONE` limit levels.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "limit_level",
+        "level_scale"
+      ],
+      "type": "object"
+    },
+    "ExchangeMenu": {
+      "description": "One exchange menu (`MMI_*`).",
+      "properties": {
+        "desc_tids": {
+          "description": "The description text ids.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "menu": {
+          "description": "The `MMI_*` id.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "sets": {
+          "description": "The sets (at most 15).",
+          "items": {
+            "$ref": "#/$defs/ExchangeSet"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "menu",
+        "desc_tids",
+        "sets"
+      ],
+      "type": "object"
+    },
+    "ExchangePay": {
+      "description": "One paid item of a set.",
+      "properties": {
+        "count": {
+          "description": "The count.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "flag": {
+          "description": "The optional flag number after the probability (0 when absent).",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "item": {
+          "description": "The item.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "prob": {
+          "description": "The probability in 1/1,000,000.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "item",
+        "count",
+        "prob",
+        "flag"
+      ],
+      "type": "object"
+    },
+    "ExchangeSet": {
+      "description": "One exchange set of a menu.",
+      "properties": {
+        "condition_points": {
+          "description": "The points needed: `(type, point)`.",
+          "items": {
+            "items": {
+              "format": "int32",
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "conditions": {
+          "description": "The items needed: `(item, count)`; `PENYA` is `II_GOLD_SEED1`.",
+          "items": {
+            "items": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "pay_num": {
+          "description": "How many of the `pays` entries are paid out.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "pays": {
+          "description": "The possible results.",
+          "items": {
+            "$ref": "#/$defs/ExchangePay"
+          },
+          "type": "array"
+        },
+        "remove_points": {
+          "description": "The points taken: `(type, point)`.",
+          "items": {
+            "items": {
+              "format": "int32",
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "removes": {
+          "description": "The items taken: `(item, count)`.",
+          "items": {
+            "items": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "result_msgs": {
+          "description": "The result message text ids (success, failure).",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "tid": {
+          "description": "The text id of the list entry.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "tid",
+        "result_msgs",
+        "conditions",
+        "condition_points",
+        "removes",
+        "remove_points",
+        "pay_num",
+        "pays"
+      ],
+      "type": "object"
+    },
+    "GemAbilityDef": {
+      "description": "The gems of one destination parameter.",
+      "properties": {
+        "dst": {
+          "description": "`DST_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "rows": {
+          "description": "The gem rows.",
+          "items": {
+            "$ref": "#/$defs/GemAbilityRow"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "dst",
+        "rows"
+      ],
+      "type": "object"
+    },
+    "GemAbilityRow": {
+      "description": "One gem of an ability.",
+      "properties": {
+        "gem": {
+          "description": "The gem item.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "gem06": {
+          "description": "The item that carries the ability (`dwAbilityItemId`).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "values": {
+          "description": "The five ability values (one per ultimate level).",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "gem",
+        "gem06",
+        "values"
+      ],
+      "type": "object"
+    },
+    "ItemExtBundle": {
+      "description": "`item-ext`: the item extension tables the client shows (14 §10.4; no gift box or pack contents, no\n`s.txt`, no ultimate probabilities).",
+      "properties": {
+        "accessory": {
+          "description": "Accessory bonuses.",
+          "items": {
+            "$ref": "#/$defs/AccessoryDef"
+          },
+          "type": "array"
+        },
+        "enchant": {
+          "$ref": "#/$defs/EnchantDef",
+          "description": "The enchant effect scales."
+        },
+        "exchange": {
+          "description": "Exchange menus.",
+          "items": {
+            "$ref": "#/$defs/ExchangeMenu"
+          },
+          "type": "array"
+        },
+        "gem_ability": {
+          "description": "Ultimate gem abilities.",
+          "items": {
+            "$ref": "#/$defs/GemAbilityDef"
+          },
+          "type": "array"
+        },
+        "pet": {
+          "$ref": "#/$defs/PetTablesDef",
+          "description": "Pet display tables."
+        },
+        "piercing": {
+          "description": "Piercing materials.",
+          "items": {
+            "$ref": "#/$defs/PiercingDef"
+          },
+          "type": "array"
+        },
+        "random_opt_items": {
+          "description": "Random-option items (`RandomOptItem`).",
+          "items": {
+            "$ref": "#/$defs/RandomOptItemDef"
+          },
+          "type": "array"
+        },
+        "random_options": {
+          "description": "Awakening, blessing and pet random options.",
+          "items": {
+            "$ref": "#/$defs/RandomOptionGroup"
+          },
+          "type": "array"
+        },
+        "set_items": {
+          "description": "Armor sets (`SetItem`).",
+          "items": {
+            "$ref": "#/$defs/SetItemDef"
+          },
+          "type": "array"
+        },
+        "tickets": {
+          "default": [],
+          "description": "`ticket.inc` with the expanded layers of `layer.inc`, ascending by item id (empty in an old bundle).",
+          "items": {
+            "$ref": "#/$defs/TicketRow"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "set_items",
+        "random_opt_items",
+        "piercing",
+        "accessory",
+        "gem_ability",
+        "random_options",
+        "pet",
+        "exchange",
+        "enchant",
+        "tickets"
+      ],
+      "title": "ItemExtBundle",
+      "type": "object"
+    },
+    "PetAvail": {
+      "description": "One available pet option (the hatch probability stays server-side).",
+      "properties": {
+        "dst": {
+          "description": "`DST_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "item": {
+          "description": "The item that grants it.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "movers": {
+          "description": "The mover ids that can have it.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "values": {
+          "description": "The values per pet level (9).",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "dst",
+        "values",
+        "item",
+        "movers"
+      ],
+      "type": "object"
+    },
+    "PetTablesDef": {
+      "description": "The pet display tables.",
+      "properties": {
+        "avail": {
+          "description": "`AvailDestParam` rows.",
+          "items": {
+            "$ref": "#/$defs/PetAvail"
+          },
+          "type": "array"
+        },
+        "feed_energy": {
+          "description": "`FeedEnergy N` blocks: rows of `(cost min, cost max, energy min, energy max)`.",
+          "items": {
+            "items": {
+              "items": {
+                "format": "int32",
+                "type": "integer"
+              },
+              "maxItems": 4,
+              "minItems": 4,
+              "type": "array"
+            },
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "max_energy": {
+          "description": "`MaxEnergy` per pet level.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "avail",
+        "max_energy",
+        "feed_energy"
+      ],
+      "type": "object"
+    },
+    "PiercingDef": {
+      "description": "One piercing material and the parameters it grants.",
+      "properties": {
+        "item": {
+          "description": "The material item.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "params": {
+          "description": "`(DST, adjust)` pairs in file order.",
+          "items": {
+            "items": {
+              "format": "int32",
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "item",
+        "params"
+      ],
+      "type": "object"
+    },
+    "RandomOptItemDef": {
+      "description": "One random-option item (`RANDOMOPTITEM`).",
+      "properties": {
+        "id": {
+          "description": "The id.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "level": {
+          "description": "The level.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "description": "The name (IDS key resolved).",
+          "type": "string"
+        },
+        "params": {
+          "description": "`(DST, adjust)` pairs.",
+          "items": {
+            "items": {
+              "format": "int32",
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "prob": {
+          "description": "The probability.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "level",
+        "prob",
+        "params"
+      ],
+      "type": "object"
+    },
+    "RandomOptionDst": {
+      "description": "One destination parameter of a block with its possible values.",
+      "properties": {
+        "dst": {
+          "description": "`DST_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "n": {
+          "description": "The probability of this destination within the block (raw).",
+          "format": "int32",
+          "type": "integer"
+        },
+        "values": {
+          "description": "`(value, probability)` pairs (raw probabilities, 1,000,000,000 in total).",
+          "items": {
+            "items": {
+              "format": "int32",
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "dst",
+        "n",
+        "values"
+      ],
+      "type": "object"
+    },
+    "RandomOptionGroup": {
+      "description": "One block of the file.",
+      "properties": {
+        "a": {
+          "description": "The probability of one option.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "b": {
+          "description": "The probability of two options.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "c": {
+          "description": "The probability of three options.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "dsts": {
+          "description": "The destinations in file order.",
+          "items": {
+            "$ref": "#/$defs/RandomOptionDst"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "description": "The block keyword (`Awakening`, `Blessing`, `SystemPet`, `EatPet`).",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "a",
+        "b",
+        "c",
+        "dsts"
+      ],
+      "type": "object"
+    },
+    "SetAvail": {
+      "description": "One bonus of a set.",
+      "properties": {
+        "adj": {
+          "description": "The adjustment.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "dst": {
+          "description": "`DST_*`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "equiped": {
+          "description": "The number of equipped pieces that activates it.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "dst",
+        "adj",
+        "equiped"
+      ],
+      "type": "object"
+    },
+    "SetElem": {
+      "description": "One piece of a set: the item and the `PARTS_*` slot it occupies.",
+      "properties": {
+        "item": {
+          "description": "The item.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "parts": {
+          "description": "`PARTS_*`.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "item",
+        "parts"
+      ],
+      "type": "object"
+    },
+    "SetItemDef": {
+      "description": "One armor set (`CSetItem`).",
+      "properties": {
+        "avail": {
+          "description": "The bonuses, sorted by `equiped` (exchange sort).",
+          "items": {
+            "$ref": "#/$defs/SetAvail"
+          },
+          "type": "array"
+        },
+        "elems": {
+          "description": "The pieces (at most 8).",
+          "items": {
+            "$ref": "#/$defs/SetElem"
+          },
+          "type": "array"
+        },
+        "id": {
+          "description": "The set id.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "description": "The set name (IDS key resolved).",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "elems",
+        "avail"
+      ],
+      "type": "object"
+    },
+    "TicketRow": {
+      "description": "One ticket of `ticket.inc` as the client's item dispatch needs it (`CTicketProperty` + `CLayerProperty`, R24 of Plan/45 §9.5).",
+      "properties": {
+        "expand": {
+          "description": "`GetExpanedLayer( world )` of `layer.inc`: the layers `-expand ..= 0` the holder may enter (0 without a line).",
+          "format": "int32",
+          "type": "integer"
+        },
+        "item": {
+          "description": "The ticket item (`II_*`).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "world": {
+          "description": "The world the ticket opens (`WI_*`).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "item",
+        "world",
+        "expand"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`item-ext.<h16>.json`: the envelope of the `item-ext` bundle (schema version 1).",
+  "properties": {
+    "bundle": {
+      "const": "item-ext"
+    },
+    "data": {
+      "$ref": "#/$defs/ItemExtBundle"
+    },
+    "schema": {
+      "const": 1
+    }
+  },
+  "required": [
+    "bundle",
+    "schema",
+    "data"
+  ],
+  "title": "ItemExtBundleEnvelope",
+  "type": "object"
+}

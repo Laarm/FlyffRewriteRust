@@ -1,0 +1,179 @@
+// Quest messages (Plan/11 section 4.2, WP-PROTO-19; tag block 544-575). Transcribed from ref/07a section 8.2,
+// ref/07c section 25, ref/08 sections 7.7.6 and 14, ref/09b section 3.6, ref/16 section 7 and Plan/20 sections
+// 9.10-9.12.
+//
+// The quest engine is M7 and the shipped quest data is empty (D1); the messages are cheap and keep the client's
+// quest log, tracker and NPC locator wire-complete. A quest record is `Quest` (mover_types.proto, the 12-byte
+// QUEST struct). Server rule: a quest request is throttled to one per 400 ms (shared with ScriptDlg).
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+import "flyff/v1/common.proto";
+import "flyff/v1/mover_types.proto";
+
+// legacy REMOVEQUEST 0x00FF0026 (C2S): cancel an active quest (ref/07a section 8.2, ref/16 section 7.9,
+// Plan/20 section 9.10). The quest must be active, not finished (state 14) and not marked no-remove. Answer:
+// RemoveQuestNtf (mode -1).
+message RemoveQuestReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF0026
+    name: "REMOVEQUEST"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "20";
+  option (flyff.milestone) = "M7";
+  // the quest
+  uint32 quest_id = 1 [(flyff.legacy_type) = "u32 questId"];
+}
+
+// legacy QUEST_CHECK 0x88100110 (C2S): add a quest to or remove it from the tracker list (at most 5; ref/07c
+// section 25, ref/16 section 7.9, Plan/20 section 9.10). Answer: QuestChecked.
+message QuestCheck {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x88100110
+    name: "QUEST_CHECK"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "20";
+  option (flyff.milestone) = "M7";
+  // the quest (truncated to 16 bits by the server)
+  sint32 quest_id = 1 [(flyff.legacy_type) = "i32 nQuestId"];
+  // true = track, false = untrack
+  bool check = 2 [(flyff.legacy_type) = "BOOL bCheck"];
+}
+
+// legacy QUESTHELPER_REQNPCPOS 0x70005000 (C2S): ask where a quest NPC stands (ref/07c section 25, Plan/20
+// section 9.10). Answer: QuestHelperNpcPos, or TID_GAME_QUESTINFO_FAIL.
+message QuestHelperReqNpcPos {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x70005000
+    name: "QUESTHELPER_REQNPCPOS"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "20";
+  option (flyff.milestone) = "M7";
+  // the NPC's character key
+  string character_key = 1 [
+    (flyff.legacy_type) = "str<=63",
+    (flyff.max_len) = 63
+  ];
+}
+
+// legacy SETQUEST 0x00B0 (S2C); obj_id: 0 (self). A quest changed state, counter or timer (ref/08 sections
+// 7.7.6 and 14, ref/09a, Plan/20 section 9.12). The client prints the progress texts.
+message SetQuest {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xB0
+    name: "SETQUEST"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "20";
+  option (flyff.milestone) = "M7";
+  // the quest record (mover_types.proto)
+  Quest quest = 1 [(flyff.legacy_type) = "raw(QUEST) 12 B"];
+}
+
+// legacy REMOVEQUEST 0x003A (S2C); obj_id: 0 (self). Quests were removed (ref/08 section 14, ref/09b section
+// 3.6, ref/16 section 7.9, Plan/20 section 9.12).
+message RemoveQuestNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x3A
+    name: "REMOVEQUEST"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "20";
+  option (flyff.milestone) = "M7";
+  // -1 = cancel one quest (the client prints the cancel text), 0 = remove one quietly, 1 = remove all active,
+  // 2 = remove all completed
+  sint32 mode = 1 [(flyff.legacy_type) = "i32 nType"];
+  // the quest (0 for modes 1 and 2)
+  uint32 quest_id = 2 [(flyff.legacy_type) = "u32 dwQuestId"];
+}
+
+// legacy QUEST_TEXT_TIME 0x00BA (S2C); obj_id: 0 (self). A timed quest text (ref/08 section 14, Plan/20
+// section 9.11). The time is a duration (Plan/11 section 5.8).
+message QuestTextTime {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xBA
+    name: "QUEST_TEXT_TIME"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "20";
+  option (flyff.milestone) = "M7";
+  // the legacy flag
+  bool flag = 1 [(flyff.legacy_type) = "BOOL bFlag"];
+  // the quest state the text belongs to
+  sint32 state = 2 [(flyff.legacy_type) = "i32 nState"];
+  // the remaining time in ms
+  uint32 time_ms = 3 [(flyff.legacy_type) = "u32 dwTime"];
+}
+
+// legacy QUEST_CHECKED 0x8820 (S2C); obj_id: 0 (self). The tracker list replaced (ref/08 section 14, ref/09b
+// section 3.6, ref/16 section 7.9).
+message QuestChecked {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8820
+    name: "QUEST_CHECKED"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "20";
+  option (flyff.milestone) = "M7";
+  // the tracked quests, at most 5 (MAX_CHECKED_QUEST)
+  repeated uint32 quest_ids = 1 [(flyff.legacy_type) = "u8 n + n x u16"];
+}
+
+// legacy QUESTHELPER_NPCPOS 0x9400 (S2C); obj_id: 0 (self). The position of the quest NPC for the direction
+// arrow (ref/08 section 14, ref/09b section 3.6).
+message QuestHelperNpcPos {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9400
+    name: "QUESTHELPER_NPCPOS"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "20";
+  option (flyff.milestone) = "M7";
+  // the NPC position
+  Vec3 pos = 1 [(flyff.legacy_type) = "vec3"];
+}
+
+// legacy SETGUILDQUEST 0x00B5 (S2C); obj_id: 0 (self). A guild quest changed state; audience: the guild
+// (ref/08 section 13.3, Plan/20 section 9.11). Guild quests are deferred (D20-15) but the message is kept.
+message SetGuildQuest {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xB5
+    name: "SETGUILDQUEST"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "20";
+  option (flyff.milestone) = "M7";
+  // the guild quest
+  sint32 quest_id = 1 [(flyff.legacy_type) = "i32 nQuestId"];
+  // the quest state
+  sint32 state = 2 [(flyff.legacy_type) = "i32 nState"];
+}
+
+// legacy REMOVEGUILDQUEST 0x00B6 (S2C); obj_id: 0 (self). A guild quest ended; audience: the guild (ref/08
+// section 13.3, Plan/20 section 9.11).
+message RemoveGuildQuest {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xB6
+    name: "REMOVEGUILDQUEST"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "20";
+  option (flyff.milestone) = "M7";
+  // the guild quest
+  sint32 quest_id = 1 [(flyff.legacy_type) = "i32 nQuestId"];
+}

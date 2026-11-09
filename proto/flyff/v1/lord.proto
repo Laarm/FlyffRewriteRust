@@ -1,0 +1,456 @@
+// Lord, election and tax messages (Plan/11 section 4.2, WP-PROTO-26; tag block 880-911). Transcribed from ref/07c
+// section 21, ref/08 section 15.3, ref/09b sections 3.16, 6.3, 7.9 and 7.11, src:_Common/lord.cpp and Tax.cpp and
+// Plan/22 sections 9 and 10. Helper types: LordElection (IElection with its property), LordCandidate (CCandidate),
+// LordEventComponent (CLEComponent), the tick entries of the lord events and lord skills, and the tax tables (CTax).
+// Election states: READY 0, CANDIDACY 1, VOTE 2, EXPIRED 3. Lord skills: CHEERING 0, BLESSING 1, LOVE 2, SHOUT 3,
+// RAGE 4, SUMMON 5, TELEPORT 6, PARTY 7. Tax kinds: SALES 0, PURCHASE 1, ADMISSION 2 (heaven tower fee). Every C2S
+// message acts for the session character (VR-001).
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+
+// CCandidate::Serialize (ref/09b section 7.11): one candidate of an election.
+message LordCandidate {
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32 m_idPlayer"];
+  // the deposit in penya
+  sint64 deposit = 2 [
+    (flyff.legacy_type) = "i64 m_iDeposit",
+    (flyff.js_safe_number) = true
+  ];
+  sint32 votes = 3 [(flyff.legacy_type) = "i32 m_nVote"];
+  // unix seconds when the candidacy was created
+  sint64 created_at = 4 [
+    (flyff.legacy_type) = "i32 m_tCreate",
+    (flyff.js_safe_number) = true
+  ];
+  // the pledge text
+  string pledge = 5 [(flyff.legacy_type) = "str<=255"];
+}
+
+// One list of item ids of IElection::sProperty.m_vItems (the lord's reward items for one sex).
+message LordElectionItems {
+  // dropped: n (u32, the list length)
+  // item ids
+  repeated sint32 item_ids = 1 [(flyff.legacy_type) = "n x i32"];
+}
+
+// IElection::sProperty::Serialize (ref/09b section 7.11): the schedule and reward rules of the election.
+message LordElectionProperty {
+  // 1 = Sunday .. 7 = Saturday
+  sint32 day_of_week = 1 [(flyff.legacy_type) = "i32 nDayOfWeek"];
+  sint32 hour = 2 [(flyff.legacy_type) = "i32 nHour"];
+  // seconds the candidacy phase lasts
+  sint32 candidacy_s = 3 [(flyff.legacy_type) = "time_t tCandidacy"];
+  // seconds from the begin until the vote ends
+  sint32 vote_s = 4 [(flyff.legacy_type) = "time_t tVote"];
+  float requirement_factor = 5 [(flyff.legacy_type) = "f32 fRequirementFactor"];
+  // days between two elections
+  sint32 days = 6 [(flyff.legacy_type) = "i32 nDays"];
+  // dropped: n (u32, the list length)
+  // refund rate by final rank (index = rank - 1; the last entry is for dropped-out candidates)
+  repeated float deposit_return_rates = 7 [(flyff.legacy_type) = "n x f32"];
+  // exactly 2 lists, index = sex
+  repeated LordElectionItems items = 8 [(flyff.legacy_type) = "2 x (u32 m + m x i32)"];
+}
+
+// IElection::Serialize (ref/09b section 7.11): the election with its property and candidates.
+message LordElection {
+  uint32 election_id = 1 [(flyff.legacy_type) = "u32 m_idElection"];
+  // READY 0, CANDIDACY 1, VOTE 2, EXPIRED 3
+  sint32 state = 2 [(flyff.legacy_type) = "i32 m_eState"];
+  // unix seconds when the election begins, 0 = not scheduled
+  sint64 begin_at = 3 [
+    (flyff.legacy_type) = "time_t m_tBegin",
+    (flyff.js_safe_number) = true
+  ];
+  // votes needed to win
+  sint32 requirement = 4 [(flyff.legacy_type) = "i32 m_nRequirement"];
+  LordElectionProperty property = 5 [(flyff.legacy_type) = "sProperty"];
+  // dropped: n (u32, the list length)
+  // at most 10
+  repeated LordCandidate candidates = 6 [(flyff.legacy_type) = "n x CCandidate"];
+}
+
+// CLEComponent::Serialize (ref/09b section 7.11): one running lord event (a global experience / item drop
+// boost).
+message LordEventComponent {
+  // minutes left
+  sint32 tick = 1 [(flyff.legacy_type) = "i32 nTick"];
+  // the creator
+  uint32 id_player = 2 [(flyff.legacy_type) = "u32 idPlayer"];
+  // added experience factor
+  float exp_factor = 3 [(flyff.legacy_type) = "f32 fEFactor"];
+  // added item drop factor
+  float item_factor = 4 [(flyff.legacy_type) = "f32 fIFactor"];
+}
+
+// ILordEvent::SerializeTick entry.
+message LordEventTickEntry {
+  // the creator of the event
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32 idPlayer"];
+  // minutes left
+  sint32 tick = 2 [(flyff.legacy_type) = "i32 nTick"];
+}
+
+// CLordSkill::SerializeTick entry.
+message LordSkillTickEntry {
+  // lord skill id 0..7
+  sint32 skill = 1 [(flyff.legacy_type) = "i32 nSkill"];
+  // cooldown minutes left
+  sint32 tick = 2 [(flyff.legacy_type) = "i32 nTick"];
+}
+
+// One tax kind of a continent (CTax::Serialize, ref/09b section 7.9).
+message TaxRate {
+  // SALES 0, PURCHASE 1, ADMISSION 2
+  uint32 kind = 1 [(flyff.legacy_type) = "u8 taxKind"];
+  // percent
+  sint32 rate = 2 [(flyff.legacy_type) = "i32 nTaxRate"];
+}
+
+// One continent of CTax::Serialize (world to client form, ref/09b section 7.9).
+message TaxContinent {
+  // continent id
+  uint32 continent = 1 [(flyff.legacy_type) = "u8"];
+  // owner of the tax rights (guild id); 0xFFFFFFFF (NULL_ID, kept) = none
+  uint32 owner_id = 2 [(flyff.legacy_type) = "u32 dwId"];
+  // dropped: nKinds (i32, the list length)
+  repeated TaxRate rates = 3 [(flyff.legacy_type) = "nKinds x {u8, i32}"];
+}
+
+// legacy ELECTION_ADD_DEPOSIT 0x8FFF0000 (C2S): become a candidate or raise the deposit (ref/07c section 21,
+// Plan/22 section 9.4). Needs the candidacy phase, a master or hero, a total of at least 100000000 that is
+// above the current one and a raise of at least 10000000. Answer: ElectionAddDepositNtf to everyone.
+message ElectionAddDepositReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x8FFF0000
+    name: "ELECTION_ADD_DEPOSIT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // the new total deposit in penya
+  sint64 total = 1 [
+    (flyff.legacy_type) = "i64 iTotal",
+    (flyff.js_safe_number) = true
+  ];
+}
+
+// legacy ELECTION_SET_PLEDGE 0x8FFF0001 (C2S): set the pledge (ref/07c section 21, Plan/22 section 9.4). A
+// candidate only, in the vote phase; the first pledge is free, a later one costs 1000000. Empty is ignored.
+// Answer: ElectionSetPledgeNtf to everyone.
+message ElectionSetPledgeReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x8FFF0001
+    name: "ELECTION_SET_PLEDGE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // the pledge text
+  string pledge = 1 [
+    (flyff.legacy_type) = "str<=255",
+    (flyff.max_len) = 255
+  ];
+}
+
+// legacy ELECTION_INC_VOTE 0x8FFF0002 (C2S): vote for a candidate (ref/07c section 21, Plan/22 section 9.4).
+// Level 60 or more, in the vote phase, once per election. Answer: ElectionIncVoteNtf to everyone.
+message ElectionIncVoteReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x8FFF0002
+    name: "ELECTION_INC_VOTE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // the candidate (character id)
+  uint32 candidate = 1 [(flyff.legacy_type) = "u32 idCandidate"];
+}
+
+// legacy L_EVENT_CREATE 0x8FFF0008 (C2S): start a lord event (ref/07c section 21, Plan/22 section 9.4). The
+// cost of the two chosen rates is paid in penya and perins. Answer: LEventCreateNtf to everyone.
+message LEventCreateReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x8FFF0008
+    name: "L_EVENT_CREATE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // index of the experience event
+  sint32 e_index = 1 [(flyff.legacy_type) = "i32 iEEvent"];
+  // index of the item drop event
+  sint32 i_index = 2 [(flyff.legacy_type) = "i32 iIEvent"];
+}
+
+// legacy LORD_SKILL_USE 0x8FFF0009 (C2S): the lord uses a lord skill (ref/07c section 21, Plan/22 section
+// 9.6). Answer: LordSkillUseNtf near the lord.
+message LordSkillUseReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x8FFF0009
+    name: "LORD_SKILL_USE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // lord skill id 0..7
+  sint32 skill = 1 [(flyff.legacy_type) = "i32 nSkill"];
+  // name of the target player; ignored for skills on oneself
+  string target_name = 2 [
+    (flyff.legacy_type) = "str<=41",
+    (flyff.max_len) = 41
+  ];
+}
+
+// legacy TAX_SET_TAXRATE 0x70001003 (C2S): the master of the guild that will own a continent sets its rates
+// (ref/07c section 21, Plan/22 section 10.5). Both rates must be within the configured limits. Answer:
+// TaxAllInfo to everyone.
+message TaxSetTaxRate {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x70001003
+    name: "TAX_SET_TAXRATE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  uint32 continent = 1 [(flyff.legacy_type) = "u8 nCont"];
+  // percent
+  sint32 sales_rate = 2 [(flyff.legacy_type) = "i32 salesRate"];
+  // percent
+  sint32 purchase_rate = 3 [(flyff.legacy_type) = "i32 purchaseRate"];
+}
+
+// legacy ELECTION_ADD_DEPOSIT 0x8F00 (S2C); obj_id: 0 (self). A deposit was made; broadcast to everyone
+// (ref/08 section 15.3, ref/09b section 3.16, Plan/22 section 9.4).
+message ElectionAddDepositNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8F00
+    name: "ELECTION_ADD_DEPOSIT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // the candidate
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32 idPlayer"];
+  // the penya added by this deposit (the raise)
+  sint64 deposit = 2 [
+    (flyff.legacy_type) = "i64",
+    (flyff.js_safe_number) = true
+  ];
+  // unix seconds when the candidacy was created
+  sint64 created_at = 3 [
+    (flyff.legacy_type) = "i32 tCreate",
+    (flyff.js_safe_number) = true
+  ];
+}
+
+// legacy ELECTION_SET_PLEDGE 0x8F01 (S2C); obj_id: 0 (self). A candidate set the pledge (ref/08 section 15.3,
+// ref/09b section 3.16).
+message ElectionSetPledgeNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8F01
+    name: "ELECTION_SET_PLEDGE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32 idPlayer"];
+  string pledge = 2 [(flyff.legacy_type) = "str<=255"];
+}
+
+// legacy ELECTION_INC_VOTE 0x8F02 (S2C); obj_id: 0 (self). A vote was cast (ref/08 section 15.3, ref/09b
+// section 3.16).
+message ElectionIncVoteNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8F02
+    name: "ELECTION_INC_VOTE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  uint32 id_candidate = 1 [(flyff.legacy_type) = "u32 idPlayer"];
+  uint32 id_elector = 2 [(flyff.legacy_type) = "u32 idElector"];
+}
+
+// legacy ELECTION_BEGIN_CANDIDACY 0x8F03 (S2C); obj_id: 0 (self). The candidacy phase begins (ref/08 section
+// 15.3, ref/09b section 3.16). No payload.
+message ElectionBeginCandidacy {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8F03
+    name: "ELECTION_BEGIN_CANDIDACY"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy ELECTION_BEGIN_VOTE 0x8F04 (S2C); obj_id: 0 (self). The vote phase begins (ref/08 section 15.3,
+// ref/09b section 3.16).
+message ElectionBeginVote {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8F04
+    name: "ELECTION_BEGIN_VOTE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // votes needed to win
+  sint32 requirement = 1 [(flyff.legacy_type) = "i32"];
+}
+
+// legacy ELECTION_END_VOTE 0x8F05 (S2C); obj_id: 0 (self). The election ended (ref/08 section 15.3, ref/09b
+// section 3.16).
+message ElectionEndVote {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8F05
+    name: "ELECTION_END_VOTE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // the new lord; 0xFFFFFFFF (NULL_ID, kept) = no winner
+  uint32 id_lord = 1 [(flyff.legacy_type) = "u32 idLord"];
+}
+
+// legacy LORD 0x8F06 (S2C); obj_id: 0 (NULL_ID). The whole lord system state, in the join batch only
+// (CLord::Serialize; ref/08 section 15.3, ref/09b section 7.11, Plan/22 section 9.7). Boxed in ServerMsg.
+message Lord {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8F06
+    name: "LORD"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // the current lord; 0xFFFFFFFF (NULL_ID, kept) = none
+  uint32 id_lord = 1 [(flyff.legacy_type) = "u32 m_idPlayer"];
+  LordElection election = 2 [(flyff.legacy_type) = "IElection::Serialize"];
+  // dropped: n (u32, the list length)
+  // the running lord events
+  repeated LordEventComponent events = 3 [(flyff.legacy_type) = "n x CLEComponent"];
+  // dropped: n (u32, the list length)
+  // cooldowns of the lord skills
+  repeated LordSkillTickEntry skill_ticks = 4 [(flyff.legacy_type) = "n x {i32, i32}"];
+}
+
+// legacy L_EVENT_CREATE 0x8F08 (S2C); obj_id: 0 (self). A lord event started; broadcast to everyone (ref/08
+// section 15.3, ref/09b section 3.16, Plan/22 section 9.5).
+message LEventCreateNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8F08
+    name: "L_EVENT_CREATE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  LordEventComponent component = 1 [(flyff.legacy_type) = "CLEComponent::Serialize"];
+}
+
+// legacy L_EVENT_INITIALIZE 0x8F09 (S2C); obj_id: 0 (self). Every lord event was cleared (ref/08 section 15.3,
+// ref/09b section 3.16). No payload.
+message LEventInitialize {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8F09
+    name: "L_EVENT_INITIALIZE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy L_EVENT_TICK 0x8F0B (S2C); obj_id: 0 (self). The minutes left of the lord events, every minute
+// (ref/08 section 15.3, ref/09b section 3.16, Plan/22 section 9.5).
+message LEventTick {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8F0B
+    name: "L_EVENT_TICK"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // dropped: n (u32, the list length)
+  repeated LordEventTickEntry ticks = 1 [(flyff.legacy_type) = "n x {u32, i32}"];
+}
+
+// legacy LORD_SKILL_USE 0x8F0D (S2C); obj_id: the lord. A lord skill was used (ref/08 section 15.3, ref/09b
+// section 3.16, Plan/22 section 9.6).
+message LordSkillUseNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8F0D
+    name: "LORD_SKILL_USE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // character id of the target (legacy idTarget, resolved by the client with prj.GetUserByID; the lord's own id for
+  // a skill on oneself)
+  uint32 target = 1 [(flyff.legacy_type) = "u32 idTarget"];
+  sint32 skill = 2 [(flyff.legacy_type) = "i32"];
+}
+
+// legacy LORD_SKILL_TICK 0x8F0A (S2C); obj_id: 0 (NULL_ID). The cooldowns of the lord skills, every minute, to
+// the lord only (ref/08 section 15.3, ref/09b section 3.16, Plan/22 section 9.6).
+message LordSkillTick {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8F0A
+    name: "LORD_SKILL_TICK"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // dropped: n (u32, the list length)
+  repeated LordSkillTickEntry ticks = 1 [(flyff.legacy_type) = "n x {i32, i32}"];
+}
+
+// legacy TAX_ALLINFO 0x0400 (S2C); obj_id: 0 (self). The tax tables of every continent, in the join batch and
+// after every change (CTax::Serialize, client form; ref/08 section 15.3, ref/09b section 7.9, Plan/22 section
+// 10.5).
+message TaxAllInfo {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x400
+    name: "TAX_ALLINFO"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // dropped: nContinents (i32, the list length)
+  repeated TaxContinent continents = 1 [(flyff.legacy_type) = "n x {u8, u32, i32 n, n x {u8, i32}}"];
+}
+
+// legacy TAX_SETTAXRATE_OPENWND 0x0401 (S2C); obj_id: 0 (self). Open the tax rate window for the master of the
+// next owner (ref/08 section 15.3, ref/09b section 3.16, Plan/22 section 10.5).
+message TaxSetTaxRateOpenWnd {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x401
+    name: "TAX_SETTAXRATE_OPENWND"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  uint32 continent = 1 [(flyff.legacy_type) = "u8"];
+  sint32 min_rate = 2 [(flyff.legacy_type) = "i32"];
+  sint32 max_rate = 3 [(flyff.legacy_type) = "i32"];
+}

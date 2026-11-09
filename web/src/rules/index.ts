@@ -1,0 +1,62 @@
+// The rules of the browser (Plan/16 section 18.4, WP-MOVER-13; Plan/40 section 2): `RulesFacade` over the wasm
+// `RulesContext` plus the M1 free functions (character-name, bank-PIN and hair-colour rules). Only this directory
+// and `wasm/` import `wasm/pkg` (layering rules, Plan/40 CA2).
+export { createRulesContext, createRulesFacade, type RulesFacade } from './facade';
+export type { RulesContextHandle } from '../wasm/rulesContext';
+export {
+  DrainBatch,
+  encodeMoverParamInputs,
+  encodeSplitSnapshots,
+  readDrainRow,
+  readParamsRow,
+  type DrainArrays,
+} from './encode';
+export {
+  ATTACKABLE_NO,
+  ATTACKABLE_PK_TARGET,
+  ATTACKABLE_YES,
+  DRAIN_ROW_WORDS,
+  DST_OP,
+  EQUIP_SILENT_REFUSAL,
+  MAX_SKILL_JOB,
+  PARAMS_ROW_WORDS,
+  SKILL_PLAN_ERROR,
+  skillPlanErrorCode,
+  splitRandomOptionWord,
+  type AttackContext,
+  type AttackView,
+  type DerivedStatsJs,
+  type DrainRow,
+  type DstPair,
+  type DstTriple,
+  type EquipJs,
+  type HairCostInput,
+  type ItemTooltipInput,
+  type ItemTooltipNumbers,
+  type ParamRowIn,
+  type PriceInput,
+  type PricePair,
+  type RandomOptionKind,
+  type RandomOptionLine,
+  type RulesBundles,
+  type RulesCfgJs,
+  type SetSummary,
+  type StatInputJs,
+  type StatisticsJs,
+  type TooltipOwnerJs,
+  type TooltipShopJs,
+  type TooltipWornJs,
+  type TradeableInput,
+  type UpgradeBranch,
+  type UpgradeConstants,
+  type UpgradeKind,
+  type UpgradeOdds,
+  type UpgradeRoute,
+  type UpgradeRouteInput,
+} from './types';
+export {
+  createWasmLobbyRules,
+  encodeNameRules,
+  type LobbyRules,
+  type NameCheck,
+} from '../wasm/lobbyRules';

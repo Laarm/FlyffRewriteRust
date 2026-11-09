@@ -1,0 +1,671 @@
+{
+  "$defs": {
+    "ClientRegion": {
+      "description": "One region of the client's `m_aRegion` (14 §10.5): every `.rgn` region that is not a begin, revival or\nstructure region, in file order.",
+      "properties": {
+        "attribute": {
+          "description": "`RA_*` attribute flags.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "desc": {
+          "description": "The description.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "direct_music": {
+          "description": "The music plays directly (no fade).",
+          "type": "boolean"
+        },
+        "index": {
+          "description": "The region kind (`RI_*`).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "key": {
+          "description": "The region key.",
+          "type": "string"
+        },
+        "music": {
+          "description": "`BGM_*` of the region.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "rect": {
+          "description": "`[left, top, right, bottom]` = `[xmin, zmin, xmax, zmax]`; containment is `left <= x < right && top <= z < bottom`.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "type": "array"
+        },
+        "tele_world": {
+          "description": "The teleport target world of a trigger region.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "title": {
+          "description": "The display title.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "index",
+        "rect",
+        "attribute",
+        "music",
+        "direct_music",
+        "tele_world",
+        "key",
+        "title",
+        "desc"
+      ],
+      "type": "object"
+    },
+    "ContinentDef": {
+      "description": "One `.wld.cnt` continent block (ref/19 §11).",
+      "properties": {
+        "ambient": {
+          "description": "`C_ambient`.",
+          "items": {
+            "format": "float",
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "cloud": {
+          "description": "`C_cloud <use> <file>`.",
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "diffuse": {
+          "description": "`C_diffuse`.",
+          "items": {
+            "format": "float",
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "fog": {
+          "description": "`C_fogstartend`.",
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "format": "float",
+              "type": "number"
+            },
+            {
+              "format": "float",
+              "type": "number"
+            }
+          ],
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "id": {
+          "description": "`C_id` (`ContinentDef.h`).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "name": {
+          "description": "`C_name`.",
+          "type": "string"
+        },
+        "sky": {
+          "description": "`C_sky <use> <file>`.",
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "town": {
+          "description": "`TOWN`.",
+          "type": "boolean"
+        },
+        "use_envir": {
+          "description": "`C_useEnvir`: the client environment override.",
+          "type": "boolean"
+        },
+        "use_real_data": {
+          "description": "`C_useRealData`: a gameplay continent for the server.",
+          "type": "boolean"
+        },
+        "vertices": {
+          "description": "`VERTEX x y z` as written (not closed).",
+          "items": {
+            "items": {
+              "format": "float",
+              "type": "number"
+            },
+            "maxItems": 3,
+            "minItems": 3,
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "weather": {
+          "description": "`C_weather`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "town",
+        "use_envir",
+        "use_real_data",
+        "name",
+        "id",
+        "ambient",
+        "diffuse",
+        "fog",
+        "weather",
+        "sky",
+        "cloud",
+        "vertices"
+      ],
+      "type": "object"
+    },
+    "MapMonsterDto": {
+      "description": "The monster records of one map.",
+      "properties": {
+        "atlas": {
+          "description": "The key of its sprites in the `ui-atlases` bundle.",
+          "type": "string"
+        },
+        "entries": {
+          "description": "The records.",
+          "items": {
+            "$ref": "#/$defs/MapMonsterRow"
+          },
+          "type": "array"
+        },
+        "map": {
+          "description": "The map number 1..=7.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "map",
+        "atlas",
+        "entries"
+      ],
+      "type": "object"
+    },
+    "MapMonsterRow": {
+      "description": "One monster information record of a continent map.",
+      "properties": {
+        "drop_item": {
+          "description": "The drop item (0 = none).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "frame": {
+          "description": "The running record index = the sprite index in the atlas.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "movers": {
+          "description": "1..=5 mover ids, the last one is the giant.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "pos": {
+          "description": "Left/top in the 1280x960 reference space.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "size": {
+          "description": "Width and height of the hover rectangle.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        }
+      },
+      "required": [
+        "frame",
+        "movers",
+        "pos",
+        "size",
+        "drop_item"
+      ],
+      "type": "object"
+    },
+    "RainbowMarkerDto": {
+      "description": "One rainbow race NPC marker.",
+      "properties": {
+        "frame": {
+          "description": "The running record index = the sprite index in `theme/texmaprainbow_npc.inc`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "map": {
+          "description": "The continent map number the `map_pos` applies on.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "map_pos": {
+          "description": "Position on the continent map.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "size": {
+          "description": "Width and height.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "total_pos": {
+          "description": "Position on the whole-world map.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        }
+      },
+      "required": [
+        "frame",
+        "map",
+        "total_pos",
+        "map_pos",
+        "size"
+      ],
+      "type": "object"
+    },
+    "WorldFolderDto": {
+      "description": "The client data of one world folder.",
+      "properties": {
+        "continents": {
+          "description": "The continents of `.wld.cnt`.",
+          "items": {
+            "$ref": "#/$defs/ContinentDef"
+          },
+          "type": "array"
+        },
+        "regions": {
+          "description": "The client regions.",
+          "items": {
+            "$ref": "#/$defs/ClientRegion"
+          },
+          "type": "array"
+        },
+        "settings": {
+          "$ref": "#/$defs/WorldSettingsDto",
+          "description": "The `.wld` settings."
+        }
+      },
+      "required": [
+        "settings",
+        "regions",
+        "continents"
+      ],
+      "type": "object"
+    },
+    "WorldMapRow": {
+      "description": "One world-map texture and its world rectangle (`WORLD_MAPS`, a code table).",
+      "properties": {
+        "continent": {
+          "description": "The continent (`ContinentDef.id`) shown on this map; `null` for map 0.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "map": {
+          "description": "The map number 0..=7.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "rect": {
+          "description": "`[x1, z1, x2, z2]` in world coordinates; the screen z axis is inverted.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "type": "array"
+        },
+        "texture": {
+          "description": "The texture as a canonical VFS path (`theme/world_*.dds`).",
+          "type": "string"
+        }
+      },
+      "required": [
+        "map",
+        "texture",
+        "continent",
+        "rect"
+      ],
+      "type": "object"
+    },
+    "WorldRow": {
+      "description": "One `World.inc` entry.",
+      "properties": {
+        "define": {
+          "description": "The define name.",
+          "type": "string"
+        },
+        "folder": {
+          "description": "The world folder as written.",
+          "type": "string"
+        },
+        "id": {
+          "description": "`WI_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "loadable": {
+          "description": "The folder exists and has a `.wld` (the 51 worlds the server loads).",
+          "type": "boolean"
+        },
+        "title": {
+          "description": "The display title (`\"\"` for `WI_WORLD_QUIZ`).",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "define",
+        "folder",
+        "title",
+        "loadable"
+      ],
+      "type": "object"
+    },
+    "WorldSettingsDto": {
+      "description": "The `.wld` settings of one folder the client needs.",
+      "properties": {
+        "ambient": {
+          "description": "Indoor ambient colour.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "bgm": {
+          "description": "`BGM_*` of the world (0 = the default).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "cloud": {
+          "description": "Cloud textures, same order.",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": "array"
+        },
+        "diffuse": {
+          "description": "Indoor diffuse colour.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "fly": {
+          "description": "Flying allowed.",
+          "type": "boolean"
+        },
+        "fog": {
+          "description": "Fog start, end and density.",
+          "items": {
+            "format": "float",
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "type": "array"
+        },
+        "indoor": {
+          "description": "Indoor world: no sky, no weather, fixed light.",
+          "type": "boolean"
+        },
+        "light24": {
+          "description": "The 24 hourly light entries (`r1 g1 b1 r2 g2 b2`) when `use24light`.",
+          "items": {
+            "items": {
+              "format": "float",
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "light_dir": {
+          "description": "Indoor light direction.",
+          "items": {
+            "format": "float",
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "type": "array"
+        },
+        "moon": {
+          "description": "The moon texture (`weather/`), `null` = built-in.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "mpu": {
+          "description": "Metres per unit: the land edge is 128 x `mpu` world units.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "pk_mode": {
+          "description": "Default region attribute flags of the whole world.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "size": {
+          "description": "Lands in x and z.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "sky": {
+          "description": "Sky textures `[day, evening, night]` as canonical paths under `weather/`; `null` = the built-in one.",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": "array"
+        },
+        "sun": {
+          "description": "The sun texture (`weather/`), `null` = built-in.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "size",
+        "indoor",
+        "fly",
+        "bgm",
+        "pk_mode",
+        "ambient",
+        "diffuse",
+        "light_dir",
+        "fog",
+        "mpu",
+        "sky",
+        "cloud",
+        "sun",
+        "moon",
+        "light24"
+      ],
+      "type": "object"
+    },
+    "WorldsBundle": {
+      "description": "`worlds`: the world list, the client data of each folder, the world-map code table and the map records.",
+      "properties": {
+        "folders": {
+          "additionalProperties": {
+            "$ref": "#/$defs/WorldFolderDto"
+          },
+          "description": "The client data per world folder (lower-case folder name).",
+          "type": "object"
+        },
+        "map_monsters": {
+          "description": "The monster records of the 7 continent maps.",
+          "items": {
+            "$ref": "#/$defs/MapMonsterDto"
+          },
+          "type": "array"
+        },
+        "rainbow_markers": {
+          "description": "The rainbow race markers.",
+          "items": {
+            "$ref": "#/$defs/RainbowMarkerDto"
+          },
+          "type": "array"
+        },
+        "world_maps": {
+          "description": "The 8 world-map textures with their rectangles.",
+          "items": {
+            "$ref": "#/$defs/WorldMapRow"
+          },
+          "type": "array"
+        },
+        "worlds": {
+          "description": "`World.inc` in id order.",
+          "items": {
+            "$ref": "#/$defs/WorldRow"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "worlds",
+        "folders",
+        "world_maps",
+        "map_monsters",
+        "rainbow_markers"
+      ],
+      "title": "WorldsBundle",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`worlds.<h16>.json`: the envelope of the `worlds` bundle (schema version 1).",
+  "properties": {
+    "bundle": {
+      "const": "worlds"
+    },
+    "data": {
+      "$ref": "#/$defs/WorldsBundle"
+    },
+    "schema": {
+      "const": 1
+    }
+  },
+  "required": [
+    "bundle",
+    "schema",
+    "data"
+  ],
+  "title": "WorldsBundleEnvelope",
+  "type": "object"
+}

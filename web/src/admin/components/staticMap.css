@@ -1,0 +1,37 @@
+/* The static map preview (components/StaticMapPreview.tsx): a tile image on the void colour with a dot where the position is. */
+.adm-staticmap {
+  position: relative;
+  display: block;
+  flex: none;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--map-void);
+  cursor: pointer;
+}
+
+.adm-staticmap:hover,
+.adm-staticmap:focus-visible {
+  border-color: var(--accent);
+}
+
+.adm-staticmap__tile {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  image-rendering: auto;
+}
+
+.adm-staticmap__dot {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--danger);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 55%);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}

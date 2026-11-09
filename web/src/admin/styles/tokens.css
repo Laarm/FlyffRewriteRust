@@ -1,0 +1,153 @@
+/* Design tokens of the admin console (Plan/25 section 2.3, 2.4): a neutral modern design on an 8 px grid, light and dark.
+ *
+ * Colours are tokens on :root. The theme is `data-theme="light" | "dark"` on <html> (set by stores/ui.ts); without the attribute
+ * the system setting decides. The dark values appear twice (media query for "system", attribute for "dark") because CSS cannot
+ * share a block between the two selectors. Every text/background pair below meets WCAG AA (4.5:1); the map tokens meet 3:1.
+ */
+
+:root {
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+
+  /* 8 px grid */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --radius: 6px;
+  --radius-lg: 10px;
+
+  --fs-sm: 12px;
+  --fs: 14px;
+  --fs-table: 13px;
+  --fs-lg: 16px;
+  --fs-xl: 20px;
+  --row-h: 34px; /* table rows; the compact density sets 26px */
+  --control-h: 32px;
+
+  --topbar-h: 52px;
+  --nav-w: 216px;
+  --rail-w: 52px;
+  --drawer-w: 520px;
+  --drawer-w-wide: 720px;
+
+  --shadow-1: 0 1px 2px rgb(16 24 40 / 8%), 0 1px 3px rgb(16 24 40 / 10%);
+  --shadow-2: 0 8px 24px rgb(16 24 40 / 18%), 0 2px 6px rgb(16 24 40 / 10%);
+
+  --ease: 120ms ease-out;
+
+  /* light */
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface-2: #eef0f4;
+  --surface-3: #e4e7ed;
+  --border: #d3d8e0;
+  --border-strong: #b6bdc9;
+  --text: #19202e;
+  --text-muted: #566174;
+  --accent: #2458c5;
+  --accent-hover: #1c4aa8;
+  --accent-soft: #e3ecfd;
+  --accent-text: #ffffff;
+  --danger: #b3261e;
+  --danger-hover: #961d16;
+  --danger-soft: #fdeceb;
+  --warn: #8a5300;
+  --warn-soft: #fff3dc;
+  --ok: #17713c;
+  --ok-soft: #e1f5e8;
+  --info-soft: #e8eefb;
+  --focus: #2458c5;
+  --overlay: rgb(15 20 30 / 45%);
+  --skeleton-a: #e6e9ef;
+  --skeleton-b: #f3f5f8;
+
+  /* map (Plan/25 section 2.3: 3:1 contrast against --surface in both themes; the map views add their own) */
+  --map-void: #cfd5df;
+  --map-grid: #b7bfcc;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0e1218;
+    --surface: #161b24;
+    --surface-2: #1c222d;
+    --surface-3: #242b38;
+    --border: #2b3342;
+    --border-strong: #3d485c;
+    --text: #e4e8f0;
+    --text-muted: #9ba6b9;
+    --accent: #7aa7ff;
+    --accent-hover: #9bbdff;
+    --accent-soft: #1d2b49;
+    --accent-text: #0b1220;
+    --danger: #ff8478;
+    --danger-hover: #ffa196;
+    --danger-soft: #3a1d1b;
+    --warn: #f2b45a;
+    --warn-soft: #3a2b12;
+    --ok: #64d391;
+    --ok-soft: #14301f;
+    --info-soft: #1b2638;
+    --focus: #9bbdff;
+    --overlay: rgb(0 0 0 / 60%);
+    --skeleton-a: #1f2631;
+    --skeleton-b: #283040;
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 40%);
+    --shadow-2: 0 8px 24px rgb(0 0 0 / 55%), 0 2px 6px rgb(0 0 0 / 40%);
+    --map-void: #2a3140;
+    --map-grid: #3e485b;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #0e1218;
+  --surface: #161b24;
+  --surface-2: #1c222d;
+  --surface-3: #242b38;
+  --border: #2b3342;
+  --border-strong: #3d485c;
+  --text: #e4e8f0;
+  --text-muted: #9ba6b9;
+  --accent: #7aa7ff;
+  --accent-hover: #9bbdff;
+  --accent-soft: #1d2b49;
+  --accent-text: #0b1220;
+  --danger: #ff8478;
+  --danger-hover: #ffa196;
+  --danger-soft: #3a1d1b;
+  --warn: #f2b45a;
+  --warn-soft: #3a2b12;
+  --ok: #64d391;
+  --ok-soft: #14301f;
+  --info-soft: #1b2638;
+  --focus: #9bbdff;
+  --overlay: rgb(0 0 0 / 60%);
+  --skeleton-a: #1f2631;
+  --skeleton-b: #283040;
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-2: 0 8px 24px rgb(0 0 0 / 55%), 0 2px 6px rgb(0 0 0 / 40%);
+  --map-void: #2a3140;
+  --map-grid: #3e485b;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+:root:not([data-theme]) {
+  color-scheme: light dark;
+}
+
+/* compact density (Plan/25 section 2.4) */
+:root[data-density='compact'] {
+  --row-h: 26px;
+  --control-h: 28px;
+  --fs-table: 12px;
+}

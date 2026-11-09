@@ -1,0 +1,279 @@
+{
+  "$defs": {
+    "NpcBuffSkill": {
+      "description": "`SetBuffSkill(skill, level, minPlayerLv, maxPlayerLv, timeMs)` (`NPC_BUFF_SKILL`, `__NPC_BUFF`).",
+      "properties": {
+        "level": {
+          "description": "`dwSkillLV`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "max_player_lv": {
+          "description": "`nMaxPlayerLV`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "min_player_lv": {
+          "description": "`nMinPlayerLV`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "skill": {
+          "description": "`dwSkillID`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "time_ms": {
+          "description": "`dwSkillTime` in ms.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "skill",
+        "level",
+        "min_player_lv",
+        "max_player_lv",
+        "time_ms"
+      ],
+      "type": "object"
+    },
+    "NpcFigure": {
+      "description": "`SetFigure(mover, hairMesh, hairColor, headMesh)`: the look of a human NPC.",
+      "properties": {
+        "hair_color": {
+          "description": "`m_dwHairColor` (ARGB).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "hair_mesh": {
+          "description": "`m_dwHairMesh`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "head_mesh": {
+          "description": "`m_dwHeadMesh`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "mover": {
+          "description": "`MI_MALE` / `MI_FEMALE` (`m_dwMoverIdx`).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "mover",
+        "hair_mesh",
+        "hair_color",
+        "head_mesh"
+      ],
+      "type": "object"
+    },
+    "NpcRow": {
+      "description": "One NPC definition (`character.inc` family).",
+      "properties": {
+        "buff_skills": {
+          "description": "Buff skills the NPC casts.",
+          "items": {
+            "$ref": "#/$defs/NpcBuffSkill"
+          },
+          "type": "array"
+        },
+        "dialog": {
+          "description": "The NPC has a dialog script.",
+          "type": "boolean"
+        },
+        "dialog_key": {
+          "description": "The script key (`dialog_file` minus its extension, lower-cased), when there is a dialog.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "equip": {
+          "description": "`SetEquip`.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "figure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/NpcFigure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "`SetFigure`."
+        },
+        "key": {
+          "description": "The key as written (`MaFl_Mikyel`); lookups are case-insensitive.",
+          "type": "string"
+        },
+        "menus": {
+          "description": "The enabled `MMI_*` menu ids.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "music": {
+          "description": "`BGM_*` played during the dialog (0 = none).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "name": {
+          "description": "The display name.",
+          "type": "string"
+        },
+        "portrait": {
+          "description": "The portrait as a canonical VFS path under `char/`; empty when the NPC has none.",
+          "type": "string"
+        },
+        "structure": {
+          "description": "`SRT_*` (-1 = none).",
+          "format": "int32",
+          "type": "integer"
+        },
+        "tabs": {
+          "description": "Exactly four vendor tabs.",
+          "items": {
+            "$ref": "#/$defs/NpcTab"
+          },
+          "type": "array"
+        },
+        "teleports": {
+          "description": "Teleporter destinations `(x, z)`.",
+          "items": {
+            "items": {
+              "format": "float",
+              "type": "number"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "vendor_type": {
+          "description": "0 = penya shop, 1 = chip shop.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "key",
+        "name",
+        "portrait",
+        "dialog",
+        "dialog_key",
+        "structure",
+        "music",
+        "figure",
+        "equip",
+        "menus",
+        "vendor_type",
+        "tabs",
+        "buff_skills",
+        "teleports"
+      ],
+      "type": "object"
+    },
+    "NpcStock": {
+      "description": "One vendor stock entry.",
+      "properties": {
+        "count": {
+          "description": "The stack count (`(short)pack_max`).",
+          "format": "int16",
+          "maximum": 32767,
+          "minimum": -32768,
+          "type": "integer"
+        },
+        "item": {
+          "description": "The item.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "item",
+        "count"
+      ],
+      "type": "object"
+    },
+    "NpcTab": {
+      "description": "One vendor tab: its title and the precomputed stock.",
+      "properties": {
+        "stock": {
+          "description": "The items for sale in tab order.",
+          "items": {
+            "$ref": "#/$defs/NpcStock"
+          },
+          "type": "array"
+        },
+        "title": {
+          "description": "The tab title (may be empty).",
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "stock"
+      ],
+      "type": "object"
+    },
+    "NpcsBundle": {
+      "description": "`npcs`: all 403 NPC definitions in file order.",
+      "properties": {
+        "npcs": {
+          "description": "The NPCs.",
+          "items": {
+            "$ref": "#/$defs/NpcRow"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "npcs"
+      ],
+      "title": "NpcsBundle",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`npcs.<h16>.json`: the envelope of the `npcs` bundle (schema version 1).",
+  "properties": {
+    "bundle": {
+      "const": "npcs"
+    },
+    "data": {
+      "$ref": "#/$defs/NpcsBundle"
+    },
+    "schema": {
+      "const": 1
+    }
+  },
+  "required": [
+    "bundle",
+    "schema",
+    "data"
+  ],
+  "title": "NpcsBundleEnvelope",
+  "type": "object"
+}

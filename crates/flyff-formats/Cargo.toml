@@ -1,0 +1,26 @@
+[package]
+name = "flyff-formats"
+description = "Byte-exact binary format parsers o3d/chr/ani/lnd/dyo/sfx/dds/... (Plan/30; tier S)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+default = []
+# serde derives on the pack descriptors and option types handed to/from JavaScript (flyff-wasm).
+wasm = ["dep:serde"]
+# ts-rs derives for web/src/gen/formats (the serde attributes shape the TypeScript, so `ts` implies `wasm`).
+ts = ["wasm", "dep:ts-rs"]
+
+[dependencies]
+flyff-common = { workspace = true }
+flyff-script = { workspace = true }
+serde = { workspace = true, optional = true }
+ts-rs = { workspace = true, optional = true }
+thiserror = { workspace = true }
+

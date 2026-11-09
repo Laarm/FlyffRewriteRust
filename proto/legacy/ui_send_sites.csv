@@ -1,0 +1,319 @@
+send_fn,legacy_ids,call_sites,milestone,status
+SendAcceptCampusMember,CAMPUS_ACCEPT:88100122,"WndField.cpp:26164, WndField.cpp:26173",M6,done
+SendAcptTruce,ACPT_TRUCE:F000B049,WndGuildWarPeaceConfirm.cpp:76,M6,done
+SendAcptWar,ACPT_GUILD_WAR:F000B037,WndGuildWarRequest.cpp:86,M6,done
+SendAddAppletTaskBar,ADDAPPLETTASKBAR:FFFFFF0B,"WndTaskBar.cpp:882, WndTaskBar.cpp:1703",M3,done
+SendAddFriend,ADDFRIEND:FFFFFF60,WndFriendConFirm.cpp:97,M6,done
+SendAddFriendNameReqest,ADDFRIENDNAMEREQEST:FFFFFF6B,WndFriendConFirm.cpp:191,M6,done
+SendAddFriendReqest,ADDFRIENDREQEST:FFFFFF61,WndWorld.cpp:5341,M6,done
+SendAddGuildMember,ADD_GUILD_MEMBER:FFFFFF33,WndGuild.cpp:237,M6,done
+SendAddItemTaskBar,ADDITEMTASKBAR:FFFFFF0C,"WndTaskBar.cpp:1148, WndTaskBar.cpp:1708",M3,done
+SendAddPartyMember,ADDPARTYMEMBER:FFFFFF11,"WndField.cpp:27951, WndPartyConfirm.cpp:109",M5,done
+SendAddVote,NC_ADDVOTE:F000B038,WndGuildVote.cpp:444,,dropped
+SendAlphabetOpenWnd,ALPHABET_OPENWND:F000F104,WndMiniGame.cpp:793,M7,done
+SendAlphabetStart,ALPHABET_START:F000F105,WndMiniGame.cpp:846,M7,done
+SendAngelBuff,ANGELBUFF:00FFF002,"WndWorld.cpp:6985, WndWorld.cpp:6996, WndWorld.cpp:11776, WndWorld.cpp:11787",M5,done
+SendAvailPocket,AVAIL_POCKET:70000006,"FuncTextCmd.cpp:543, WndBagEx.cpp:244, WndBagEx.cpp:267",M4,done
+SendAwakening,AWAKENING:70000008,WndAwakening.cpp:143,M4,done
+SendBlessednessCancel,BLESSEDNESS_CANCEL:7000000A,WndBlessingCancel.cpp:115,M4,done
+SendBuyChipItem,BUYCHIPITEM:00FF00B6,WndShop.cpp:679,M4,done
+SendBuyGuildHouse,GUILDHOUSE_BUY:88100001,"FuncTextCmd.cpp:5077, WndWorld.cpp:6326",M7,done
+SendBuyItem,BUYITEM:00FF00B3,"WndShop.cpp:677, WndShop.cpp:681",M4,done
+SendBuyPVendorItem,BUY_PVENDOR_ITEM:00FF00AD,WndVendorBuy.cpp:205,M4,done
+SendCastVote,NC_CASTVOTE:F000B03B,WndGuildVote.cpp:238,,dropped
+SendChangeAttribute,CHANGE_ATTRIBUTE:F000D00E,WndField.cpp:23505,M4,done
+SendChangeBankPass,CHANGEBANKPASS:FFFFFF47,WndBank.cpp:647,M4,done
+SendChangeFace,CHANGEFACE:00FF00EE,"WndShop.cpp:2680, WndShop.cpp:2826",M4,done
+SendChangeJob,SEND_TO_SERVER_CHANGEJOB:00000F32,"WndField.cpp:6484, WndField.cpp:6495, WndField.cpp:6498, WndField.cpp:13584, WndField.cpp:13726",,dropped
+SendChangePKPVPMode,MODE:FFFFFF7B,"WndOptionGame.cpp:372, WndOptionGame.cpp:375, WndOptionGame.cpp:379, WndOptionGame.cpp:382",M5,done
+SendChangeShareExp,PARTYCHANGEEXPMODE:FFFFFF21,WndParty.cpp:437,M5,done
+SendChangeShareItem,PARTYCHANGEITEMMODE:FFFFFF20,WndParty.cpp:452,M5,done
+SendChangeTroup,CHANGETROUP:FFFFFF19,WndPartyChangeTroup.cpp:167,M5,done
+SendChat,CHAT:00FF0000,"FTool.cpp:61, FuncTextCmd.cpp:1170, FuncTextCmd.cpp:1935, FuncTextCmd.cpp:1984, FuncTextCmd.cpp:1992 (+20)",M2,done
+SendChatting,CHATTING:F000B055,"WndVendor.cpp:629, WndVendor.cpp:648",M4,done
+SendCheckedQuestId,QUEST_CHECK:88100110,"WndQuest.cpp:1551, WndQuest.cpp:1556",M7,done
+SendCheering,CHEERING:FFFFFF7C,"WndManager.cpp:3074, WndWorld.cpp:5868",M6,done
+SendChgMaster,CHG_MASTER:F000F000,WndGuildTabMember.cpp:603,M6,done
+SendClearPetName,CLEAR_PET_NAME:8FFFFF01,"FuncTextCmd.cpp:2189, WndWorld.cpp:5427",M4,done
+SendCloseBankWnd,CLOSEBANKWND:FFFFFF41,"WndBank.cpp:22, WndDuelConfirm.cpp:180, WndWorld.cpp:8529",M4,done
+SendCloseChattingRoom,CLOSECHATTINGROOM:F000B059,WndVendor.cpp:658,M4,done
+SendCloseGuildBankWnd,GUILD_BANK_WND_CLOSE:FFFFFF3E,"WndDuelConfirm.cpp:209, WndGuildBank.cpp:296, WndGuildBank.cpp:309, WndGuildHouse.cpp:108, WndManager.cpp:1507 (+1)",M6,done
+SendCloseShopWnd,CLOSESHOPWND:00FF00B2,"WndDuelConfirm.cpp:123, WndShop.cpp:1010, WndWorld.cpp:8300",M4,done
+SendCloseVote,NC_CLOSEVOTE:F000B03A,WndGuildVote.cpp:456,,dropped
+SendCommercialElem,COMMERCIALELEM:F000B04F,WndCommItem.cpp:1317,M4,done
+SendConfirmBank,CONFIRMBANK:FFFFFF48,WndBank.cpp:498,M4,done
+SendConfirmTrade,CONFIRMTRADE:00FF00A7,WndWorld.cpp:5542,M4,done
+SendConfirmTradeCancel,CONFIRMTRADECANCEL:00FF00A8,WndField.cpp:9222,M4,done
+SendCorrReq,CORR_REQ:00FF0FF0,"ActionMoverMsg.cpp:1154, ActionMoverMsg2.cpp:350",,dropped
+SendCouple,COUPLE:8FFFF002,WndField.cpp:23729,M6,done
+SendCreateAngel,CREATEANGEL:00FFF000,WndSummonAngel.cpp:476,M4,done
+SendCreateGuildCloak,CREATE_GUILDCLOAK:00FF0FFD,WndGuildBank.cpp:343,M6,done
+SendCreateMonster,CREATEMONSTER:0000002A,WndWorldControlPlayer.cpp:277,M4,done
+SendCtrlCoolTimeCancel,CTRL_COOLTIME_CANCEL:F000F008,WndWorld.cpp:8279,M4,todo
+SendDeclWar,DECL_GUILD_WAR:F000B036,"FuncTextCmd.cpp:1186, WndGuildWarDecl.cpp:89",M6,done
+SendDecouple,DECOUPLE:8FFFF003,WndField.cpp:23743,M6,done
+SendDestroyGuild,DESTROY_GUILD:FFFFFF32,"FuncTextCmd.cpp:1104, WndGuildTabInfo.cpp:77",M6,done
+SendDoEquip,DOEQUIP:00FF000B,"WndCommItem.cpp:1662, WndField.cpp:2934, WndField.cpp:3095, WndField.cpp:3099, WndField.cpp:25959",M3,done
+SendDoEscape,DO_ESCAPE:00000020,WndManager.cpp:3065,M4,done
+SendDoUseItem,DOUSEITEM:00FF0021;SEALCHARGET_REQ:F000F814,"WndChangeFace.cpp:297, WndCommItem.cpp:1657, WndField.cpp:1883, WndField.cpp:2766, WndField.cpp:2769 (+22)",M3,done
+SendDoUseItemInput,DO_USE_ITEM_INPUT:8FFFFF00,"WndChangeName.cpp:221, WndField.cpp:13473, WndSelectCh.cpp:101",M4,done
+SendDoUseItemTarget,DO_USE_ITEM_TARGET:70000004,WndField.cpp:1820,M4,done
+SendDoUseSkillPoint,DOUSESKILLPOINT:000F0003,WndField.cpp:14238,M5,done
+SendDropGold,DROPGOLD:00FF0008,WndField.cpp:8864,,dropped
+SendDropItem,DROPITEM:00FF0007,"WndField.cpp:214, WndField.cpp:290",M3,done
+SendDuelNo,DUELNO:FFFFFF25,WndDuelConfirm.cpp:323,M5,done
+SendDuelPartyNo,DUELPARTYNO:FFFFFF28,WndDuelConfirm.cpp:349,M5,done
+SendDuelPartyRequest,DUELPARTYREQUEST:FFFFFF26,WndWorld.cpp:5854,M5,done
+SendDuelPartyYes,DUELPARTYYES:FFFFFF27,WndDuelConfirm.cpp:339,M5,done
+SendDuelRequest,DUELREQUEST:FFFFFF23,WndWorld.cpp:5846,M5,done
+SendDuelYes,DUELYES:FFFFFF24,WndDuelConfirm.cpp:313,M5,done
+SendElectionAddDeposit,ELECTION_ADD_DEPOSIT:8FFF0000,"FuncTextCmd.cpp:4564, WndLord.cpp:440",M7,done
+SendElectionIncVote,ELECTION_INC_VOTE:8FFF0002,"FuncTextCmd.cpp:4590, WndLord.cpp:606",M7,done
+SendElectionSetPledge,ELECTION_SET_PLEDGE:8FFF0001,"FuncTextCmd.cpp:4579, WndLord.cpp:297, WndLord.cpp:919",M7,done
+SendEnchant,ENCHANT:F000B024,"WndField.cpp:1792, WndField.cpp:1802, WndField.cpp:1804",M4,done
+SendEndSkillQueue,ENDSKILLQUEUE:00FF00D5,WndWorld.cpp:7190,M5,done
+SendError,ERRORCODE:F000B004,"ActionMoverMsg.cpp:1155, ActionMoverMsg.cpp:1162",,dropped
+SendExchange,EXCHANGE:F000F116,WndField.cpp:22025,M4,done
+SendExp,SEND_TO_SERVER_EXP:00000F31,WndDebugInfo.cpp:199,,dropped
+SendExpBoxInfo,EXPBOXINFO:00000F00,WndWorld.cpp:3128,,dropped
+SendExpStop,EXP_STOP:AA000010,WndField.cpp:11814,M3,done
+SendFeedPocketInactive,FEED_POCKET_INACTIVE:F000F604,WndWorld.cpp:7490,M5,done
+SendFiveSystemBet,FIVESYSTEM_BET:F000F108,WndMiniGame.cpp:1246,M7,done
+SendFiveSystemDestroyWnd,FIVESYSTEM_DESTROYWND:F000F107,WndMiniGame.cpp:991,M7,done
+SendFiveSystemOpenWnd,FIVESYSTEM_OPENWND:F000F106,WndMiniGame.cpp:1113,M7,done
+SendFiveSystemStart,FIVESYSTEM_START:F000F109,WndMiniGame.cpp:1358,M7,done
+SendFriendCancel,ADDFRIENDCANCEL:FFFFFF62,WndFriendConFirm.cpp:104,M6,done
+SendFriendInterceptState,FRIENDINTERCEPTSTATE:FFFFFF68,"WndFriendCtrl.cpp:1023, WndMessengerCtrl.cpp:723",M6,done
+SendGC1to1MemberLienUp,GC1TO1_MEMBERLINEUP:F000F706,WndGuildCombat1to1.cpp:529,M7,done
+SendGC1to1MemberLienUpOpenWnd,GC1TO1_MEMBERLINEUPOPENWND:F000F705,WndWorld.cpp:4358,M7,done
+SendGC1to1TeleportToNPC,GC1TO1_TELEPORTTONPC:F000F707,WndField.cpp:16287,M7,done
+SendGC1to1TeleportToStage,GC1TO1_TELEPORTTOSTAGE:F000F708,WndField.cpp:17591,M7,done
+SendGC1to1Tender,GC1TO1_TENDER:F000F702,WndGuildCombat1to1.cpp:791,M7,done
+SendGC1to1TenderCancel,GC1TO1_TENDERCANCEL:F000F703,WndField.cpp:17461,M7,done
+SendGC1to1TenderFailed,GC1TO1_TENDERFAILED:F000F709,WndWorld.cpp:4485,M7,done
+SendGC1to1TenderOpenWnd,GC1TO1_TENDEROPENWND:F000F700,"WndField.cpp:17050, WndWorld.cpp:4344",M7,done
+SendGC1to1TenderView,GC1TO1_TENDERVIEW:F000F701,"WndField.cpp:17062, WndWorld.cpp:4355",M7,done
+SendGCGetItem,GETITEM_GUILDCOMBAT:F000D02F,WndGuildBank.cpp:44,,dropped
+SendGCGetPenyaGuild,GETPENYAGUILD_GUILDCOMBAT:F000D02D,WndWorld.cpp:4216,M6,done
+SendGCGetPenyaPlayer,GETPENYAPLAYER_GUILDCOMBAT:F000D02E,WndWorld.cpp:4252,M6,done
+SendGCJoin,JOIN_GUILDCOMBAT:F000D024,"WndField.cpp:17585, WndField.cpp:17594",M6,done
+SendGCPlayerPoint,PLAYERPOINT_GUILDCOMBAT:F000D031,WndWorld.cpp:4164,M6,done
+SendGCRequestStatusWindow,REQUEST_STATUS:F000D028,"WndField.cpp:17060, WndField.cpp:17064, WndWorld.cpp:4132",M6,done
+SendGCSelectMap,SELECTMAP_GUILDCOMBAT:F000D02B,"WndField.cpp:17257, WndField.cpp:17268, WndField.cpp:17273, WndField.cpp:17278, WndField.cpp:17283",M6,done
+SendGCSelectPlayer,SELECTPLAYER_GUILDCOMBAT:F000D027,WndField.cpp:16876,M6,done
+SendGCSelectPlayerWindow,SELECTPLAYER_GUILDCOMBAT:F000D027,WndWorld.cpp:4172,M6,done
+SendGCTele,TELE_GUILDCOMBAT:F000D030,"WndField.cpp:16285, WndField.cpp:16289",M6,done
+SendGetFriendName,GETFRIENDNAME:FFFFFF63,"WndMessenger.cpp:201, WndMessenger.cpp:675",,dropped
+SendGetFriendState,GETFRIENDSTATE:FFFFFF64,"WndMessenger.cpp:203, WndMessenger.cpp:677",M6,done
+SendGetGoldBank,GETGOLDBACK:FFFFFF45,WndField.cpp:9015,M4,done
+SendGetItemBank,GETITEMBACK:FFFFFF44,"WndField.cpp:2013, WndField.cpp:9037",M4,done
+SendGetItemGuildBank,GETITEMGUILDBANK:F000B022,"WndField.cpp:2168, WndField.cpp:8975, WndField.cpp:8998",M6,done
+SendGuilPenya,GUILD_PENYA:F000B027,WndGuildTabApp.cpp:543,M6,done
+SendGuildAuthority,GUILD_AUTHORITY:F000B026,"WndGuildTabApp.cpp:278, WndGuildTabPower.cpp:256",M6,done
+SendGuildClass,GUILD_CLASS:FFFFFF74,"WndGuildTabMember.cpp:591, WndGuildTabMember.cpp:595",M6,done
+SendGuildCombatApp,IN_GUILDCOMBAT:F000D022,"WndField.cpp:15964, WndField.cpp:17350, WndGuildCombat1to1.cpp:786",M6,done
+SendGuildCombatCancel,OUT_GUILDCOMBAT:F000D023,"WndField.cpp:17456, WndField.cpp:17465",M6,done
+SendGuildCombatWindow,IN_GUILDCOMBAT:F000D022,"WndField.cpp:17048, WndField.cpp:17052, WndWorld.cpp:4126",M6,done
+SendGuildContribution,NW_GUILDCONTRIBUTION:F000B011,WndGuildMerit.cpp:179,M6,done
+SendGuildHouseEnter,GUILDHOUSE_ENTER:88100006,WndWorld.cpp:6314,M7,done
+SendGuildHouseGoOut,GUILDHOUSE_GOOUT:88100007,WndWorld.cpp:6320,M7,done
+SendGuildHouseTenderInfoWnd,GUILDHOUSE_TENDER_INFOWND:88100231,WndHousing.cpp:1752,,dropped
+SendGuildHouseTenderJoin,GUILDHOUSE_TENDER_JOIN:88100233,WndHousing.cpp:1701,,dropped
+SendGuildHouseTenderMainWnd,GUILDHOUSE_TENDER_MAINWND:88100230,WndHousing.cpp:1597,,dropped
+SendGuildInvite,GUILD_INVITE:FFFFFF35,WndWorld.cpp:11507,M6,done
+SendGuildLogo,NW_GUILDLOGO:F000B010,"WndGuildTabInfo.cpp:341, WndGuildTabInfo.cpp:359",M6,done
+SendGuildMemberLv,GUILD_MEMBER_LEVEL:FFFFFF3A,"WndGuildTabMember.cpp:582, WndGuildTabMember.cpp:586",M6,done
+SendGuildNickName,GUILD_NICKNAME:FFFFFF75,WndGuildName.cpp:317,M6,done
+SendGuildNotice,NW_GUILDNOTICE:F000B012,WndGuildTabInfo.cpp:169,M6,done
+SendGuildRank,REQUEST_GUILD_RANKING:F000B04E,"WndWorld.cpp:5809, WndWorld.cpp:5817, WndWorld.cpp:5825",,dropped
+SendGuildSetName,GUILD_SETNAME:F000B032,WndGuildName.cpp:151,M6,done
+SendHdr,SORT_INVENTORY:AA000002;REVIVAL_TO_LODELIGHT:00FF00C2;REVIVAL_TO_LODESTAR:00FF00C1;REVIVAL:00FF00C0;SETLODELIGHT:00FF00C3;ARENA_ENTER:70000010;ARENA_EXIT:70000011,"WndField.cpp:2790[SORT_INVENTORY], WndField.cpp:12797[REVIVAL_TO_LODELIGHT], WndField.cpp:12808[REVIVAL_TO_LODESTAR], WndField.cpp:12819[REVIVAL], WndWorld.cpp:5349[SETLODELIGHT], WndWorld.cpp:6119[ARENA_ENTER], WndWorld.cpp:6122[ARENA_EXIT]",M3,done
+SendHideCoat,HIDE_COAT:AA000007,WndField.cpp:2818,M4,done
+SendHousingGoOut,HOUSING_GOOUT:70003007,WndQuitRoom.cpp:80,M7,done
+SendHousingReqSetVisitAllow,HOUSING_SETVISITALLOW:70003005,"WndMessengerCtrl.cpp:801, WndMessengerCtrl.cpp:808",M7,done
+SendHousingReqSetupFurniture,HOUSING_SETUPFURNITURE:70003002,"WndHousing.cpp:497, WndHousing.cpp:531, WndWorld.cpp:7024, WndWorld.cpp:11808",M7,done
+SendHousingReqVisitableList,HOUSING_REQVISITABLELIST:70003006,"WndRoomList.cpp:67, WndRoomList.cpp:126",M7,done
+SendHousingVisitRoom,HOUSING_VISITROOM:70003004,"FuncTextCmd.cpp:4902, FuncTextCmd.cpp:4907, WndRoomList.cpp:120, WndWorld.cpp:5415",M7,done
+SendIncJobLevel,INC_JOB_LEVEL:00FF00C5,"WndField.cpp:3984, WndPvp.cpp:227",,dropped
+SendIncStatLevel,INC_STAT_LEVEL:00FF00C4,WndField.cpp:4905,M3,todo
+SendInviteCampusMember,CAMPUS_INVITE:88100121,WndWorld.cpp:6345,M6,done
+SendItemTransy,ITEMTRANSY:F000D00C,"WndChangeFace.cpp:468, WndChangeFace.cpp:473, WndChangeFace.cpp:480",M4,done
+SendJoin,JOIN:0000FF00,"DPLoginClient.cpp:213, DPLoginClient.cpp:215",M1,done
+SendKawibawiboGetItem,KAWIBAWIBO_GETITEM:F000F101,WndMiniGame.cpp:488,M7,done
+SendKawibawiboStart,KAWIBAWIBO_START:F000F100,WndMiniGame.cpp:241,M7,done
+SendLEventCreate,L_EVENT_CREATE:8FFF0008,"FuncTextCmd.cpp:4642, WndLord.cpp:672, WndLord.cpp:676",M7,done
+SendLegendSkillUp,LEGENDSKILLUP_START:F000F500,WndField.cpp:21816,M5,done
+SendLocalPosFromIA,LOCALPOSFROMIA:00FF0FFF,MoverActEvent.cpp:2195,,dropped
+SendLordSkillUse,LORD_SKILL_USE:8FFF0009,"FuncTextCmd.cpp:4663, WndLord.cpp:990, WndManager.cpp:2989, WndManager.cpp:2994",M7,done
+SendMagicAttack,MAGIC_ATTACK:00FF0011,MoverSkill.cpp:3296,M3,done
+SendMakePetFeed,MAKE_PET_FEED:F000F605,WndPetSys.cpp:1718,M4,done
+SendMapKey,MAP_KEY:FFFFF000,worldmng.cpp:738,,dropped
+SendMeleeAttack,MELEE_ATTACK:00FF0010,"ActionMoverState.cpp:837, ActionMoverState.cpp:839, MoverSkill.cpp:3494, MoverSkill.cpp:3496",M3,done
+SendMeleeAttack2,MELEE_ATTACK2:00FF0014,ActionMoverMsg2.cpp:169,M5,done
+SendMessageNote,SENDTAG:F000B007,WndMessenger.cpp:1350,M6,done
+SendModifyStatus,MODIFY_STATUS:F000F501,"WndField.cpp:4847, WndField.cpp:4873",M3,done
+SendMotion,MOTION:00FF0016,"WndManager.cpp:3042, WndManager.cpp:3052, WndWorld.cpp:6447",M2,done
+SendMoveBankItem,MOVEBANKITEM:FFFFFF46,WndItemCtrl.cpp:1238,,dropped
+SendMoveItem,MOVEITEM:00FF0006,WndItemCtrl.cpp:1244,M3,done
+SendMoveItem_Pocket,MOVE_ITEM_POCKET:70000007,"FuncTextCmd.cpp:532, WndBagEx.cpp:438, WndBagEx.cpp:503, WndField.cpp:2106, WndField.cpp:8935",M4,done
+SendMoverFocus,MOVERFOCOUS:FFFFFF2D,World.cpp:355,M8,todo
+SendNPCBuff,NPC_BUFF:F000F813,WndWorld.cpp:5322,M4,done
+SendNewSmelt,SMELT_SAFETY:70007000,WndNewUpgrade.cpp:105,M4,done
+SendOpenBankWnd,OPENBANKWND:FFFFFF40,WndWorld.cpp:5722,M4,done
+SendOpenChattingRoom,OPENCHATTINGROOM:F000B058,WndVendor.cpp:398,M4,done
+SendOpenGuildBankWnd,GUILD_BANK_WND:F000B020,"WndGuildHouse.cpp:113, WndWorld.cpp:5799",M6,done
+SendOpenShopWnd,OPENSHOPWND:00FF00B1,"WndWorld.cpp:5561, WndWorld.cpp:5567",M4,done
+SendOptionEnableRenderMask,OPTION_ENABLE_RENDER_MASK:8FFF0010,"WndField.cpp:1848, WndOption.cpp:862, WndOption.cpp:1293",M4,done
+SendPVendorClose,PVENDOR_CLOSE:00FF00AA,WndVendor.cpp:500,M4,done
+SendPVendorOpen,PVENDOR_OPEN:00FF00A9,"WndVendor.cpp:375, WndVendor.cpp:792",M4,done
+SendPartyChangeLeader,PARTYCHANGELEADER:FFFFFF2F,WndParty.cpp:364,M5,done
+SendPartyJoinAllow,PARTYALLOWJOIN:AA000009,WndParty.cpp:468,M5,done
+SendPartyMemberCancle,MEMBERREQUESTCANCLE:FFFFFF18,WndPartyConfirm.cpp:116,M5,done
+SendPartyMemberRequest,MEMBERREQUEST:FFFFFF17,WndWorld.cpp:11481,M5,done
+SendPartySkillUse,PARTYSKILLUSE:FFFFFF1B,"WndField.cpp:27767, WndManager.cpp:2916",M5,done
+SendPetRelease,PET_RELEASE:F000F600,WndWorld.cpp:6083,M4,done
+SendPetTamerMiracle,PET_TAMER_MIRACLE:F000F603,WndPetSys.cpp:1443,M4,done
+SendPetTamerMistake,PET_TAMER_MISTAKE:F000F602,WndField.cpp:13463,M4,todo
+SendPickupPetAwakeningCancel,PICKUP_PET_AWAKENING_CANCEL:8FFF000F,WndPetSys.cpp:95,M4,done
+SendPiercing,PIERCING:F000B025,WndField.cpp:1815,M4,done
+SendPiercingRemove,PIERCINGREMOVE:F000F809,WndField.cpp:22997,M4,done
+SendPiercingSize,PIERCING_SIZE:F000D008,WndPiercing.cpp:31,M4,done
+SendPlayerAngle,PLAYERANGLE:FFFFFF29,WndWorld.cpp:7803,M5,done
+SendPlayerBehavior,PLAYERBEHAVIOR:FFFFFF02,"MoverMsg.cpp:60, WndDuelConfirm.cpp:441, WndDuelConfirm.cpp:446, WndManager.cpp:3181, WndWorldControlPlayer.cpp:564",M2,done
+SendPlayerBehavior2,PLAYERBEHAVIOR2:FFFFFF04,WndWorldControlPlayer.cpp:948,M5,done
+SendPlayerCorr,PLAYERCORR:FFFFFF05,"MoverActEvent.cpp:2008, MoverActEvent.cpp:2084",M2,done
+SendPlayerCorr2,PLAYERCORR2:FFFFFF06,"MoverActEvent.cpp:2006, MoverActEvent.cpp:2082",M5,done
+SendPlayerDestObj,PLAYERSETDESTOBJ:FFFFFF07,MoverMsg.cpp:63,M2,done
+SendPlayerMoved,PLAYERMOVED:FFFFFF01,WndWorldControlPlayer.cpp:562,M2,done
+SendPlayerMoved2,PLAYERMOVED2:FFFFFF03,"ActionMover.cpp:230, WndWorldControlPlayer.cpp:943",M5,done
+SendPlayerPetfilter,PETFILTER:AA000011,WndField.cpp:26618,M4,done
+SendPropose,PROPOSE:8FFFF000,WndField.cpp:23718,M6,done
+SendPutGoldBank,PUTGOLDBACK:FFFFFF43,WndField.cpp:8906,M4,done
+SendPutGoldBankToBank,PUTBACKTOBANK:FFFFFF49,WndField.cpp:9056,M4,done
+SendPutItemBank,PUTITEMBACK:FFFFFF42,"WndBank.cpp:252, WndField.cpp:8918",M4,done
+SendPutItemBankToBank,PUTBACKTOBANK:FFFFFF49,"WndBank.cpp:336, WndField.cpp:9077",M4,done
+SendPutItemGuildBank,PUTITEMGUILDBANK:F000B021,"WndField.cpp:8956, WndGuildBank.cpp:276",M6,done
+SendQuePetResurrection,QUE_PETRESURRECTION:70000009,WndPetRes.cpp:116,M4,done
+SendQueryEquip,QUERYEQUIP:F000D009,WndWorld.cpp:5434,M4,done
+SendQueryEquipSetting,QUERYEQUIPSETTING:F000D00A,"WndOptionGame.cpp:385, WndOptionGame.cpp:388",M4,done
+SendQueryGetDestObj,QUERYGETDESTOBJ:FFFFFF72,MoverMove.cpp:285,,dropped
+SendQueryGetMailGold,QUERYGETMAILGOLD:0000001F,"FuncTextCmd.cpp:2706, WndField.cpp:15352",M4,done
+SendQueryGetMailItem,QUERYGETMAILITEM:0000001C,"FuncTextCmd.cpp:2697, WndField.cpp:14317, WndField.cpp:15335",M4,done
+SendQueryGetPos,QUERYGETPOS:FFFFFF08,"MoverActEvent.cpp:2020, MoverActEvent.cpp:2097",,dropped
+SendQueryMailBox,QUERYMAILBOX:0000001D,"WndField.cpp:14384, WndField.cpp:14434, WndMailRequestingBox.cpp:78, WndManager.cpp:3360, post.cpp:356",M4,done
+SendQueryPVendorItem,QUERY_PVENDOR_ITEM:00FF00AC,"WndWorld.cpp:7250, WndWorld.cpp:7254",M4,done
+SendQueryPlayerData,QUERY_PLAYER_DATA:F000F802;QUERY_PLAYER_DATA2:F000F807,"WndWorld.cpp:6346, playerdata.cpp:47, playerdata.cpp:58",M5,done
+SendQueryPlayerString,QUERYPLAYERSTRING:FFFFFF37,"WndGuildTabInfo.cpp:448, WndGuildTabMember.cpp:876, WndManager.cpp:6326, WndWorld.cpp:1396, WndWorld.cpp:3149",,dropped
+SendQueryPostMail,QUERYPOSTMAIL:0000001A,"ConsoleFunc.cpp:520, FuncTextCmd.cpp:2678, WndField.cpp:14569",M4,done
+SendQueryReadMail,READMAIL:00000024,WndField.cpp:15227,M4,done
+SendQueryRemoveMail,QUERYREMOVEMAIL:0000001B,"ConsoleFunc.cpp:547, FuncTextCmd.cpp:2688, WndField.cpp:15514",M4,done
+SendQuerySetGuildName,QUERYSETGUILDNAME:00000010,WndGuildName.cpp:153,M6,done
+SendQuerySetPlayerName,QUERYSETPLAYERNAME:00000012,WndChangeName.cpp:110,M5,done
+SendQueryStartCollecting,QUERY_START_COLLECTING:F000F800,WndCollecting.cpp:461,M4,done
+SendQueryStopCollecting,QUERY_STOP_COLLECTING:F000F801,WndCollecting.cpp:466,M4,done
+SendQueryTruce,QUERY_TRUCE:F000B048,WndGuildWarPeace.cpp:73,M6,done
+SendQuickSell,QUICKSELL:AA000003,"WndShop.cpp:82, WndShop.cpp:1122",M4,done
+SendQuizEventEntrance,QUIZ_ENTRANCE:FF000003,"FuncTextCmd.cpp:5042, WndQuizEvent.cpp:49",M7,done
+SendQuizEventTeleport,QUIZ_TELEPORT:FF000004,"WndQuizEvent.cpp:52, WndQuizEvent.cpp:114, WndQuizEvent.cpp:125, WndQuizEvent.cpp:196, WndQuizEvent.cpp:207 (+3)",M7,done
+SendRainbowRaceApplication,RAINBOWRACE_APPLICATION:70002002,WndRainbowRace.cpp:61,M7,done
+SendRainbowRaceApplicationOpenWnd,RAINBOWRACE_APPLICATION_OPENWND:70002001,"FuncTextCmd.cpp:4729, WndWorld.cpp:4631",M7,done
+SendRainbowRaceMiniGameExtState,RAINBOWRACE_MINIGAME_PACKET:70002003,RainbowRace.cpp:130,M7,done
+SendRainbowRaceMiniGameState,RAINBOWRACE_MINIGAME_PACKET:70002003,RainbowRace.cpp:120,M7,done
+SendRainbowRacePrevRankingOpenWnd,RAINBOWRACE_PREVRANKING_OPENWND:70002000,"FuncTextCmd.cpp:4795, WndWorld.cpp:4658",M7,done
+SendRainbowRaceReqFinish,RAINBOWRACE_REQ_FINISH:70002004,"FuncTextCmd.cpp:4873, WndWorld.cpp:4674",M7,done
+SendRandomOptionRetry,RANDOMOPTIONRETRY:AA000004,WndField.cpp:26458,M4,done
+SendRandomScroll,RANDOMSCROLL:F000D00D,WndField.cpp:390,M4,done
+SendRangeAttack,RANGE_ATTACK:00FF0012,MoverSkill.cpp:3406,M3,done
+SendReassembleOpenWnd,REASSEMBLE_OPENWND:F000F103,WndMiniGame.cpp:1851,M7,done
+SendReassembleStart,REASSEMBLE_START:F000F102,WndMiniGame.cpp:1903,M7,done
+SendRefuse,REFUSE:8FFFF001,WndField.cpp:23734,M6,done
+SendRefuseCampusMember,CAMPUS_REFUSE:88100123,WndField.cpp:26179,M6,done
+SendRegisterPVendorItem,REGISTER_PVENDOR_ITEM:00FF00AB,"WndRegVend.cpp:347, WndVendor.cpp:176",M4,done
+SendRemoveAppletTaskBar,REMOVEAPPLETTASKBAR:FFFFFF0A,"WndTaskBar.cpp:887, WndTaskBar.cpp:893, WndTaskBar.cpp:897, WndTaskBar.cpp:1532, WndTaskBar.cpp:1931 (+2)",M3,done
+SendRemoveAttribute,REMVOE_ATTRIBUTE:F000D00B,"FuncTextCmd.cpp:4267, WndField.cpp:22708",M4,done
+SendRemoveCampusMember,CAMPUS_REMOVE_MEMBER:88100125,"WndField.cpp:26230, WndField.cpp:26239",M6,done
+SendRemoveFriend,REMOVEFRIEND:FFFFFF6A,"WndFriendCtrl.cpp:1030, WndMessengerCtrl.cpp:730",M6,done
+SendRemoveGuildMember,REMOVE_GUILD_MEMBER:FFFFFF34,"FuncTextCmd.cpp:1121, WndGuildTabMember.cpp:656",M6,done
+SendRemoveItem,REMOVEINVENITEM:00FF0019,WndInvenRemoveItem.cpp:129,M3,done
+SendRemoveItemLevelDown,REMOVE_ITEM_LEVEL_DOWN:70000005,WndLvReqDown.cpp:117,M4,done
+SendRemoveItemTaskBar,REMOVEITEMTASKBAR:FFFFFF0D,"WndTaskBar.cpp:1153, WndTaskBar.cpp:1159, WndTaskBar.cpp:1163, WndTaskBar.cpp:1544, WndTaskBar.cpp:1934 (+2)",M3,done
+SendRemovePartyMember,REMOVEPARTYMEMBER:FFFFFF12,WndPartyChangeTroup.cpp:355,M5,done
+SendRemoveQuest,REMOVEQUEST:00FF0026,WndQuest.cpp:47,M7,done
+SendRemoveVis,VISPET_REMOVEVIS:88000000,WndPetSys.cpp:2947,M4,done
+SendRepairItem,REPAIRITEM:00FF00B5,WndRepairItem.cpp:213,,dropped
+SendReqGuildBankLogList,GUILDLOG_VIEW:F000F810,"WndGuildBank.cpp:590, WndGuildBank.cpp:681, WndGuildBank.cpp:771, WndGuildBank.cpp:861",M6,done
+SendReqHonorTitleChange,HONOR_CHANGE_REQ:70004001,WndField.cpp:4554,M6,done
+SendReqLeave,REQ_LEAVE:00FF00FA,WndField.cpp:12548,M2,done
+SendReqNPCPos,QUESTHELPER_REQNPCPOS:70005000,"WndQuest.cpp:925, WndQuest.cpp:2322",M7,done
+SendResurrectionCancel,RESURRECTION_CANCEL:FFFFFF79,"WndField.cpp:12802, WndField.cpp:12813, WndField.cpp:12824, WndField.cpp:13362",M5,done
+SendResurrectionOK,RESURRECTION_OK:FFFFFF78,WndField.cpp:13355,M5,done
+SendReturnScroll,RETURNSCROLL:F000D010,"WndSelectVillage.cpp:124, WndWorld.cpp:7474",M4,done
+SendScriptDialogReq,SCRIPTDLG:00FF00B0,"WndDialog.cpp:238, WndWorld.cpp:5360",M4,done
+SendSealChar,SEALCHAR_REQ:F000F811,WndSealChar.cpp:81,M8,todo
+SendSealCharConm,SEALCHARCONM_REQ:F000F812,WndSealChar.cpp:294,M8,todo
+SendSealCharSet,SEALCHARGET_REQ:F000F814,WndSealChar.cpp:388,M8,todo
+SendSecretRoomEntrance,SECRETROOM_ENTRANCE:70000104,"FuncTextCmd.cpp:4453, WndWorld.cpp:4541",M7,done
+SendSecretRoomLineUpMember,SECRETROOM_LINEUPMEMBER:70000101,WndSecretRoom.cpp:385,M7,done
+SendSecretRoomLineUpOpenWnd,SECRETROOM_LINEUPOPENWND:70000103,"FuncTextCmd.cpp:4478, WndWorld.cpp:4510",M7,done
+SendSecretRoomTeleportToNPC,SECRETROOM_TELEPORTTONPC:70000105,WndSecretRoom.cpp:1070,M7,done
+SendSecretRoomTender,SECRETROOM_TENDER:70000100,WndSecretRoom.cpp:1036,M7,done
+SendSecretRoomTenderCancelReturn,SECRETROOM_TENDERCANCELRETURN:70000107,"FuncTextCmd.cpp:4524, WndSecretRoom.cpp:1201",M7,done
+SendSecretRoomTenderOpenWnd,SECRETROOM_TENDEROPENWND:70000102,"FuncTextCmd.cpp:4470, WndSecretRoom.cpp:937, WndWorld.cpp:4492",M7,done
+SendSecretRoomTenderView,SECRETROOM_TENDERVIEW:70000106,"FuncTextCmd.cpp:4508, WndSecretRoom.cpp:942, WndWorld.cpp:4505",M7,done
+SendSelectedAwakeningValue,ITEM_SELECT_AWAKENING_VALUE:88100221,"WndAwakening.cpp:286, WndAwakening.cpp:292, WndAwakening.cpp:325",M4,done
+SendSellItem,SELLITEM:00FF00B4,WndShop.cpp:273,M4,done
+SendSetHair,SET_HAIR:00FF00AF,"WndShop.cpp:2467, WndShop.cpp:2505, WndShop.cpp:2674, WndShop.cpp:2817",M4,done
+SendSetNaviPoint,SETNAVIPOINT:00FF0018,"WndField.cpp:10580, WndField.cpp:10585",M5,done
+SendSetState,SETFRIENDSTATE:FFFFFF67,"WndManager.cpp:7482, WndMessenger.cpp:324, WndMessenger.cpp:847",M6,done
+SendSetTarget,SETTARGET:00FF0023,"World.cpp:313, World.cpp:328, World.cpp:334",M3,done
+SendSfxClear,SFX_CLEAR:00FF0024,"Sfx.cpp:696, SfxObj.cpp:53",,dropped
+SendSfxHit,SFX_HIT:00FF00D2,SfxObj.cpp:127,,dropped
+SendSfxID,SFX_ID:00FF0022,"Ctrl.cpp:1403, Ctrl.cpp:1405, MoverActEvent.cpp:796, MoverActEvent.cpp:898",,dropped
+SendShipActMsg,SHIP_ACTMSG:00FF0015,ActionShip.cpp:134,,dropped
+SendSkillTaskBar,SKILLTASKBAR:FFFFFF0E,"WndTaskBar.cpp:1518, WndTaskBar.cpp:1913",M5,done
+SendSmeltSafety,SMELT_SAFETY:70007000,WndField.cpp:24510,M4,done
+SendSnapshot,SNAPSHOT:FFFFFF00,"Neuz.cpp:1038, WndWorldControlPlayer.cpp:342",M1,done
+SendStateModeCancel,STATEMODE:FFFFFF7A,"Mover.cpp:6592, MoverMsg.cpp:199, WndWorldControlPlayer.cpp:567",M4,done
+SendSummonFriend,SUMMON_FRIEND:F000E001,WndSummonFriend.cpp:201,M6,done
+SendSummonFriendCancel,SUMMON_FRIEND_CANCEL:F000E005,WndSummonFriend.cpp:89,M6,done
+SendSummonFriendConfirm,SUMMON_FRIEND_CONFIRM:F000E002,WndSummonFriend.cpp:83,M6,done
+SendSummonParty,SUMMON_PARTY:F000E003,WndSummonFriend.cpp:382,M6,done
+SendSummonPartyConfirm,SUMMON_PARTY_CONFIRM:F000E004,WndSummonFriend.cpp:484,M6,done
+SendSurrender,SURRENDER:F000B047,WndGuildWarGiveUp.cpp:75,M6,done
+SendTaxRate,TAX_SET_TAXRATE:70001003,WndSecretRoom.cpp:1132,M7,done
+SendTeleSkill,TELESKILL:00FF0025,MoverActEvent.cpp:562,M5,done
+SendTeleport,TELE16:AA000005,WndField.cpp:26762,M4,done
+SendTeleportToHeavenTower,HEAVENTOWER_TELEPORT:70001008,WndField.cpp:22434,M7,done
+SendTeleportToSecretRoomDungeon,SECRETROOM_TELEPORTTODUNGEON:70000114,"FuncTextCmd.cpp:4429, WndWorld.cpp:4556",M7,done
+SendTeleporterReq,TELEPORTER:88100100,"WndMapEx.cpp:446, WorldMap.cpp:1137",M4,done
+SendTrade,TRADE:00FF00A0,"WndField.cpp:9215, WndTaskBar.cpp:1460",M4,done
+SendTradeCancel,TRADECANCEL:00FF00A4,"WndDuelConfirm.cpp:121, WndField.cpp:9291, WndField.cpp:9314, WndField.cpp:9484, WndWorld.cpp:8298",M4,done
+SendTradeConfirm,TRADECONFIRM:00FF002F,WndField.cpp:9295,M4,done
+SendTradeOk,TRADEOK:00FF00A3,WndField.cpp:9480,M4,done
+SendTradePut,TRADEPUT:00FF00A1,"WndField.cpp:8894, WndTradeCtrl.cpp:178",M4,done
+SendTradePutGold,TRADEPUTGOLD:00FF00A5,WndField.cpp:8876,M4,done
+SendTransformItem,TRANSFORM_ITEM:8FFF000D,WndPetSys.cpp:2108,M4,done
+SendUltimateEnchantWeapon,ULTIMATE_ENCHANTWEAPON:F000F113,WndField.cpp:1787,M4,done
+SendUltimateMakeGem,ULTIMATE_MAKEGEM:F000F111,WndField.cpp:20415,M4,done
+SendUltimateMakeItem,ULTIMATE_MAKEITEM:F000F110,WndField.cpp:20095,M4,done
+SendUltimateRemoveGem,ULTIMATE_REMOVEGEM:F000F115,"WndField.cpp:1795, WndField.cpp:1798, WndField.cpp:23403",M4,done
+SendUltimateSetGem,ULTIMATE_SETGEM:F000F114,WndField.cpp:20630,M4,done
+SendUltimateTransWeapon,ULTIMATE_TRANSWEAPON:F000F112,WndField.cpp:21445,M4,done
+SendUnregisterPVendorItem,UNREGISTER_PVENDOR_ITEM:00FF00AE,"WndField.cpp:1950, WndVendor.cpp:454, WndVendorCtrl.cpp:434",M4,done
+SendUpgradeBase,UPGRADEBASE:F000B050,WndUpgradeBase.cpp:609,,dropped
+SendUsePetFeed,USE_PET_FEED:F000F601,WndPetSys.cpp:1204,M4,done
+SendUseSkill,USESKILL:00FF0020,"MoverMove.cpp:171, MoverMove.cpp:173",M5,done
+SendWantedGold,NW_WANTED_GOLD:00FF00EF,WndField.cpp:12871,,dropped
+SendWantedInfo,NW_WANTED_INFO:00FF00F2,WndField.cpp:13073,,dropped
+SendWantedList,NW_WANTED_LIST:00FF00F0,WndWorld.cpp:6049,,dropped
+SendWantedName,NW_WANTED_NAME:00FF00FC,WndWorld.cpp:6042,,dropped
+SendCreatePlayer,CREATE_PLAYER:000000F4,"WndTitle.cpp:3007, WndTitle.cpp:3009",M1,done
+SendDeletePlayer,DEL_PLAYER:000000F5,WndTitle.cpp:1336,M1,done
+SendTradePull,TRADEPULL:00FF00A2,DPClient.cpp:9520 (no caller),M4,done
+SendSwapVis,VISPET_SWAPVIS:88000001,WndPetSys.cpp:2511,M4,done
+SendEnterChattingRoom,ENTERCHTTING:F000B054,"DPClient.cpp:13894, DPClient.cpp:14116",M4,done
+UpdateJob,UPDATE_JOB:AA000001,WndChangeJobEx.cpp:63,M5,done
+JoinParty,JOIN_PARTY_REQ:AA000008,"WndField.cpp:27894, WndField.cpp:27939",M5,done
+SendChangePartyName,CHANPARTYNAME:FFFFFF1A,DPClient.cpp:9624 (no caller),M5,done
+SendBlock,BLOCK:FFFFFF5A,"DPClient.cpp:2574, DPClient.cpp:2582, DPClient.cpp:2589, DPClient.cpp:2596, DPClient.cpp:2603 (+7)",M6,done
+SendReqHonorList,HONOR_LIST_REQ:70004000,DPClient.cpp:17346 (no caller),M6,done

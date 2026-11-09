@@ -1,0 +1,15 @@
+# Plan/02 §2.6: the `xtask` alias, plus the C compiler for the static musl target.
+# There are NO [build] / [target.*] rustflags: never set target-cpu, never enable wasm simd128 or other
+# target features (bit-exactness, D4). xtask sets per-command env only.
+[alias]
+xtask = "run --package xtask --quiet --"
+
+# `x86_64-unknown-linux-musl` builds compile the bundled C sources (SQLite, Lua 5.3, mimalloc, ring) with
+# the musl C library headers. `musl-gcc` (Debian/Ubuntu package `musl-tools`) is used instead of zig
+# (Plan/02 §6 names cargo-zigbuild; zig is not required on hosts that have musl-tools, see ADR-017).
+# Only the musl target reads this variable; an exported CC_x86_64_unknown_linux_musl wins.
+[env]
+CC_x86_64_unknown_linux_musl = "musl-gcc"
+# Folder embedded by flyff-server's `embed-web` feature (rust-embed, Plan/02 §7.1). `cargo xtask dist`
+# overrides it with a generated placeholder folder when `web/dist` has not been built.
+FLYFF_WEB_DIST_DIR = { value = "web/dist", relative = true }

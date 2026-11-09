@@ -1,0 +1,128 @@
+{
+  "$defs": {
+    "RowTable_SfxRow": {
+      "description": "A columnar table: `columns` names the fields of each row, `rows` holds one array of cells per row (14 §10.2).",
+      "properties": {
+        "columns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "rows": {
+          "items": {
+            "type": "array"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "columns",
+        "rows"
+      ],
+      "type": "object",
+      "x-flyff-columns": [
+        "id",
+        "name",
+        "file",
+        "sound",
+        "scale",
+        "distant",
+        "render_flag"
+      ],
+      "x-flyff-row": {
+        "$ref": "#/$defs/SfxRow"
+      }
+    },
+    "SfxRow": {
+      "description": "One sfx entry (`mdlDyna.inc` section `sfx`).",
+      "properties": {
+        "distant": {
+          "description": "`MD_*` view distance class.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "file": {
+          "description": "The `.sfx` file as a canonical path under `sfx/`, `null` when it does not exist.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "description": "`XI_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "name": {
+          "description": "The entry name.",
+          "type": "string"
+        },
+        "render_flag": {
+          "description": "The render flag (skipped by the \"SFX render off\" option unless 1).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "scale": {
+          "description": "The initial scale.",
+          "format": "float",
+          "type": "number"
+        },
+        "sound": {
+          "description": "The attached sound: a bare file name under `sound/` (44 §5.2), `null` when there is none.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "file",
+        "sound",
+        "scale",
+        "distant",
+        "render_flag"
+      ],
+      "type": "object"
+    },
+    "SfxTableBundle": {
+      "description": "`sfx-table`: the effect models by `XI_` id.",
+      "properties": {
+        "sfx": {
+          "$ref": "#/$defs/RowTable_SfxRow",
+          "description": "The sfx entries in ascending id order."
+        }
+      },
+      "required": [
+        "sfx"
+      ],
+      "title": "SfxTableBundle",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`sfx-table.<h16>.json`: the envelope of the `sfx-table` bundle (schema version 1).",
+  "properties": {
+    "bundle": {
+      "const": "sfx-table"
+    },
+    "data": {
+      "$ref": "#/$defs/SfxTableBundle"
+    },
+    "schema": {
+      "const": 1
+    }
+  },
+  "required": [
+    "bundle",
+    "schema",
+    "data"
+  ],
+  "title": "SfxTableBundleEnvelope",
+  "type": "object"
+}

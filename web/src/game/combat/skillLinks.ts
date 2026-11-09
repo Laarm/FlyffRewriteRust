@@ -1,0 +1,149 @@
+// The hand-link effects of the cast of a skill (`CMover::DoUseSkill`, client branch, MoverSkill.cpp:918-1002; Plan/41 17.3 "Skill
+// casting/use"): blade, jester and spring-attack skills draw one effect on EACH hand, bow skills one on the LEFT hand, mercenary and
+// assist knuckle skills one on the RIGHT hand. `partLink` of the effect: 0 = the right hand (`PARTS_RWEAPON`), 1 = the left hand
+// (`PARTS_LWEAPON`). The classes behind the ids (`CSfxPartsLinkBlade`, `CSfxAllowPartsLink`; the jester ids fall through to the
+// blade class, a missing `break` of the original) are `render/sfx/skillClasses.ts`.
+
+import {
+  XI_GEN_PVP_FLAG01,
+  XI_SKILL_ACR_BOW_AIMEDSHOT01,
+  XI_SKILL_ACR_BOW_ARROWRAIN01,
+  XI_SKILL_ACR_BOW_AUTOSHOT01,
+  XI_SKILL_ACR_BOW_JUNKBOW01,
+  XI_SKILL_ACR_BOW_SILENTSHOT01,
+  XI_SKILL_ACR_YOYO_SLOWSTEP01,
+  XI_SKILL_ASS_KNU_SUPPORT01,
+  XI_SKILL_ASS_KNU_SUPPORT02,
+  XI_SKILL_ASS_KNU_SUPPORT03,
+  XI_SKILL_BLD_DOUBLEAX_SPRINGATTACK01,
+  XI_SKILL_BLD_DOUBLESW_BLADEDANCE01,
+  XI_SKILL_BLD_DOUBLE_SONICBLADE01,
+  XI_SKILL_JST_SUP_ABSORB01,
+  XI_SKILL_JST_SUP_BLEEDING01,
+  XI_SKILL_JST_SUP_CRITICALSWING01,
+  XI_SKILL_JST_SUP_POISON01,
+  XI_SKILL_JST_YOYO_BACKSTAB01,
+  XI_SKILL_JST_YOYO_HITOFPENYA01,
+  XI_SKILL_JST_YOYO_VATALSTAB01,
+  XI_SKILL_KNT_TWOSW_CHARGE01,
+  XI_SKILL_MER_ONE_SUPPORT01,
+  XI_SKILL_MER_ONE_SUPPORT02,
+  XI_SKILL_MER_ONE_SUPPORT03,
+  XI_SKILL_MER_ONE_SUPPORT04,
+  XI_SKILL_RAG_BOW_FLAMEARROW01,
+  XI_SKILL_RAG_BOW_ICEARROW01,
+  XI_SKILL_RAG_BOW_PIRCINGARROW01,
+  XI_SKILL_RAG_BOW_POISONARROW01,
+  XI_SKILL_RAG_BOW_SILENTARROW01,
+  XI_SKILL_RAG_BOW_TRIPLESHOT01,
+  XI_SKILL_RAG_SUP_FASTATTACK01,
+} from '../../gen/defs/obj';
+import {
+  SI_ACR_BOW_AIMEDSHOT,
+  SI_ACR_BOW_ARROWRAIN,
+  SI_ACR_BOW_AUTOSHOT,
+  SI_ACR_BOW_JUNKBOW,
+  SI_ACR_BOW_SILENTSHOT,
+  SI_ACR_SUP_SLOWSTEP,
+  SI_ASS_KNU_BURSTCRACK,
+  SI_ASS_KNU_POWERFIST,
+  SI_ASS_KNU_TAMPINGHOLE,
+  SI_BLD_DOUBLEAX_SPRINGATTACK,
+  SI_BLD_DOUBLESW_BLADEDANCE,
+  SI_BLD_DOUBLE_SONICBLADE,
+  SI_GEN_ATK_COUNTER,
+  SI_JST_SUP_ABSORB,
+  SI_JST_SUP_BLEEDING,
+  SI_JST_SUP_POISON,
+  SI_JST_YOYO_BACKSTAB,
+  SI_JST_YOYO_CRITICALSWING,
+  SI_JST_YOYO_HITOFPENYA,
+  SI_JST_YOYO_VATALSTAB,
+  SI_KNT_TWOSW_CHARGE,
+  SI_MER_ONE_GUILOTINE,
+  SI_MER_ONE_REFLEXHIT,
+  SI_MER_ONE_SPECIALHIT,
+  SI_MER_ONE_SPLMASH,
+  SI_RAG_BOW_FLAMEARROW,
+  SI_RAG_BOW_ICEARROW,
+  SI_RAG_BOW_PIRCINGARROW,
+  SI_RAG_BOW_POISONARROW,
+  SI_RAG_BOW_SILENTARROW,
+  SI_RAG_BOW_TRIPLESHOT,
+  SI_RAG_SUP_FASTATTACK,
+} from '../../gen/defs/skill';
+
+/** One hand to put an effect on. */
+export type Hand = 0 | 1;
+/** The right hand (`PARTS_RWEAPON`) and the left hand (`PARTS_LWEAPON`). */
+export const RIGHT_HAND: Hand = 0;
+export const LEFT_HAND: Hand = 1;
+
+export interface LinkEffect {
+  readonly xi: number;
+  readonly hand: Hand;
+}
+
+/** `dwLinkSfxDouble`: one effect on each hand. */
+const DOUBLE = new Map<number, number>([
+  [SI_BLD_DOUBLEAX_SPRINGATTACK, XI_SKILL_BLD_DOUBLEAX_SPRINGATTACK01],
+  [SI_BLD_DOUBLE_SONICBLADE, XI_SKILL_BLD_DOUBLE_SONICBLADE01],
+  [SI_KNT_TWOSW_CHARGE, XI_SKILL_KNT_TWOSW_CHARGE01],
+  [SI_BLD_DOUBLESW_BLADEDANCE, XI_SKILL_BLD_DOUBLESW_BLADEDANCE01],
+  [SI_JST_YOYO_VATALSTAB, XI_SKILL_JST_YOYO_VATALSTAB01],
+  [SI_JST_YOYO_HITOFPENYA, XI_SKILL_JST_YOYO_HITOFPENYA01],
+  [SI_JST_YOYO_CRITICALSWING, XI_SKILL_JST_SUP_CRITICALSWING01],
+  [SI_ACR_SUP_SLOWSTEP, XI_SKILL_ACR_YOYO_SLOWSTEP01],
+  [SI_JST_SUP_POISON, XI_SKILL_JST_SUP_POISON01],
+  [SI_JST_SUP_BLEEDING, XI_SKILL_JST_SUP_BLEEDING01],
+  [SI_JST_YOYO_BACKSTAB, XI_SKILL_JST_YOYO_BACKSTAB01],
+  [SI_JST_SUP_ABSORB, XI_SKILL_JST_SUP_ABSORB01],
+]);
+
+/** `dwLinkSfxLeft`: the bow skills' cast effect on the left hand. */
+const LEFT = new Map<number, number>([
+  [SI_RAG_BOW_ICEARROW, XI_SKILL_RAG_BOW_ICEARROW01],
+  [SI_ACR_BOW_JUNKBOW, XI_SKILL_ACR_BOW_JUNKBOW01],
+  [SI_ACR_BOW_AIMEDSHOT, XI_SKILL_ACR_BOW_AIMEDSHOT01],
+  [SI_ACR_BOW_SILENTSHOT, XI_SKILL_ACR_BOW_SILENTSHOT01],
+  [SI_ACR_BOW_ARROWRAIN, XI_SKILL_ACR_BOW_ARROWRAIN01],
+  [SI_ACR_BOW_AUTOSHOT, XI_SKILL_ACR_BOW_AUTOSHOT01],
+  [SI_RAG_SUP_FASTATTACK, XI_SKILL_RAG_SUP_FASTATTACK01],
+  [SI_RAG_BOW_FLAMEARROW, XI_SKILL_RAG_BOW_FLAMEARROW01],
+  [SI_RAG_BOW_PIRCINGARROW, XI_SKILL_RAG_BOW_PIRCINGARROW01],
+  [SI_RAG_BOW_POISONARROW, XI_SKILL_RAG_BOW_POISONARROW01],
+  [SI_RAG_BOW_SILENTARROW, XI_SKILL_RAG_BOW_SILENTARROW01],
+  [SI_RAG_BOW_TRIPLESHOT, XI_SKILL_RAG_BOW_TRIPLESHOT01],
+]);
+
+/** `dwLinkSfxRight`: mercenary and assist knuckle skills on the right hand (`SI_GEN_ATK_COUNTER` reuses the backstab effect). */
+const RIGHT = new Map<number, number>([
+  [SI_MER_ONE_SPLMASH, XI_SKILL_MER_ONE_SUPPORT04],
+  [SI_MER_ONE_GUILOTINE, XI_SKILL_MER_ONE_SUPPORT02],
+  [SI_MER_ONE_REFLEXHIT, XI_SKILL_MER_ONE_SUPPORT01],
+  [SI_MER_ONE_SPECIALHIT, XI_SKILL_MER_ONE_SUPPORT03],
+  [SI_ASS_KNU_POWERFIST, XI_SKILL_ASS_KNU_SUPPORT03],
+  [SI_ASS_KNU_TAMPINGHOLE, XI_SKILL_ASS_KNU_SUPPORT02],
+  [SI_ASS_KNU_BURSTCRACK, XI_SKILL_ASS_KNU_SUPPORT01],
+  [SI_GEN_ATK_COUNTER, XI_SKILL_JST_YOYO_BACKSTAB01],
+]);
+
+/**
+ * The hand-link effects of the cast of `skillId`, in creation order: the double effect (right hand, then left), the left-hand
+ * effect, the right-hand effect.
+ */
+export function handLinks(skillId: number): LinkEffect[] {
+  const out: LinkEffect[] = [];
+  const both = DOUBLE.get(skillId);
+  if (both !== undefined) {
+    out.push({ xi: both, hand: RIGHT_HAND }, { xi: both, hand: LEFT_HAND });
+  }
+  const left = LEFT.get(skillId);
+  if (left !== undefined) out.push({ xi: left, hand: LEFT_HAND });
+  const right = RIGHT.get(skillId);
+  if (right !== undefined) out.push({ xi: right, hand: RIGHT_HAND });
+  return out;
+}
+
+/** The duel flag effect (`CSfxDuelParty`, Plan/41 17.2): scale 1.5 above the head. */
+export const DUEL_FLAG_XI = XI_GEN_PVP_FLAG01;

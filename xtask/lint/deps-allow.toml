@@ -1,0 +1,73 @@
+# Dependency rules for `cargo xtask dep-rules` (Plan/02 §11.5, Plan/01 §5.3) and the tier table used by
+# `cargo xtask gen` / `lint-determinism`.
+
+# Determinism tiers (Plan/02 §11.3). Every other workspace crate is tier N.
+[tiers]
+S = ["flyff-common", "flyff-script", "flyff-data", "flyff-formats", "flyff-rules", "flyff-sim", "flyff-wasm"]
+G = ["flyff-game", "flyff-lua"]
+R = ["flyff-assets"]
+
+# Allowed internal edges (Plan/01 §5.3), normal dependencies only. Optional (feature-gated) edges that
+# are NOT listed here are violations; those listed under [feature_gated] are allowed only if optional.
+[internal]
+flyff-common = []
+flyff-script = ["flyff-common"]
+flyff-vfs = ["flyff-common"]
+flyff-formats = ["flyff-common", "flyff-script"]
+flyff-data = ["flyff-common", "flyff-script"]
+flyff-rules = ["flyff-common", "flyff-data"]
+flyff-sim = ["flyff-common", "flyff-formats"]
+flyff-proto = ["flyff-common"]
+flyff-db = ["flyff-common"]
+flyff-lua = ["flyff-common", "flyff-vfs", "flyff-data"]
+flyff-assets = ["flyff-common", "flyff-vfs", "flyff-script", "flyff-formats", "flyff-data", "flyff-sim"]
+flyff-game = ["flyff-common", "flyff-vfs", "flyff-script", "flyff-formats", "flyff-data", "flyff-rules", "flyff-sim", "flyff-proto", "flyff-db", "flyff-lua"]
+flyff-server = ["flyff-common", "flyff-vfs", "flyff-script", "flyff-formats", "flyff-data", "flyff-rules", "flyff-sim", "flyff-proto", "flyff-db", "flyff-game", "flyff-lua", "flyff-assets"]
+flyff-wasm = ["flyff-common", "flyff-formats", "flyff-data", "flyff-rules", "flyff-sim"]
+
+# Native-only edges of tier-S crates that exist only behind a cargo feature (X6, ADR-013).
+[feature_gated]
+flyff-data = ["flyff-vfs", "flyff-formats", "mlua"]
+
+# X1: only these packages may depend on the async/network stack in their normal dependencies
+# (the whole flyff-e2e package is test code and exempt).
+[x1]
+crates = ["tokio", "axum", "hyper", "tower", "tower-http", "reqwest", "async-std", "tokio-tungstenite", "mio"]
+allowed_in = ["flyff-server", "flyff-e2e"]
+
+# flyff-game must never reach these (Plan/02 §11.5 rule 1).
+[game_forbidden]
+crates = ["tokio", "axum", "hyper", "tower", "mio", "tokio-tungstenite"]
+
+# X5 / X6 / X7 and rule 4.
+[x5]
+rusqlite_only_in = ["flyff-db"]
+[x6]
+mlua_only_in = ["flyff-lua", "flyff-data"]
+[x7]
+forbidden = ["crossbeam-channel"]
+[tool_only]
+crates = ["anyhow", "clap"]
+allowed_in = ["flyff-server", "xtask", "npcscript-transpile", "flyff-e2e", "oracle", "synthetic-pack", "proto-coverage"]
+
+# The wasm closure (Plan/02 §11.5 rule 2): every DIRECT dependency of a workspace crate inside the
+# `flyff-wasm` closure must be listed; transitive dependencies of listed crates are fine, except the
+# names in `deny`, which must never appear anywhere in the closure.
+[wasm]
+root = "flyff-wasm"
+allow = [
+  "libm", "glam", "serde", "serde_json", "serde-wasm-bindgen", "thiserror", "smallvec", "indexmap",
+  "rustc-hash", "rand_core", "rand_pcg", "bytemuck", "wasm-bindgen", "js-sys", "console_error_panic_hook",
+  "ts-rs", "schemars", "xxhash-rust",
+]
+deny = ["getrandom", "rayon", "rusqlite", "mlua", "tokio", "flume", "bytes", "mio", "libc"]
+
+# Files that are exempt from the wasm-safety source rules (X2) because they sit behind native-only
+# features (`rt`, `testkit`, `load`).
+[io_exempt]
+paths = [
+  "crates/flyff-common/src/rt/",
+  "crates/flyff-common/src/testkit.rs",
+  "crates/flyff-data/src/load/",
+  "crates/flyff-data/src/bundle/store.rs",
+]

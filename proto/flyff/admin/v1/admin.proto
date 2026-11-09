@@ -1,0 +1,427 @@
+// The admin console protocol (Plan/25 section 3.16, WP-ADMIN-05): the second protobuf package, spoken over
+// `/admin/ws` only. There is no envelope, no legacy id and no `(flyff.dir)`: one `AdminClientMsg` or
+// `AdminServerMsg` per binary WebSocket frame. The package is excluded from `coverage proto` and from the
+// directed-message rule of exit-check, but it is part of PROTO_HASH.
+syntax = "proto3";
+
+package flyff.admin.v1;
+
+import "flyff/options.proto";
+import "flyff/v1/item_types.proto";
+
+enum EntityKind {
+  ENTITY_KIND_UNSPECIFIED = 0;
+  PLAYER = 1;
+  MONSTER = 2;
+  NPC = 3;
+  PET = 4;
+  ITEM = 5;
+  CTRL = 6;
+}
+
+enum Tier {
+  TIER_UNSPECIFIED = 0;
+  TIER_A = 1;
+  TIER_B = 2;
+  TIER_C = 3;
+}
+
+enum SubscriptionErrorCode {
+  SUB_ERR_UNSPECIFIED = 0;
+  FORBIDDEN = 1;
+  LIMIT = 2;
+  BAD_SPEC = 3;
+  NOT_FOUND = 4;
+}
+
+enum SessionEndReason {
+  END_UNSPECIFIED = 0;
+  LOGOUT = 1;
+  BAN = 2;
+  AUTHORITY = 3;
+  PASSWORD = 4;
+  SHUTDOWN = 5;
+  EXPIRED = 6;
+}
+
+enum ChatChannel {
+  CHAT_UNSPECIFIED = 0;
+  SAY = 1;
+  SHOUT = 2;
+  PARTY = 3;
+  GUILD = 4;
+  WHISPER = 5;
+  MESSENGER = 6;
+  SYSTEM = 7;
+}
+
+message Rect {
+  float x0 = 1;
+  float z0 = 2;
+  float x1 = 3;
+  float z1 = 4;
+}
+
+// ---- client -> server
+message AdminClientMsg {
+  oneof msg {
+    MapSubscribe map_subscribe = 1;
+    MapUpdate map_update = 2;
+    Unsubscribe unsubscribe = 3;
+    EntityWatch entity_watch = 4;
+    CharacterWatch character_watch = 5;
+    ChatSubscribe chat_subscribe = 6;
+    RosterSubscribe roster_subscribe = 7;
+    LayersSubscribe layers_subscribe = 8;
+    LogSubscribe log_subscribe = 9;
+    StatusSubscribe status_subscribe = 10;
+    Ping ping = 15;
+  }
+}
+
+message MapSubscribe {
+  uint32 sub_id = 1;
+  uint32 world = 2;
+  int32 layer = 3;
+  Rect rect = 4;
+  uint32 kinds = 5; /* bitset 1 << EntityKind */
+  Tier max_tier = 6;
+}
+
+message MapUpdate {
+  uint32 sub_id = 1;
+  Rect rect = 2;
+  uint32 kinds = 3;
+  Tier max_tier = 4;
+  uint32 world = 5;
+  int32 layer = 6;
+}
+
+message Unsubscribe {
+  uint32 sub_id = 1;
+}
+
+message EntityWatch {
+  uint32 sub_id = 1;
+  uint32 obj_id = 2;
+}
+
+message CharacterWatch {
+  uint32 sub_id = 1;
+  uint64 character_id = 2 [(flyff.js_safe_number) = true];
+}
+
+message ChatSubscribe {
+  uint32 sub_id = 1;
+  repeated ChatChannel channels = 2;
+  uint32 world = 3; /* 0 = all */
+  uint64 character_id = 4 [(flyff.js_safe_number) = true]; /* 0 = all */
+  string text = 5;
+}
+
+message RosterSubscribe {
+  uint32 sub_id = 1;
+}
+
+message LayersSubscribe {
+  uint32 sub_id = 1;
+  uint32 world = 2; /* 0 = all */
+}
+
+message LogSubscribe {
+  uint32 sub_id = 1;
+  uint32 min_level = 2; /* 1 error .. 5 trace */
+  string target_prefix = 3;
+}
+
+message StatusSubscribe {
+  uint32 sub_id = 1;
+}
+
+message Ping {
+  uint64 t = 1 [(flyff.js_safe_number) = true];
+}
+
+// ---- server -> client
+message AdminServerMsg {
+  oneof msg {
+    MapKeyframe map_keyframe = 1;
+    MapDelta map_delta = 2;
+    EntityDetail entity_detail = 3;
+    ContainerSnapshot container_snapshot = 4;
+    CharacterDetail character_detail = 5;
+    ChatLine chat_line = 6;
+    RosterDelta roster_delta = 7;
+    LayerList layer_list = 8;
+    LogLine log_line = 9;
+    StatusTick status_tick = 10;
+    SubscriptionError subscription_error = 11;
+    Resync resync = 12;
+    SessionEnded session_ended = 14;
+    Pong pong = 15;
+  }
+}
+
+message MapEntitySpawn {
+  uint32 id = 1;
+  EntityKind kind = 2;
+  uint32 sub = 3;
+  uint32 prop = 4;
+  uint32 level = 5;
+  float x = 6;
+  float z = 7;
+  uint32 yaw = 8;
+  uint32 hp_pct = 9;
+  uint32 flags = 10;
+  uint32 target = 11;
+}
+
+message MapMoves {
+  repeated uint32 ids = 1 [packed = true];
+  repeated float x = 2 [packed = true];
+  repeated float z = 3 [packed = true];
+  repeated uint32 yaw = 4 [packed = true];
+  repeated uint32 hp_pct = 5 [packed = true];
+  repeated uint32 flags = 6 [packed = true];
+  repeated uint32 target = 7 [packed = true]; /* tier A only, else empty */
+}
+
+message MapBin {
+  uint32 bx = 1;
+  uint32 bz = 2;
+  uint32 normal = 3;
+  uint32 captain = 4;
+  uint32 asleep = 5;
+}
+
+message PlayerName {
+  uint32 id = 1;
+  string name = 2;
+}
+
+message MapKeyframe {
+  uint32 sub_id = 1;
+  uint64 tick = 2 [(flyff.js_safe_number) = true];
+  Tier tier = 3;
+  bool degraded = 4;
+  uint32 bin_m = 5;
+  repeated MapEntitySpawn entities = 6;
+  repeated MapBin bins = 7;
+  repeated PlayerName names = 8;
+}
+
+message MapDelta {
+  uint32 sub_id = 1;
+  uint64 tick = 2 [(flyff.js_safe_number) = true];
+  Tier tier = 3;
+  bool degraded = 4;
+  MapMoves moves = 5;
+  repeated MapEntitySpawn spawns = 6;
+  repeated uint32 removes = 7 [packed = true];
+  repeated MapBin bins = 8; /* full bin set when tier C */
+  repeated PlayerName names = 9;
+}
+
+message EntityDetail {
+  uint32 sub_id = 1;
+  uint32 obj_id = 2;
+  EntityKind kind = 3;
+  uint32 prop = 4;
+  string name = 5;
+  uint32 world = 6;
+  int32 layer = 7;
+  float x = 8;
+  float y = 9;
+  float z = 10;
+  uint32 level = 11;
+  uint32 hp = 12;
+  uint32 hp_max = 13;
+  uint32 mp = 14;
+  uint32 mp_max = 15;
+  uint32 fp = 16;
+  uint32 fp_max = 17;
+  uint32 flags = 18;
+  string ai_state = 19;
+  uint32 target = 20;
+  repeated HateEntry hate = 21;
+  uint32 spawn_region = 22;
+  uint64 respawn_tick = 23 [(flyff.js_safe_number) = true];
+  uint64 character_id = 24 [(flyff.js_safe_number) = true];
+  uint32 owner = 25;
+  uint32 mode_flags = 26;
+  bool closed = 27;
+}
+
+message HateEntry {
+  uint32 obj_id = 1;
+  string name = 2;
+  uint32 hate = 3;
+}
+
+enum ContainerKind {
+  CONTAINER_UNSPECIFIED = 0;
+  EQUIPMENT = 1;
+  INVENTORY = 2;
+  POCKET = 3;
+  BANK = 4;
+  GUILD_BANK = 5;
+  MAILBOX = 6;
+}
+
+message ContainerRef {
+  ContainerKind kind = 1;
+  uint32 index = 2; /* pocket 0..2, bank slot 0..2 */
+  uint64 owner_character_id = 3 [(flyff.js_safe_number) = true];
+}
+
+message ContainerSnapshot {
+  uint32 sub_id = 1;
+  ContainerRef container = 2;
+  uint32 rev = 3;
+  uint32 capacity = 4;
+  repeated flyff.v1.ItemElem items = 5;
+  uint64 gold = 6 [(flyff.js_safe_number) = true];
+  bool live = 7;
+  uint64 saved_at = 8 [(flyff.js_safe_number) = true];
+  uint64 live_via_character_id = 9 [(flyff.js_safe_number) = true];
+}
+
+message CharacterDetail {
+  uint32 sub_id = 1;
+  uint64 character_id = 2 [(flyff.js_safe_number) = true];
+  string name = 3;
+  uint32 level = 4;
+  uint32 job = 5;
+  uint32 exp_permille = 6;
+  uint32 str = 7;
+  uint32 sta = 8;
+  uint32 dex = 9;
+  // buf:lint:ignore FIELD_LOWER_SNAKE_CASE
+  uint32 int_ = 10;
+  uint32 stat_points = 11;
+  uint32 skill_points = 12;
+  uint32 hp = 13;
+  uint32 hp_max = 14;
+  uint32 mp = 15;
+  uint32 mp_max = 16;
+  uint32 fp = 17;
+  uint32 fp_max = 18;
+  repeated SkillLevel skills = 19;
+  repeated BuffState buffs = 20;
+  repeated QuestState quests = 21;
+  uint32 mode_flags = 22;
+  uint64 mute_until = 23 [(flyff.js_safe_number) = true];
+  uint32 world = 24;
+  int32 layer = 25;
+  float x = 26;
+  float z = 27;
+  uint32 guild_id = 28;
+  uint32 party_id = 29;
+  bool online = 30;
+}
+
+message SkillLevel {
+  uint32 skill = 1;
+  uint32 level = 2;
+}
+
+message BuffState {
+  uint32 buff = 1;
+  uint32 level = 2;
+  uint32 remaining_ms = 3;
+}
+
+message QuestState {
+  uint32 quest = 1;
+  uint32 state = 2;
+}
+
+message ChatLine {
+  uint32 sub_id = 1;
+  uint64 ts_ms = 2 [(flyff.js_safe_number) = true];
+  ChatChannel channel = 3;
+  uint64 from_character_id = 4 [(flyff.js_safe_number) = true];
+  string from = 5;
+  string to = 6;
+  string text = 7;
+  string original_text = 8; /* only for P sessions when the filter changed it */
+  uint32 world = 9;
+}
+
+message RosterEntry {
+  uint64 character_id = 1 [(flyff.js_safe_number) = true];
+  uint32 obj_id = 2;
+  string name = 3;
+  uint32 level = 4;
+  uint32 job = 5;
+  uint32 world = 6;
+  int32 layer = 7;
+  float x = 8;
+  float z = 9;
+  uint32 guild_id = 10;
+  uint32 authority = 11;
+}
+
+message RosterDelta {
+  uint32 sub_id = 1;
+  bool full = 2;
+  repeated RosterEntry upserts = 3;
+  repeated uint64 removes = 4 [(flyff.js_safe_number) = true];
+  uint32 lobby = 5;
+  uint32 in_world = 6;
+}
+
+message LayerInfo {
+  uint32 world = 1;
+  int32 layer = 2;
+  string kind = 3;
+  string owner = 4;
+  uint32 members = 5;
+  uint32 monsters = 6;
+  uint64 created_tick = 7 [(flyff.js_safe_number) = true];
+  uint32 seconds_left = 8;
+}
+
+message LayerList {
+  uint32 sub_id = 1;
+  repeated LayerInfo layers = 2;
+}
+
+message LogLine {
+  uint32 sub_id = 1;
+  uint64 ts_ms = 2 [(flyff.js_safe_number) = true];
+  uint32 level = 3;
+  string target = 4;
+  string text = 5;
+}
+
+message StatusTick {
+  uint32 sub_id = 1;
+  uint32 in_world = 2;
+  uint32 lobby = 3;
+  uint32 tick_p50_us = 4;
+  uint32 tick_p99_us = 5;
+  bool db_degraded = 6;
+  uint32 db_queue = 7;
+  uint32 alerts = 8;
+  bool maintenance = 9;
+  uint32 shutdown_in_s = 10;
+}
+
+message SubscriptionError {
+  uint32 sub_id = 1;
+  SubscriptionErrorCode code = 2;
+  string message = 3;
+}
+
+message Resync {
+  uint32 sub_id = 1;
+}
+
+message SessionEnded {
+  SessionEndReason reason = 1;
+}
+
+message Pong {
+  uint64 t = 1 [(flyff.js_safe_number) = true];
+}

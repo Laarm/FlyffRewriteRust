@@ -1,0 +1,261 @@
+/* The guild views (Plan/25 section 6): logos, the logo picker, the cloak preview, the wizard and the drawer. Colours are the tokens of
+   styles/tokens.css; the art keeps the game's look (pixel pictures at integer scales). */
+
+.adm-logo {
+  display: inline-block;
+  image-rendering: pixelated;
+  vertical-align: middle;
+}
+
+.adm-logo--none,
+.adm-logo--wait {
+  box-sizing: border-box;
+  border: 1px dashed var(--border-strong);
+  border-radius: 3px;
+  background: transparent;
+}
+
+.adm-logo--custom {
+  padding: 0 var(--s-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.adm-logopick {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.adm-logopick__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 76px);
+  gap: var(--s-2);
+}
+
+.adm-logopick__gm {
+  margin: var(--s-2) 0 0;
+  font-size: var(--fs);
+  color: var(--text-muted);
+}
+
+.adm-logopick__tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 76px;
+  height: 76px;
+  padding: 0;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.adm-logopick__tile:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.adm-logopick__tile:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.adm-logopick__tile.is-selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.adm-logopick__tile.is-gm {
+  border-style: dashed;
+}
+
+.adm-logopick__none {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.adm-charpick {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.adm-charpick__list {
+  margin: 0;
+  padding: var(--s-1);
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  max-height: 240px;
+  overflow: auto;
+}
+
+.adm-charpick__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  width: 100%;
+  padding: var(--s-1) var(--s-2);
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.adm-charpick__row:hover,
+.adm-charpick__row:focus-visible {
+  background: var(--accent-soft);
+}
+
+.adm-dot {
+  color: var(--text-muted);
+}
+
+.adm-dot.is-online {
+  color: var(--ok);
+}
+
+.gld-create {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: var(--s-5);
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .gld-create {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.gld-create__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  min-width: 0;
+}
+
+.gld-create__preview {
+  position: sticky;
+  top: var(--s-4);
+}
+
+.gld-preview-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  text-align: center;
+}
+
+.gld-preview-card__name {
+  font-size: var(--fs-xl);
+  overflow-wrap: anywhere;
+}
+
+.gld-step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.gld-step__head {
+  margin: 0;
+  font-size: var(--fs-lg);
+}
+
+.gld-step__sub {
+  margin: var(--s-2) 0 0;
+  font-size: var(--fs);
+  color: var(--text-muted);
+}
+
+.gld-members {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.gld-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--s-3);
+}
+
+.gld-logo-big {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-5);
+  align-items: flex-start;
+}
+
+.gld-cloak-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.gld-cloak__canvas {
+  display: block;
+  image-rendering: pixelated;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.gld-cloak__placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  max-width: 100%;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  text-align: center;
+}
+
+.gld-ranks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: 0 0 var(--s-2);
+  padding: 0;
+  list-style: none;
+}
+
+.gld-notice {
+  margin: var(--s-2) 0;
+  padding: var(--s-2);
+  border-left: 3px solid var(--border-strong);
+  background: var(--surface-2);
+  overflow-wrap: anywhere;
+}
+
+.gld-actions {
+  flex-wrap: wrap;
+}

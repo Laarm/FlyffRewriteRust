@@ -1,0 +1,1104 @@
+{
+  "$defs": {
+    "ItemProp": {
+      "description": "One row of propItem / propSkill / propTroupeSkill (124 fields; the column number is the field\nposition in the row). Values are raw: an `=` cell keeps [`NULL_ID`] (or `-1.0`) unless a load-time\nfix-up (Plan/14 §5.4) says otherwise. Members of the C struct that are never loaded (`dwMotion`,\n`dwType`, `dwAI`, `dwHP`, `dwCtrlKind1..3`, `dwSfxCtrl`, `dwSndDamage`, `nItemResistDark`) are\nalways 0 and are omitted: code ported from C++ reads `0`.",
+      "properties": {
+        "a_fuel_re_max": {
+          "default": 0,
+          "description": "c114.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "ability_max": {
+          "default": 0,
+          "description": "c31.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "ability_min": {
+          "default": 0,
+          "description": "c30.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "abrasion": {
+          "default": 0,
+          "description": "c14: `nAbrasion`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "active_skill": {
+          "default": 0,
+          "description": "c65.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "active_skill_lv": {
+          "default": 0,
+          "description": "c66.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "active_skill_rate": {
+          "default": 0,
+          "description": "c67.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "add_skill_max": {
+          "default": 0,
+          "description": "c37.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "add_skill_min": {
+          "default": 0,
+          "description": "c36.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "adj_hit_rate": {
+          "default": 0,
+          "description": "c48.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "adj_param_val": {
+          "default": [
+            0,
+            0,
+            0
+          ],
+          "description": "c56..c58.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "type": "array"
+        },
+        "atk_style": {
+          "default": 0,
+          "description": "c38: `AS_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "attack_range": {
+          "default": 0,
+          "description": "c51: `AR_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "attack_speed": {
+          "default": 0.0,
+          "description": "c49 (FLOAT, e.g. 0.085).",
+          "format": "float",
+          "type": "number"
+        },
+        "base_parts_ignore": {
+          "default": 0,
+          "description": "c22: `dwBasePartsIgnore`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "block_rating": {
+          "default": 0,
+          "description": "c35.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "charged": {
+          "default": 0,
+          "description": "c27: `bCharged`, normalised to `1` or `0` (F2).",
+          "format": "int32",
+          "type": "integer"
+        },
+        "chg_param_val": {
+          "default": [
+            0,
+            0,
+            0
+          ],
+          "description": "c59..c61.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "type": "array"
+        },
+        "circle_time": {
+          "default": 0,
+          "description": "c85.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "combo_style": {
+          "default": 0,
+          "description": "c108: `CT_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "continuous_pain": {
+          "default": 0,
+          "description": "c44: `tmContinuousPain`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "cost": {
+          "default": 0,
+          "description": "c12: base price (F3 overrides CS/pet items, F6 `AddShopItem`).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "description": {
+          "default": "",
+          "description": "c123: `szCommand` token (IDS resolved), the description (client-only in C).",
+          "type": "string"
+        },
+        "description_key": {
+          "default": null,
+          "description": "The IDS key of the description.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "dest_data1": {
+          "default": [
+            0,
+            0,
+            0
+          ],
+          "description": "c62..c64.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "type": "array"
+        },
+        "dest_param": {
+          "default": [
+            0,
+            0,
+            0
+          ],
+          "description": "c53..c55: `DST_*`.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "type": "array"
+        },
+        "dmg_shift": {
+          "default": 0,
+          "description": "c50.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "endurance": {
+          "default": 0,
+          "description": "c13: durability.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "evildoing": {
+          "default": 0,
+          "description": "c103.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "exclusive": {
+          "default": 0,
+          "description": "c21: `dwExclusive`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "exe_target": {
+          "default": 0,
+          "description": "c87: `EXT_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "exp": {
+          "default": 0,
+          "description": "c107.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "expert_lv": {
+          "default": 0,
+          "description": "c104.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "expert_max": {
+          "default": 0,
+          "description": "c105: skills: max skill level.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "f_fuel_re_max": {
+          "default": 0,
+          "description": "c113.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "flag": {
+          "default": 0,
+          "description": "c17: `IP_FLAG_*` bits (F3: `=` becomes 0, then the BINDS flag).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "flight_limit": {
+          "default": 0,
+          "description": "c112.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "flight_lr_angle": {
+          "default": 0.0,
+          "description": "c110 (FLOAT).",
+          "format": "float",
+          "type": "number"
+        },
+        "flight_speed": {
+          "default": 0.0,
+          "description": "c109 (FLOAT; may be patched by except.txt).",
+          "format": "float",
+          "type": "number"
+        },
+        "flight_tb_angle": {
+          "default": 0.0,
+          "description": "c111 (FLOAT).",
+          "format": "float",
+          "type": "number"
+        },
+        "fuel_re": {
+          "default": 0,
+          "description": "c115.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "handed": {
+          "default": 0,
+          "description": "c16: `HD_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "icon": {
+          "default": "",
+          "description": "c120: icon file (3 tokens `\"\"\"x.dds\"\"\"`, the middle one; client-only in C, always loaded here).",
+          "type": "string"
+        },
+        "id": {
+          "default": 0,
+          "description": "c1: `II_`/`SI_`/`ST_` id.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "item_atk_order": {
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "description": "c40..c43.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "type": "array"
+        },
+        "item_eatk": {
+          "default": 0,
+          "description": "c33: `wItemEatk` (short).",
+          "format": "int16",
+          "maximum": 32767,
+          "minimum": -32768,
+          "type": "integer"
+        },
+        "item_job": {
+          "default": 0,
+          "description": "c8: `JOB_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "item_kind1": {
+          "default": 0,
+          "description": "c5: `IK1_*` (skills: `JTYPE_*`).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "item_kind2": {
+          "default": 0,
+          "description": "c6: `IK2_*` (skills: the owning `JOB_*`).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "item_kind3": {
+          "default": 0,
+          "description": "c7: `IK3_*` (skills: `DIS_*`).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "item_lv": {
+          "default": 0,
+          "description": "c23: item level.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "item_rare": {
+          "default": 0,
+          "description": "c24: rarity (sort key of the kind index, unique ranges).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "item_resist_earth": {
+          "default": 0,
+          "description": "c102.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "item_resist_electricity": {
+          "default": 0,
+          "description": "c98: `(int)(GetFloat() * 100.0f)`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "item_resist_fire": {
+          "default": 0,
+          "description": "c99.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "item_resist_water": {
+          "default": 0,
+          "description": "c101.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "item_resist_wind": {
+          "default": 0,
+          "description": "c100.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "item_sex": {
+          "default": 0,
+          "description": "c11: `SEX_MALE` 0 / `SEX_FEMALE` 1 / -1.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "item_type": {
+          "default": 0,
+          "description": "c32: element (`_NONE` 0, `_FIRE` 1, ... defineAttribute.h).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "limit_level1": {
+          "default": 0,
+          "description": "c116.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "link_kind": {
+          "default": 0,
+          "description": "c29.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "link_kind_bullet": {
+          "default": 0,
+          "description": "c28.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "loading_time": {
+          "default": 0,
+          "description": "c47.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "log": {
+          "default": 0,
+          "description": "c26: `nLog`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "max_repair": {
+          "default": 0,
+          "description": "c15: `nMaxRepair` (propSkill header: nHardness).",
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "default": "",
+          "description": "c2: display name (IDS key resolved), `TrimRight`ed.",
+          "type": "string"
+        },
+        "name_key": {
+          "default": null,
+          "description": "The IDS key of the name (debug/export).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "num": {
+          "default": 0,
+          "description": "c3: default stack count when created.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "pack_max": {
+          "default": 0,
+          "description": "c4: maximum stack; `> 1` is forced to `gameplay.max_pack_item` (F2).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "parry": {
+          "default": 0,
+          "description": "c34.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "parts": {
+          "default": 0,
+          "description": "c18: `PARTS_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "parts_file": {
+          "default": 0,
+          "description": "c20: `bPartsFile`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "partsub": {
+          "default": 0,
+          "description": "c19: `dwPartsub`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "permanence": {
+          "default": 0,
+          "description": "c9: `bPermanence` (cannot be consumed).",
+          "format": "int32",
+          "type": "integer"
+        },
+        "probability": {
+          "default": 0,
+          "description": "c52.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "quest_id": {
+          "default": 0,
+          "description": "c121.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "re_skill1": {
+          "default": 0,
+          "description": "c71: prerequisite skill.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "re_skill2": {
+          "default": 0,
+          "description": "c73.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "re_skill_level1": {
+          "default": 0,
+          "description": "c72.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "re_skill_level2": {
+          "default": 0,
+          "description": "c74.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "recoil": {
+          "default": 0,
+          "description": "c46.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "refer_stat1": {
+          "default": 0,
+          "description": "c91: e.g. `WEAPON_ULTIMATE`, `PET_VIS`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "refer_stat2": {
+          "default": 0,
+          "description": "c92.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "refer_target1": {
+          "default": 0,
+          "description": "c93.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "refer_target2": {
+          "default": 0,
+          "description": "c94.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "refer_value1": {
+          "default": 0,
+          "description": "c95: also overwritten by `AddShopItem` for non-penya vendors (F6).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "refer_value2": {
+          "default": 0,
+          "description": "c96.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "reflect": {
+          "default": 0,
+          "description": "c117.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "req_dis_lv": {
+          "default": 0,
+          "description": "c70: skills: required character level (sort key of the job skill list).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "req_fp": {
+          "default": 0,
+          "description": "c69.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "req_mp": {
+          "default": 0,
+          "description": "c68.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "sfx_elemental": {
+          "default": 0,
+          "description": "c78.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "sfx_obj": {
+          "default": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "description": "c79..c83: `XI_*`.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxItems": 5,
+          "minItems": 5,
+          "type": "array"
+        },
+        "shell_quantity": {
+          "default": 0,
+          "description": "c45.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "shop_able": {
+          "default": 0,
+          "description": "c25: `dwShopAble`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "skill_range": {
+          "default": 0,
+          "description": "c77.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "skill_ready": {
+          "default": 0,
+          "description": "c76: also `GetCoolTime()`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "skill_ready_type": {
+          "default": 0,
+          "description": "c75.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "skill_time": {
+          "default": 0,
+          "description": "c86.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "skill_type": {
+          "default": 0,
+          "description": "c97: `KT_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "snd_attack1": {
+          "default": 0,
+          "description": "c118: `SND_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "snd_attack2": {
+          "default": 0,
+          "description": "c119.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "spell_region": {
+          "default": 0,
+          "description": "c89: `SRO_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "spell_type": {
+          "default": 0,
+          "description": "c90.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "sub_define": {
+          "default": 0,
+          "description": "c106: skills: first `SA_` id of the add-skill rows.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "text_file": {
+          "default": "",
+          "description": "c122: 3 tokens; GM items hold commands here (`/ud /noud`).",
+          "type": "string"
+        },
+        "use_chance": {
+          "default": 0,
+          "description": "c88: `WUI_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "use_motion": {
+          "default": 0,
+          "description": "c84: `MTI_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "useable": {
+          "default": 0,
+          "description": "c10: `dwUseable`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "ver": {
+          "default": 0,
+          "description": "c0: keep the row iff `ver <= 15`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "weapon_type": {
+          "default": 0,
+          "description": "c39: `WT_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "ver",
+        "id",
+        "name",
+        "name_key",
+        "num",
+        "pack_max",
+        "item_kind1",
+        "item_kind2",
+        "item_kind3",
+        "item_job",
+        "permanence",
+        "useable",
+        "item_sex",
+        "cost",
+        "endurance",
+        "abrasion",
+        "max_repair",
+        "handed",
+        "flag",
+        "parts",
+        "partsub",
+        "parts_file",
+        "exclusive",
+        "base_parts_ignore",
+        "item_lv",
+        "item_rare",
+        "shop_able",
+        "log",
+        "charged",
+        "link_kind_bullet",
+        "link_kind",
+        "ability_min",
+        "ability_max",
+        "item_type",
+        "item_eatk",
+        "parry",
+        "block_rating",
+        "add_skill_min",
+        "add_skill_max",
+        "atk_style",
+        "weapon_type",
+        "item_atk_order",
+        "continuous_pain",
+        "shell_quantity",
+        "recoil",
+        "loading_time",
+        "adj_hit_rate",
+        "attack_speed",
+        "dmg_shift",
+        "attack_range",
+        "probability",
+        "dest_param",
+        "adj_param_val",
+        "chg_param_val",
+        "dest_data1",
+        "active_skill",
+        "active_skill_lv",
+        "active_skill_rate",
+        "req_mp",
+        "req_fp",
+        "req_dis_lv",
+        "re_skill1",
+        "re_skill_level1",
+        "re_skill2",
+        "re_skill_level2",
+        "skill_ready_type",
+        "skill_ready",
+        "skill_range",
+        "sfx_elemental",
+        "sfx_obj",
+        "use_motion",
+        "circle_time",
+        "skill_time",
+        "exe_target",
+        "use_chance",
+        "spell_region",
+        "spell_type",
+        "refer_stat1",
+        "refer_stat2",
+        "refer_target1",
+        "refer_target2",
+        "refer_value1",
+        "refer_value2",
+        "skill_type",
+        "item_resist_electricity",
+        "item_resist_fire",
+        "item_resist_wind",
+        "item_resist_water",
+        "item_resist_earth",
+        "evildoing",
+        "expert_lv",
+        "expert_max",
+        "sub_define",
+        "exp",
+        "combo_style",
+        "flight_speed",
+        "flight_lr_angle",
+        "flight_tb_angle",
+        "flight_limit",
+        "f_fuel_re_max",
+        "a_fuel_re_max",
+        "fuel_re",
+        "limit_level1",
+        "reflect",
+        "snd_attack1",
+        "snd_attack2",
+        "icon",
+        "quest_id",
+        "text_file",
+        "description",
+        "description_key"
+      ],
+      "type": "object"
+    },
+    "ItemsBundle": {
+      "description": "`items`: all `propItem` rows as seen by the client (Plan/14 §10.5). The `name_key` and\n`description_key` columns are not exported (`ClientItem` = `Omit<ItemProp, \"name_key\" | \"description_key\">`);\nthe ultimate-weapon names carry the client transform of §10.6.",
+      "properties": {
+        "items": {
+          "$ref": "#/$defs/RowTable_ItemProp",
+          "description": "The rows in ascending id order.",
+          "x-flyff-omit": [
+            "name_key",
+            "description_key"
+          ]
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "ItemsBundle",
+      "type": "object"
+    },
+    "RowTable_ItemProp": {
+      "description": "A columnar table: `columns` names the fields of each row, `rows` holds one array of cells per row (14 §10.2).",
+      "properties": {
+        "columns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "rows": {
+          "items": {
+            "type": "array"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "columns",
+        "rows"
+      ],
+      "type": "object",
+      "x-flyff-columns": [
+        "ver",
+        "id",
+        "name",
+        "name_key",
+        "num",
+        "pack_max",
+        "item_kind1",
+        "item_kind2",
+        "item_kind3",
+        "item_job",
+        "permanence",
+        "useable",
+        "item_sex",
+        "cost",
+        "endurance",
+        "abrasion",
+        "max_repair",
+        "handed",
+        "flag",
+        "parts",
+        "partsub",
+        "parts_file",
+        "exclusive",
+        "base_parts_ignore",
+        "item_lv",
+        "item_rare",
+        "shop_able",
+        "log",
+        "charged",
+        "link_kind_bullet",
+        "link_kind",
+        "ability_min",
+        "ability_max",
+        "item_type",
+        "item_eatk",
+        "parry",
+        "block_rating",
+        "add_skill_min",
+        "add_skill_max",
+        "atk_style",
+        "weapon_type",
+        "item_atk_order",
+        "continuous_pain",
+        "shell_quantity",
+        "recoil",
+        "loading_time",
+        "adj_hit_rate",
+        "attack_speed",
+        "dmg_shift",
+        "attack_range",
+        "probability",
+        "dest_param",
+        "adj_param_val",
+        "chg_param_val",
+        "dest_data1",
+        "active_skill",
+        "active_skill_lv",
+        "active_skill_rate",
+        "req_mp",
+        "req_fp",
+        "req_dis_lv",
+        "re_skill1",
+        "re_skill_level1",
+        "re_skill2",
+        "re_skill_level2",
+        "skill_ready_type",
+        "skill_ready",
+        "skill_range",
+        "sfx_elemental",
+        "sfx_obj",
+        "use_motion",
+        "circle_time",
+        "skill_time",
+        "exe_target",
+        "use_chance",
+        "spell_region",
+        "spell_type",
+        "refer_stat1",
+        "refer_stat2",
+        "refer_target1",
+        "refer_target2",
+        "refer_value1",
+        "refer_value2",
+        "skill_type",
+        "item_resist_electricity",
+        "item_resist_fire",
+        "item_resist_wind",
+        "item_resist_water",
+        "item_resist_earth",
+        "evildoing",
+        "expert_lv",
+        "expert_max",
+        "sub_define",
+        "exp",
+        "combo_style",
+        "flight_speed",
+        "flight_lr_angle",
+        "flight_tb_angle",
+        "flight_limit",
+        "f_fuel_re_max",
+        "a_fuel_re_max",
+        "fuel_re",
+        "limit_level1",
+        "reflect",
+        "snd_attack1",
+        "snd_attack2",
+        "icon",
+        "quest_id",
+        "text_file",
+        "description",
+        "description_key"
+      ],
+      "x-flyff-row": {
+        "$ref": "#/$defs/ItemProp"
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`items.<h16>.json`: the envelope of the `items` bundle (schema version 1).",
+  "properties": {
+    "bundle": {
+      "const": "items"
+    },
+    "data": {
+      "$ref": "#/$defs/ItemsBundle"
+    },
+    "schema": {
+      "const": 1
+    }
+  },
+  "required": [
+    "bundle",
+    "schema",
+    "data"
+  ],
+  "title": "ItemsBundleEnvelope",
+  "type": "object"
+}

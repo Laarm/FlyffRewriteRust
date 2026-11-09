@@ -1,0 +1,144 @@
+// Notification messages (Plan/11 section 10, WP-PROTO-20; tag block 608-639). Transcribed from ref/08
+// section 11, ref/09a section 6.7 and ref/24 port notes. Conventions for when to use which message:
+// Plan/11 section 10.3.
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+
+// Localised message: merges legacy DEFINEDTEXT 0x0095, DEFINEDTEXT1 0x0094, the top-level PACKETTYPE
+// DEFINEDTEXT 0x00FF00EC, CHATTEXT 0x00BC and DEFINEDCAPTION 0x00B9; obj_id: 0.
+//
+// The legacy arguments were one space-separated, quote-grouped string tokenised by the client; here they are
+// a list of strings, already formatted by the server as the original `%d`/`%s` output (integers in decimal,
+// money with the thousands commas where the legacy call site formatted it). The TID_GAME_REAPMONEY special
+// case and the " @" stripping disappear. Client formatting: replace the i-th printf conversion (`%s`, `%d`,
+// `%u`, `%ld`, ...) in the template of `tid` with args[i]; a missing arg becomes "", extra args are ignored.
+// Use exactly the TID and arguments of the original call site (Plan/11 section 10.3).
+message DefinedText {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x95
+    name: "DEFINEDTEXT"
+  };
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x94
+    name: "DEFINEDTEXT1"
+  };
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00EC
+    name: "DEFINEDTEXT"
+  };
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xBC
+    name: "CHATTEXT"
+  };
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xB9
+    name: "DEFINEDCAPTION"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "11";
+  option (flyff.milestone) = "M2";
+  enum Display {
+    // treated as MESSAGE
+    DISPLAY_UNSPECIFIED = 0;
+    // DEFINEDTEXT / DEFINEDTEXT1: system line in the text-table colour
+    DISPLAY_MESSAGE = 1;
+    // CHATTEXT
+    DISPLAY_CHAT = 2;
+    // DEFINEDCAPTION with bSmall = 0
+    DISPLAY_CAPTION = 3;
+    // DEFINEDCAPTION with bSmall = 1
+    DISPLAY_CAPTION_SMALL = 4;
+  }
+  // TID_* of Resource defineText.h; the client resolves template and colour from the text bundle
+  sint32 tid = 1 [(flyff.legacy_type) = "i32 textId"];
+  // positional printf arguments, already formatted by the server
+  repeated string args = 2 [(flyff.legacy_type) = "str args (space-separated tokens)"];
+  Display display = 3;
+}
+
+// legacy TEXT 0x00A0 (S2C); obj_id: 0. Free-form server text.
+message Text {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xA0
+    name: "TEXT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "11";
+  option (flyff.milestone) = "M2";
+  // TEXT_GENERAL 1 (green system line), TEXT_DIAG 2 (modal message box), TEXT_CHAT 3 (green line in the chat box: GM command lists, new)
+  uint32 kind = 1 [(flyff.legacy_type) = "u8"];
+  // <= 260 B
+  string text = 2 [(flyff.legacy_type) = "str<=260"];
+}
+
+// legacy PACKETTYPE SYSTEM 0x00FF00EA (S2C); obj_id: 0. Server announcement ("[Notice] text").
+message SystemNotice {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00EA
+    name: "SYSTEM"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "23";
+  option (flyff.milestone) = "M2";
+  // <= 511 B
+  string text = 1 [(flyff.legacy_type) = "str<=511"];
+}
+
+// legacy PACKETTYPE CAPTION 0x00FF00D6 (S2C); obj_id: 0. Big centred caption.
+message Caption {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00D6
+    name: "CAPTION"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "23";
+  option (flyff.milestone) = "M2";
+  bool small = 1 [(flyff.legacy_type) = "i32 bSmall"];
+  // 0 = every world, else only players in that world show it
+  uint32 world_id = 2 [(flyff.legacy_type) = "u32"];
+  // <= 260 B
+  string text = 3 [(flyff.legacy_type) = "str<=260"];
+}
+
+// legacy WORLDMSG 0x00DE (S2C); obj_id: 0. Event announcement (pink 0xFFFF99CC chat line). FIX: the rect test
+// of the audience uses x and z (Plan/15 section 8.2).
+message WorldMsg {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xDE
+    name: "WORLDMSG"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // <= 260 B
+  string text = 1 [(flyff.legacy_type) = "str<=260"];
+}
+
+// legacy EVENTMESSAGE 0x002F (S2C); obj_id: the mover the balloon is attached to. Event balloons.
+message EventMessage {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x2F
+    name: "EVENTMESSAGE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // <= 1024 B
+  string text = 1 [(flyff.legacy_type) = "str<=1024"];
+  // 0 fail effect, 1 per-item effect, 2 chat line (+ win effect for the own player), 3 TID_GAME_LACKSPACE
+  sint32 flag = 2 [(flyff.legacy_type) = "i32 nFlag"];
+  uint32 item_id = 3 [(flyff.legacy_type) = "u32 dwItemID"];
+}

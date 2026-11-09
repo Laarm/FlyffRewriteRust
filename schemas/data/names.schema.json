@@ -1,0 +1,70 @@
+{
+  "$defs": {
+    "NamesBundle": {
+      "description": "`names`: the chat word filter and the name rules.",
+      "properties": {
+        "allowed_letters": {
+          "description": "The characters a name may use, ascending; `null` = no restriction.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "chat_filter": {
+          "description": "`filter_ENG.inc` as written: `[word, replacement]` (the client lower-cases the alphabetic words).",
+          "items": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "invalid_substrings": {
+          "description": "Banned name substrings, lower-cased.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "vendor_allowed_letters": {
+          "description": "The same for vendor titles.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "chat_filter",
+        "invalid_substrings",
+        "allowed_letters",
+        "vendor_allowed_letters"
+      ],
+      "title": "NamesBundle",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`names.<h16>.json`: the envelope of the `names` bundle (schema version 1).",
+  "properties": {
+    "bundle": {
+      "const": "names"
+    },
+    "data": {
+      "$ref": "#/$defs/NamesBundle"
+    },
+    "schema": {
+      "const": 1
+    }
+  },
+  "required": [
+    "bundle",
+    "schema",
+    "data"
+  ],
+  "title": "NamesBundleEnvelope",
+  "type": "object"
+}

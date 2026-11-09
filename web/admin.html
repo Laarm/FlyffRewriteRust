@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Flyff Admin</title>
+    <style>
+      .boot {
+        margin: 24px;
+        font:
+          14px system-ui,
+          sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>The admin console needs JavaScript.</noscript>
+    <div id="admin-root">
+      <p class="boot">
+        Loading the admin console. If this message stays, open the
+        <a href="/admin/lite">rescue page</a>.
+      </p>
+    </div>
+    <script type="module" src="/src/admin/main.tsx"></script>
+  </body>
+</html>

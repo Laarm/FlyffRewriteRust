@@ -1,0 +1,6 @@
+# Exact stable pin (Plan/02 §3.1). Bumped only at milestone boundaries via ADR.
+[toolchain]
+channel = "1.99.0"
+profile = "minimal"
+components = ["rustfmt", "clippy", "llvm-tools-preview"]
+targets = ["wasm32-unknown-unknown", "x86_64-unknown-linux-musl"]

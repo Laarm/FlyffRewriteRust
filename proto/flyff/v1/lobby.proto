@@ -1,0 +1,176 @@
+// Lobby (character select) messages (Plan/11 section 2.4, WP-PROTO-08; tag block 48-79). Transcribed from
+// ref/02 sections 3.2, 6.5, 7.3 and 7.4 with the changes of Plan/11 section 2.4: no authKey, no
+// account/password echo (the session knows the account), no messenger block in the list (loaded at enter-world).
+// Validation rules are Plan/12.
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+import "flyff/v1/common.proto";
+
+// legacy PLAYER_LIST 0x000000F3; obj_id: 0. The character list; sent after HelloAck{OK} and after every
+// create/delete/return to character select.
+message CharList {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF3
+    name: "PLAYER_LIST"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "12";
+  option (flyff.milestone) = "M1";
+  // only occupied slots (the legacy nBlock 2 = empty is implicit); dropped: authKey, count
+  repeated CharSlot slots = 1;
+}
+
+// One occupied character slot of CharList (ref/02 section 6.5).
+message CharSlot {
+  // 0..2
+  uint32 slot = 1 [(flyff.legacy_type) = "i32"];
+  // legacy nBlock == 0: the character is blocked and cannot enter the world
+  bool blocked = 2 [(flyff.legacy_type) = "i32 nBlock"];
+  uint32 world_id = 3 [(flyff.legacy_type) = "u32"];
+  // MI_MALE / MI_FEMALE
+  uint32 mover_index = 4 [(flyff.legacy_type) = "u32"];
+  string name = 5 [(flyff.legacy_type) = "str<=63"];
+  Vec3 pos = 6 [(flyff.legacy_type) = "3*f32"];
+  uint32 id_player = 7 [(flyff.legacy_type) = "u32"];
+  uint32 id_party = 8 [(flyff.legacy_type) = "u32"];
+  uint32 id_guild = 9 [(flyff.legacy_type) = "u32"];
+  uint32 id_war = 10 [(flyff.legacy_type) = "u32"];
+  uint32 skin_set = 11 [(flyff.legacy_type) = "u32"];
+  uint32 hair_mesh = 12 [(flyff.legacy_type) = "u32"];
+  // ARGB
+  uint32 hair_color = 13 [(flyff.legacy_type) = "u32"];
+  uint32 head_mesh = 14 [(flyff.legacy_type) = "u32"];
+  // 0 male, 1 female
+  uint32 sex = 15 [(flyff.legacy_type) = "u8"];
+  sint32 job = 16 [(flyff.legacy_type) = "i32"];
+  sint32 level = 17 [(flyff.legacy_type) = "i32"];
+  // dropped: job level (always 0)
+  sint32 str = 18 [(flyff.legacy_type) = "i32"];
+  sint32 sta = 19 [(flyff.legacy_type) = "i32"];
+  sint32 dex = 20 [(flyff.legacy_type) = "i32"];
+  // `int` is a keyword in several target languages
+  // buf:lint:ignore FIELD_LOWER_SNAKE_CASE
+  sint32 int_ = 21 [(flyff.legacy_type) = "i32"];
+  // m_dwMode
+  uint32 mode = 22 [(flyff.legacy_type) = "u32"];
+  // visible equipment item ids; the client places each by its ItemProp dwParts
+  repeated uint32 equip_item_ids = 23 [(flyff.legacy_type) = "i32 n + u32[n]"];
+  // dropped: the messenger friend list (loaded at enter-world, ref/02 port note 8)
+}
+
+// legacy CREATE_PLAYER 0x000000F4 (C2S). Server-side validation: Plan/12 section 9.
+message CreatePlayer {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF4
+    name: "CREATE_PLAYER"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "12";
+  option (flyff.milestone) = "M1";
+  // 0..2
+  uint32 slot = 1 [(flyff.legacy_type) = "u8"];
+  // game rules (4..16 letters, allowed letters, invalid names) are handler checks; 64 B is the protocol cap
+  string name = 2 [
+    (flyff.legacy_type) = "str",
+    (flyff.max_len) = 64
+  ];
+  // dropped: face and costume (ignored by the server), job (always Vagrant), hair_color (computed by the server),
+  // account, password, authKey
+  uint32 skin_set = 3 [(flyff.legacy_type) = "u8"];
+  uint32 hair_mesh = 4 [(flyff.legacy_type) = "u8"];
+  // 0 male, 1 female
+  uint32 sex = 5 [(flyff.legacy_type) = "u8"];
+  uint32 head_mesh = 6 [(flyff.legacy_type) = "u8"];
+  // 4 digits "0001".."9999" (a handler check; 8 B is the protocol cap so a malformed PIN gets a LobbyError)
+  string bank_pin = 7 [
+    (flyff.legacy_type) = "int 0..9999",
+    (flyff.max_len) = 8
+  ];
+}
+
+// legacy DEL_PLAYER 0x000000F5 (C2S).
+message DelPlayer {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF5
+    name: "DEL_PLAYER"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "12";
+  option (flyff.milestone) = "M1";
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32"];
+  // md5_hex_lower("kikugalanet" + password), exactly 32 hex chars. FIX: actually verified against the
+  // account password (ref/02 port note 10, PL-035). The legacy client sent md5("kikugalanet" + key).
+  string pwhash = 2 [
+    (flyff.legacy_type) = "str",
+    (flyff.max_len) = 32
+  ];
+  // dropped: account, key (merged into pwhash), authKey, the messenger friend list (the server knows it)
+}
+
+// legacy PRE_JOIN 0x0000FF05 + JOIN 0x0000FF00 (C2S, merged into one request).
+message EnterWorld {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF05
+    name: "PRE_JOIN"
+  };
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00
+    name: "JOIN"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "12";
+  option (flyff.milestone) = "M1";
+  uint32 slot = 1 [(flyff.legacy_type) = "u8"];
+  uint32 id_player = 2 [(flyff.legacy_type) = "u32"];
+  // dropped: account, name, nSecretNum, authKey, party/guild/war ids, the messenger (the server knows them)
+}
+
+// legacy ERROR 0x000000FE; obj_id: 0. Lobby failures (Plan/11 section 10.3, Plan/12 section 16.2).
+message LobbyError {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFE
+    name: "ERROR"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "12";
+  option (flyff.milestone) = "M1";
+  // Legacy ERROR_* value (ref/01 section 12.6, ref/02 section 3.2):
+  //   103 DUPLICATE_ACCOUNT, 104 ILLEGAL_ACCESS, 105 DUPLICATE_SLOT, 106 SLOT_OUTOFRANGE, 107 ILLEGAL_VER,
+  //   108 OVERFLOW, 109 EXTERNAL_ADDR, 111 INVALID_NAME_CHARACTER, 112 WARTIME, 119 BLOCKGOLD_ACCOUNT,
+  //   120 FLYFF_PASSWORD, 121 FLYFF_ACCOUNT, 133 FLYFF_DB_JOB_ING, 134 15SEC_PREVENT, 135 15MIN_PREVENT,
+  //   136 CERT_GENERAL, 1316 USER_EXISTS, 1319 NO_SUCH_GROUP.
+  // New: 2001 character blocked (enter). The HTTP-only codes 100, 2000 and 2002-2005 are Plan/12 section 16.1;
+  // new codes >= 2000 are only added through doc 12.
+  sint32 code = 1 [(flyff.legacy_type) = "i32"];
+  // TID_* for the client message box (0 = the client default text for `code`, Plan/12 section 16.5)
+  sint32 tid = 2;
+}
+
+// legacy REQ_LEAVE 0x00FF00FA (C2S): starts the 10 s logout timer (ref/07b section 7.5).
+message ReqLeave {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00FA
+    name: "REQ_LEAVE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "12";
+  option (flyff.milestone) = "M2";
+}
+
+// ext 0xFE000007 (C2S): leave the world to character select; answered by CharList or LobbyError.
+message ReturnToCharSelect {
+  option (flyff.ext_id) = 0xFE000007;
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "12";
+  option (flyff.milestone) = "M2";
+}

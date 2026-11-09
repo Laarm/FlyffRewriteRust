@@ -1,0 +1,708 @@
+// Trade messages (Plan/11 section 4.2, WP-PROTO-16; tag block 384-415): the player-to-player trade handshake,
+// the personal vendor (private shop) and the vendor chat rooms. Transcribed from ref/07b sections 10, 19 and
+// 20, ref/07c section 5, ref/08 sections 12.3-12.4, ref/09a section 5.x, ref/09b section 3.9, ref/13 sections
+// 14-15 and Plan/19 sections 8 and 9.
+//
+// Trade state machine (Plan/19 section 8): ConfirmTradeReq (request) -> ConfirmTradeNtf to the target; TradeReq
+// (accept) -> TradeNtf to both; TradePutReq / TradePullReq / TradePutGoldReq edit the offers (echoed to both);
+// TradeOkReq -> TradeOkNtf, and when both are OK TradeLastConfirm; TradeConfirm -> TradeLastConfirmOk, and when
+// both confirmed the commit and TradeConsent. TradeCancelReq / errors -> TradeCancelNtf to both. Every item
+// travels as its inventory OBJECT ID; the offers stay in the owner's inventory as reservations until the
+// commit.
+//
+// FIX shapes (Plan/11a, PL-062, PL-063, VR-017; ledger draft in the NOTES of this crate): TradeNtf does NOT
+// carry the partner's inventory (the legacy sent the whole CItemContainer of the other player); TradePutNtf
+// carries the offered ItemElem instead, so the browser needs no partner inventory copy; the gold of
+// TradePutGoldReq accumulates and TradePutGoldNtf carries the running total; a ConfirmTradeReq creates a
+// pending request that TradeReq must match.
+//
+// Vendor: RegisterPVendorItemReq (while closed) -> PVendorOpenReq (title) -> buyers QueryPVendorItem /
+// BuyPVendorItem -> PVendorCloseReq. The chat room of a shop is keyed by the vendor's player id (ChattingNtf
+// sub-types).
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+import "flyff/v1/item_types.proto";
+
+// legacy CONFIRMTRADE 0x00FF00A7 (C2S): ask a player to trade (ref/07b section 19.3, Plan/19 section 8.2).
+// FIX (VR-017): records a pending request that TradeReq must match. Refused in the guild-war world, for
+// duelling players and when the target already trades. Answer: ConfirmTradeNtf to the target.
+message ConfirmTradeReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00A7
+    name: "CONFIRMTRADE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the target player (object id)
+  uint32 target = 1 [(flyff.legacy_type) = "u32 objidTrader"];
+}
+
+// legacy CONFIRMTRADECANCEL 0x00FF00A8 (C2S): decline a trade request (ref/07b section 19.3, Plan/19 section
+// 8.2). FIX (VR-001, VR-017): a pending request of `requester` to the sender must exist. Answer:
+// ConfirmTradeCancelNtf to the requester.
+message ConfirmTradeCancelReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00A8
+    name: "CONFIRMTRADECANCEL"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the player that asked (object id)
+  uint32 requester = 1 [(flyff.legacy_type) = "u32 objidTrader"];
+}
+
+// legacy TRADE 0x00FF00A0 (C2S): accept a trade request and open the trade (ref/07b section 19.3, Plan/19
+// section 8.2). FIX (VR-017): the pending, unexpired request from `requester` must exist. Answer: TradeNtf to
+// both players.
+message TradeReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00A0
+    name: "TRADE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the player that asked (object id)
+  uint32 requester = 1 [(flyff.legacy_type) = "u32 objidTrader"];
+}
+
+// legacy TRADEPUT 0x00FF00A1 (C2S): offer an item (ref/07b section 19.3, Plan/19 section 8.2). `slot < 25`,
+// `num >= 1`; the item must be tradeable (not equipped, quest, bound, in use, a guild cloak or a vagrant
+// ride) and both sides still in the item step; the count is clamped to the stack. Answer: TradePutNtf to
+// both, TradePutError to the sender when a side already confirmed.
+message TradePutReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00A1
+    name: "TRADEPUT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the trade slot 0..24 (MAX_TRADE 25)
+  uint32 slot = 1 [(flyff.legacy_type) = "u8 i"];
+  // ITYPE_ITEM; ignored, echoed
+  uint32 item_type = 2 [(flyff.legacy_type) = "u8 nItemType"];
+  // the inventory object id of the offered item
+  uint32 obj_id = 3 [(flyff.legacy_type) = "u8 nId"];
+  // the offered count, >= 1
+  sint32 num = 4 [(flyff.legacy_type) = "i16 nItemNum"];
+}
+
+// legacy TRADEPULL 0x00FF00A2 (C2S): take an offer back (ref/07b section 19.3). The repack client never sends
+// it. Answer: TradePullNtf to both.
+message TradePullReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00A2
+    name: "TRADEPULL"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the trade slot 0..24
+  uint32 slot = 1 [(flyff.legacy_type) = "u8 i"];
+}
+
+// legacy TRADEPUTGOLD 0x00FF00A5 (C2S): offer penya (ref/07b section 19.3, Plan/19 section 8.2). FIX
+// (PL-062): the amount accumulates (clamped to the wallet) instead of overwriting the previous offer. Answer:
+// TradePutGoldNtf with the running total to both.
+message TradePutGoldReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00A5
+    name: "TRADEPUTGOLD"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the penya to add; read as i32 it must be > 0
+  uint32 gold = 1 [(flyff.legacy_type) = "u32 dwGold"];
+}
+
+// legacy TRADEOK 0x00FF00A3 (C2S): the sender is satisfied with the offers (ref/07b section 19.3). No
+// payload. Answer: TradeOkNtf to both, or TradeLastConfirm to both when the partner was already OK.
+message TradeOkReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00A3
+    name: "TRADEOK"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy TRADECONFIRM 0x00FF002F (C2S): the last confirmation (ref/07b section 19.3, Plan/19 section 8.2). No
+// payload. Answer: TradeLastConfirmOk to both, or the commit and TradeConsent when the partner confirmed
+// first.
+message TradeConfirm {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF002F
+    name: "TRADECONFIRM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy TRADECANCEL 0x00FF00A4 (C2S): cancel the trade (ref/07b section 19.3, Plan/19 section 8.2). Answer:
+// TradeCancelNtf to both; the reservations and the offered gold are released.
+message TradeCancelReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00A4
+    name: "TRADECANCEL"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // 0 = cancelled; non-zero shows the "refused" message on the partner side (the repack client always sends
+  // 0)
+  sint32 mode = 1 [(flyff.legacy_type) = "i32 nMode"];
+}
+
+// legacy PVENDOR_OPEN 0x00FF00A9 (C2S): open the personal shop with a title (ref/07c section 5.1, Plan/19
+// section 9.2). FIX (VR-046): every check runs before the title is set; an invalid title answers
+// TID_DIAG_0020 and stops. Answer: PVendorOpenNtf to near.
+message PVendorOpenReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00A9
+    name: "PVENDOR_OPEN"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the shop title, at most 47 bytes (MAX_VENDORNAME 48 buffer, ref/07b section 20); colour codes are
+  // stripped unless the FONTEDIT buff is active
+  string title = 1 [
+    (flyff.legacy_type) = "str<=47",
+    (flyff.max_len) = 47
+  ];
+}
+
+// legacy PVENDOR_CLOSE 0x00FF00AA (C2S): the vendor closes the shop, or a visitor closes the vendor window
+// (ref/07c section 5.2, Plan/19 section 9.2). Answer: PVendorCloseNtf.
+message PVendorCloseReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00AA
+    name: "PVENDOR_CLOSE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the vendor player: the sender itself (close my shop) or the browsed vendor (leave)
+  uint32 vendor = 1 [(flyff.legacy_type) = "u32 objidVendor"];
+}
+
+// legacy REGISTER_PVENDOR_ITEM 0x00FF00AB (C2S): put an item for sale into a shop slot while the shop is
+// closed (ref/07c section 5.3, Plan/19 section 9.2). `slot < 20`; VR-013: no menu NPC within 3 m; VR-019: the
+// total price stays below 2100000000; the item must not occupy another slot. Answer: RegisterPVendorItemNtf.
+message RegisterPVendorItemReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00AB
+    name: "REGISTER_PVENDOR_ITEM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the shop slot 0..19 (MAX_VENDOR_REVISION)
+  uint32 slot = 1 [(flyff.legacy_type) = "u8 iIndex"];
+  // ITYPE_ITEM; ignored
+  uint32 item_type = 2 [(flyff.legacy_type) = "u8 nType"];
+  // the inventory object id of the item
+  uint32 obj_id = 3 [(flyff.legacy_type) = "u8 nId"];
+  // the count for sale (clamped to the stack)
+  sint32 num = 4 [(flyff.legacy_type) = "i16 nNum"];
+  // the unit price; values below 1 become 1
+  sint32 cost = 5 [(flyff.legacy_type) = "i32 nCost"];
+}
+
+// legacy UNREGISTER_PVENDOR_ITEM 0x00FF00AE (C2S): take an item out of a shop slot while the shop is closed
+// (ref/07c section 5.4). Answer: UnregisterPVendorItemNtf when a slot was cleared.
+message UnregisterPVendorItemReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00AE
+    name: "UNREGISTER_PVENDOR_ITEM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the shop slot 0..29
+  uint32 slot = 1 [(flyff.legacy_type) = "u8 i"];
+}
+
+// legacy QUERY_PVENDOR_ITEM 0x00FF00AC (C2S): look into an open personal shop (ref/07c section 5.5, Plan/19
+// section 9.2). Answer: PVendorItem.
+message QueryPVendorItem {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00AC
+    name: "QUERY_PVENDOR_ITEM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the vendor player (object id)
+  uint32 vendor = 1 [(flyff.legacy_type) = "u32 objidVendor"];
+}
+
+// legacy BUY_PVENDOR_ITEM 0x00FF00AD (C2S): buy from a personal shop (ref/07c section 5.6, Plan/19 section
+// 9.4); an atomic multi-party commit. No distance check between buyer and seller (NA-08); no tax. Answer:
+// CreateItem and SetPointParam to the buyer, PVendorItemNum near the vendor.
+message BuyPVendorItem {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00AD
+    name: "BUY_PVENDOR_ITEM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the vendor player (object id)
+  uint32 vendor = 1 [(flyff.legacy_type) = "u32 objidVendor"];
+  // the shop slot 0..29
+  uint32 slot = 2 [(flyff.legacy_type) = "u8 nItem"];
+  // the ItemProp id of the slot item (anti-race check)
+  uint32 item_id = 3 [(flyff.legacy_type) = "u32 dwItemId"];
+  // the count, > 0 (clamped to what is for sale)
+  sint32 num = 4 [(flyff.legacy_type) = "i16 nNum"];
+}
+
+// legacy ENTERCHTTING 0xF000B054 (C2S): join the chat room of a personal shop (ref/07b section 10, Plan/19
+// section 9.3). The client sends it when it opens a vendor window. Ignored when the sender is already in a
+// room.
+message EnterChatting {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B054
+    name: "ENTERCHTTING"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the room id = the vendor's player id
+  uint32 room = 1 [(flyff.legacy_type) = "u32 uidChattingRoom"];
+}
+
+// legacy CHATTING 0xF000B055 (C2S): say something in the chat room the sender is in (ref/07b section 10,
+// Plan/19 section 9.3). The mute check and the markup stripping run first (doc 23 hooks). Answer: ChattingNtf
+// (Chatting) to every member.
+message ChattingReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B055
+    name: "CHATTING"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the line, at most 1023 bytes
+  string text = 1 [
+    (flyff.legacy_type) = "str<=1023",
+    (flyff.max_len) = 1023
+  ];
+}
+
+// legacy OPENCHATTINGROOM 0xF000B058 (C2S): the vendor opens the chat of the shop (ref/07b section 10).
+// VR-074: only the room owner. No payload. Answer: ChattingNtf (ChattingRoomState true) to the other members.
+message OpenChattingRoom {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B058
+    name: "OPENCHATTINGROOM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy CLOSECHATTINGROOM 0xF000B059 (C2S): the vendor closes the chat of the shop (ref/07b section 10).
+// VR-074: only the room owner. No payload. Answer: ChattingNtf (ChattingRoomState false) to the other
+// members.
+message CloseChattingRoom {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B059
+    name: "CLOSECHATTINGROOM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy CONFIRMTRADE 0x0022 (S2C); obj_id: the requester. A player asks the receiver to trade; the client
+// opens a request box and answers with TradeReq or ConfirmTradeCancelReq, or refuses automatically (ref/07b
+// section 19.2, ref/09a). No payload.
+message ConfirmTradeNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x22
+    name: "CONFIRMTRADE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy CONFIRMTRADECANCEL 0x0023 (S2C); obj_id: the requester. The target declined the request; the client
+// prints TID_GAME_TRADECANCEL. No payload.
+message ConfirmTradeCancelNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x23
+    name: "CONFIRMTRADECANCEL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy TRADE 0x0007 (S2C); obj_id: the other player (the trade partner of the receiver). The trade is open;
+// sent to both players (ref/07b section 19.3, Plan/19 section 8.2). FIX (PL-063, Plan/11a): the legacy
+// payload continued with the partner's whole inventory container; it is dropped, offered items travel in
+// TradePutNtf.
+message TradeNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x7
+    name: "TRADE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the player id of the initiator (the sender of the accepted request)
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32 uidPlayer"];
+  // dropped: the partner's CItemContainer (Serialize of the whole inventory; PL-063)
+}
+
+// legacy TRADEPUT 0x0008 (S2C); obj_id: the player that offered. An offer was set; sent to both players
+// (ref/07b section 19.3, Plan/19 section 8.2). FIX (Plan/11a): carries the offered item with its full data,
+// so the browser needs no copy of the partner's inventory. Boxed in ServerMsg (an ItemElem is 248 B).
+message TradePutNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8
+    name: "TRADEPUT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the trade slot 0..24
+  uint32 slot = 1 [(flyff.legacy_type) = "u8 i"];
+  // echoed from the request
+  uint32 item_type = 2 [(flyff.legacy_type) = "u8 nItemType"];
+  // the offerer's inventory object id
+  uint32 obj_id = 3 [(flyff.legacy_type) = "u8 nId"];
+  // the offered count
+  sint32 num = 4 [(flyff.legacy_type) = "i16 nItemNum"];
+  // FIX: the offered item with its full data (item_id, serial, upgrades, options ...); its `num` is the
+  // offered count, equal to `num` above
+  ItemElem item = 100;
+}
+
+// legacy TRADEPUTERROR 0x0005 (S2C); obj_id: 0 (self). A TradePutReq or TradePullReq came after a side was
+// already OK; the client shows TID_DIAG_0054. No payload.
+message TradePutError {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x5
+    name: "TRADEPUTERROR"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy TRADEPULL 0x0009 (S2C); obj_id: the player that pulled. An offer was taken back; sent to both
+// players.
+message TradePullNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9
+    name: "TRADEPULL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the trade slot 0..24
+  uint32 slot = 1 [(flyff.legacy_type) = "u8 i"];
+}
+
+// legacy TRADEPUTGOLD 0x0020 (S2C); obj_id: the player that offered. The penya offer of that player; sent to
+// both players (ref/09a). FIX (PL-062): the TOTAL offered so far (the legacy sent the last amount).
+message TradePutGoldNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x20
+    name: "TRADEPUTGOLD"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the total penya offered by that player
+  uint32 gold = 1 [(flyff.legacy_type) = "u32 dwGold"];
+}
+
+// legacy TRADEOK 0x000A (S2C); obj_id: the player that pressed OK. Sent to both players. No payload.
+message TradeOkNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xA
+    name: "TRADEOK"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy TRADELASTCONFIRM 0x002B (S2C); obj_id: 0 (the legacy header is NULL_ID). Both players pressed OK:
+// the client opens the final confirmation box. Sent to both. No payload.
+message TradeLastConfirm {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x2B
+    name: "TRADELASTCONFIRM"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy TRADELASTCONFIRMOK 0x002C (S2C); obj_id: the player that confirmed. Sent to both players. No
+// payload.
+message TradeLastConfirmOk {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x2C
+    name: "TRADELASTCONFIRMOK"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy TRADECONSENT 0x000C (S2C); obj_id: 0 (the legacy header is NULL_ID). The trade was committed; sent
+// to both. The explicit item and gold deltas (UpdateItem, CreateItem, SetPointParam) precede it (Plan/19
+// section 8.3). No payload.
+message TradeConsent {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xC
+    name: "TRADECONSENT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy TRADECANCEL 0x000B (S2C); obj_id: the player that cancelled (0 for the error form). The trade ended
+// and the reservations were released; sent to both players (ref/09a, Plan/19 sections 8.3-8.4). The error
+// form (a failed commit) has obj_id 0, id_player 0 and mode 0.
+message TradeCancelNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xB
+    name: "TRADECANCEL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the player id of the canceller; 0 in the error form
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32 uidPlayer"];
+  // 0 = cancelled; non-zero = refused (the partner shows TID_DIAG_0002)
+  sint32 mode = 2 [(flyff.legacy_type) = "i32 nMode"];
+}
+
+// legacy PVENDOR_OPEN 0x0042 (S2C); obj_id: the vendor. The shop opened with this title; audience near
+// including self (ref/07c section 5.1, ref/09b section 3.9). The client shows the title balloon above the
+// vendor.
+message PVendorOpenNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x42
+    name: "PVENDOR_OPEN"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the shop title
+  string title = 1 [(flyff.legacy_type) = "str"];
+}
+
+// legacy PVENDOR_CLOSE 0x0043 (S2C); obj_id: the vendor. The shop closed (near, closed = true) or the
+// receiver's browsing window must close (self, closed = false) (ref/07c section 5.2, ref/09b section 3.9).
+message PVendorCloseNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x43
+    name: "PVENDOR_CLOSE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // true (1) = the shop is closed and the title balloon goes; false (0) = only this viewer's window
+  bool closed = 1 [(flyff.legacy_type) = "u8 clearTitle"];
+}
+
+// legacy REGISTER_PVENDOR_ITEM 0x0044 (S2C); obj_id: 0 (self, the seller). The item was put into a shop slot
+// (ref/07c section 5.3).
+message RegisterPVendorItemNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x44
+    name: "REGISTER_PVENDOR_ITEM"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the shop slot
+  uint32 slot = 1 [(flyff.legacy_type) = "u8 iIndex"];
+  // ITYPE_ITEM, 0
+  uint32 item_type = 2 [(flyff.legacy_type) = "u8 nType"];
+  // the inventory object id
+  uint32 obj_id = 3 [(flyff.legacy_type) = "u8 nId"];
+  // the count for sale
+  sint32 num = 4 [(flyff.legacy_type) = "i16 nNum"];
+  // the unit price
+  sint32 cost = 5 [(flyff.legacy_type) = "i32 nCost"];
+}
+
+// legacy UNREGISTER_PVENDOR_ITEM 0x0047 (S2C); obj_id: 0 (self, the seller). A shop slot was cleared (ref/07c
+// section 5.4).
+message UnregisterPVendorItemNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x47
+    name: "UNREGISTER_PVENDOR_ITEM"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the shop slot
+  uint32 slot = 1 [(flyff.legacy_type) = "u8 i"];
+}
+
+// legacy PVENDOR_ITEM 0x0045 (S2C); obj_id: the vendor. The goods of an open shop, the answer of
+// QueryPVendorItem to the requester (ref/07c section 5.5, ref/08 section 12.4, Plan/19 section 9.2). Only
+// registered slots are listed.
+message PVendorItem {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x45
+    name: "PVENDOR_ITEM"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the registered slots in ascending slot order
+  repeated Entry entries = 1 [(flyff.legacy_type) = "u8 n + n x {u8 slot, CItemElem, i32 extra, i32 cost}"];
+  // whether the vendor's chat room is open; true when the vendor has no room
+  bool chatting_state = 2 [(flyff.legacy_type) = "BOOL bChatting"];
+
+  message Entry {
+    uint32 slot = 1 [(flyff.legacy_type) = "u8"];
+    ItemElem item = 2 [(flyff.legacy_type) = "CItemElem::Serialize"];
+    // the count for sale (the reserved count)
+    sint32 count = 3 [(flyff.legacy_type) = "i32 extra"];
+    // the unit price
+    sint32 price = 4 [(flyff.legacy_type) = "i32 cost"];
+  }
+}
+
+// legacy PVENDOR_ITEM_NUM 0x0046 (S2C); obj_id: the vendor. A purchase from the shop; audience: the vendor
+// and its viewers (near) (ref/07c section 5.6, ref/09b section 3.9, Plan/19 section 9.4). The vendor's client
+// prints the sale into the vendor chat window.
+message PVendorItemNum {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x46
+    name: "PVENDOR_ITEM_NUM"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the shop slot
+  uint32 slot = 1 [(flyff.legacy_type) = "u8 nItem"];
+  // the count still for sale (0 = sold out)
+  sint32 remaining = 2 [(flyff.legacy_type) = "i16 nNum"];
+  // the buyer's character name
+  string buyer_name = 3 [(flyff.legacy_type) = "str<=41"];
+}
+
+// legacy CHATTING 0x007B (S2C); obj_id: 0 (self; the legacy header is the receiver). One event of a vendor
+// chat room (ref/07b section 10, ref/09b section 3.9, Plan/19 section 9.3). The legacy `u8 sub` selects the
+// case; the field number is sub + 1 (Plan/11 section 5.2): CHATTING_ENTERMEMBER 0, NEWCHATTING 1,
+// DELETECHATTING 2, REMOVEMEMBER 3, CHATTING 4, CHATTINGROOMSTATE 5. The nested messages drop the CHATTING_
+// prefix.
+message ChattingNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x7B
+    name: "CHATTING"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  oneof sub {
+    // CHATTING_ENTERMEMBER 0: a player joined (sent to the existing members)
+    EnterMember enter_member = 1;
+    // CHATTING_NEWCHATTING 1: the newcomer's member list (all members including itself)
+    NewChatting new_chatting = 2;
+    // CHATTING_DELETECHATTING 2: the room is gone; the receiver's room membership ends
+    DeleteChatting delete_chatting = 3;
+    // CHATTING_REMOVEMEMBER 3: a member left
+    RemoveMember remove_member = 4;
+    // CHATTING_CHATTING 4: a line of text, to every member including the sender
+    Chatting chatting = 5;
+    // CHATTING_CHATTINGROOMSTATE 5: the vendor opened or closed the chat
+    ChattingRoomState chatting_room_state = 6;
+  }
+
+  message Member {
+    uint32 id_player = 1 [(flyff.legacy_type) = "u32"];
+    // at most 63 bytes
+    string name = 2 [(flyff.legacy_type) = "str<=63"];
+  }
+
+  message EnterMember {
+    uint32 id_player = 1 [(flyff.legacy_type) = "u32"];
+    string name = 2 [(flyff.legacy_type) = "str<=63"];
+  }
+
+  message NewChatting {
+    repeated Member members = 1 [(flyff.legacy_type) = "i32 n + n x {u32, str}"];
+  }
+
+  // no payload
+  message DeleteChatting {}
+
+  message RemoveMember {
+    uint32 id_player = 1 [(flyff.legacy_type) = "u32"];
+  }
+
+  message Chatting {
+    // the speaker
+    uint32 id_player = 1 [(flyff.legacy_type) = "u32"];
+    // at most 1023 bytes
+    string text = 2 [(flyff.legacy_type) = "str<=1023"];
+  }
+
+  message ChattingRoomState {
+    // true = the chat is open
+    bool open = 1 [(flyff.legacy_type) = "BOOL"];
+  }
+}

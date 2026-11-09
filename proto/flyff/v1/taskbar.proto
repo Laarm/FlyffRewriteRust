@@ -1,0 +1,143 @@
+// Taskbar messages (Plan/11 section 4.2, WP-PROTO-11; tag block 1008-1039). Transcribed from ref/07a section 13,
+// ref/08 section 12.10, ref/09b section 4.5 and Plan/42. The server stores the shortcuts only for persistence
+// (Plan/13 TaskbarDoc) and never interprets them. Limits (ref/07a section 13): 18 applet slots, 8 item bars of 9
+// slots (the legacy MAX_SLOT_ITEM_COUNT is 8 since __VER >= 11), 5 skill-queue slots.
+//
+// SHORTCUT_* (the `shortcut_type` of a Shortcut): NONE 0, ETC 1, APPLET 2, MOTION 3, SCRIPT 4, ITEM 5, SKILL 6,
+// OBJECT 7, CHAT 8, SKILLFUN 9, EMOTICON 10, LORDSKILL 11. Only a CHAT shortcut carries `Shortcut.text`.
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+import "flyff/v1/mover_types.proto";
+
+// legacy ADDAPPLETTASKBAR 0xFFFFFF0B (C2S): put a shortcut into one slot of the applet bar (ref/07a section
+// 13). index >= 18 is ignored. The server persists it only.
+message AddAppletTaskBar {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF0B
+    name: "ADDAPPLETTASKBAR"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "42";
+  option (flyff.milestone) = "M3";
+  // applet slot 0..17
+  uint32 index = 1 [(flyff.legacy_type) = "u8 nIndex"];
+  // the legacy writes the text string only when shortcut_type == 8 (CHAT); the text is at most 127 bytes
+  Shortcut shortcut = 2 [(flyff.legacy_type) = "SHORTCUT"];
+}
+
+// legacy REMOVEAPPLETTASKBAR 0xFFFFFF0A (C2S): clear one slot of the applet bar. index >= 18 is ignored.
+message RemoveAppletTaskBar {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF0A
+    name: "REMOVEAPPLETTASKBAR"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "42";
+  option (flyff.milestone) = "M3";
+  // applet slot 0..17
+  uint32 index = 1 [(flyff.legacy_type) = "u8 nIndex"];
+}
+
+// legacy ADDITEMTASKBAR 0xFFFFFF0C (C2S): put a shortcut into one slot of one item bar (the F1-F9 bars). bar
+// >= 8 or slot >= 9 is ignored; a tenth CHAT shortcut over all item bars is refused with DefinedText
+// TID_GAME_MAX_SHORTCUT_CHAT (ref/07a section 13).
+message AddItemTaskBar {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF0C
+    name: "ADDITEMTASKBAR"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "42";
+  option (flyff.milestone) = "M3";
+  // item bar 0..7
+  uint32 bar = 1 [(flyff.legacy_type) = "u8 nSlotIndex"];
+  // slot in the bar 0..8
+  uint32 slot = 2 [(flyff.legacy_type) = "u8 nIndex"];
+  // text only for CHAT (8), at most 127 bytes
+  Shortcut shortcut = 3 [(flyff.legacy_type) = "SHORTCUT"];
+}
+
+// legacy REMOVEITEMTASKBAR 0xFFFFFF0D (C2S): clear one slot of one item bar.
+message RemoveItemTaskBar {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF0D
+    name: "REMOVEITEMTASKBAR"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "42";
+  option (flyff.milestone) = "M3";
+  // item bar 0..7
+  uint32 bar = 1 [(flyff.legacy_type) = "u8 nSlotIndex"];
+  // slot in the bar 0..8
+  uint32 slot = 2 [(flyff.legacy_type) = "u8 nIndex"];
+}
+
+// legacy SKILLTASKBAR 0xFFFFFF0E (C2S): the skill queue (action slot) was edited. Slots not listed keep
+// their old value; more than 5 entries are ignored and an entry with slot >= 5 stops the processing (ref/07a
+// section 13). The legacy i32 count is the list length.
+message SkillTaskBar {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF0E
+    name: "SKILLTASKBAR"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "42";
+  option (flyff.milestone) = "M5";
+  repeated TaskBarQueueSlot slots = 1 [
+    (flyff.legacy_type) = "i32 nCount + nCount x {u8 nIndex, SHORTCUT}",
+    (flyff.max_len) = 5
+  ];
+}
+
+// legacy TASKBAR 0x0097 (S2C); obj_id: 0 (self). The saved taskbar of the character
+// (CUserTaskBar::Serialize, ref/08 section 12.10): join batch step, and again after a job change. Only the
+// non-NONE shortcuts are listed; the legacy counts are the list lengths.
+message TaskBar {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x97
+    name: "TASKBAR"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "42";
+  option (flyff.milestone) = "M3";
+  // applet bar (18 slots)
+  repeated TaskBarApplet applets = 1 [(flyff.legacy_type) = "i32 nApplet + nApplet x {i32 slot, SC}"];
+  // item bars (8 x 9 slots)
+  repeated TaskBarItem items = 2 [(flyff.legacy_type) = "i32 nItem + nItem x {i32 bar, i32 slot, SC}"];
+  // skill queue (5 slots)
+  repeated TaskBarQueueSlot queue = 3 [(flyff.legacy_type) = "i32 nQueue + nQueue x {i32 slot, SCnoStr}"];
+  // action points (0..100) of the skill queue
+  sint32 action_point = 4 [(flyff.legacy_type) = "i32"];
+}
+
+// One slot of the skill queue (the action slot) in SkillTaskBar and TaskBar. Never carries a text.
+message TaskBarQueueSlot {
+  // queue slot 0..4
+  uint32 slot = 1 [(flyff.legacy_type) = "u8 nIndex / i32 slot"];
+  Shortcut shortcut = 2 [(flyff.legacy_type) = "SHORTCUT (no string)"];
+}
+
+// One applet-bar slot of TaskBar.
+message TaskBarApplet {
+  // applet slot 0..17
+  uint32 slot = 1 [(flyff.legacy_type) = "i32"];
+  Shortcut shortcut = 2 [(flyff.legacy_type) = "SC"];
+}
+
+// One item-bar slot of TaskBar.
+message TaskBarItem {
+  // item bar 0..7
+  uint32 bar = 1 [(flyff.legacy_type) = "i32"];
+  // slot in the bar 0..8
+  uint32 slot = 2 [(flyff.legacy_type) = "i32"];
+  Shortcut shortcut = 3 [(flyff.legacy_type) = "SC"];
+}

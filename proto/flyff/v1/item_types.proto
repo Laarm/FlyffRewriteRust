@@ -1,0 +1,144 @@
+// Item common types (Plan/11 section 7.2, WP-PROTO-03). Transcribed from ref/08 section 7.7 and
+// ref/13 sections 5.5 and 6.2. No envelope messages live here; feature files import this file.
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+
+// CItemElem::Serialize (ref/08 section 7.7.1, ref/13 section 5.5).
+message ItemElem {
+  // storage index in its container (m_dwObjId); the addressing id in packets
+  uint32 obj_id = 1 [(flyff.legacy_type) = "u32"];
+  // ItemProp id
+  uint32 item_id = 2 [(flyff.legacy_type) = "u32"];
+  // widened: unique u64 serial (D5); legacy u32 SERIALNUMBER
+  uint64 serial = 3 [
+    (flyff.legacy_type) = "u32",
+    (flyff.js_safe_number) = true
+  ];
+  // <= 31 B
+  string item_text = 4 [(flyff.legacy_type) = "str<=31"];
+  // stack count <= 9999
+  sint32 num = 5 [(flyff.legacy_type) = "i16"];
+  // dead feature
+  uint32 repair_number = 6 [(flyff.legacy_type) = "u8"];
+  // durability; reused for gold on the ground, collector battery, sealed player id
+  sint32 hit_point = 7 [(flyff.legacy_type) = "i32"];
+  sint32 repair = 8 [(flyff.legacy_type) = "i32"];
+  // m_byFlag: 0x01 expired, 0x02 binds, 0x04 isusing
+  uint32 flag = 9 [(flyff.legacy_type) = "u8"];
+  // upgrade level (+N)
+  sint32 ability_option = 10 [(flyff.legacy_type) = "i32"];
+  // guild cloak owner
+  uint32 id_guild = 11 [(flyff.legacy_type) = "u32"];
+  // element (SAI79)
+  uint32 item_resist = 12 [(flyff.legacy_type) = "u8"];
+  sint32 resist_ability_option = 13 [(flyff.legacy_type) = "i32"];
+  sint32 resist_sm_item_id = 14 [(flyff.legacy_type) = "i32"];
+  Piercing piercing = 15 [(flyff.legacy_type) = "CPiercing"];
+  // cash item
+  bool charged = 16 [(flyff.legacy_type) = "BOOL"];
+  // packed 64-bit awakening/blessing bits (ref/13 section 5.3). Bit-packed: NO js_safe_number, a bigint in
+  // TypeScript (Plan/11 section 4.3).
+  sint64 random_opt_item_id = 17 [(flyff.legacy_type) = "i64"];
+  // unix seconds, 0 = permanent (legacy keepTime + keepRemain merged)
+  // dropped: keepRemain (the legacy remaining seconds; the client rebases onto its own clock)
+  sint64 keep_time_at = 18 [
+    (flyff.legacy_type) = "u32+i32",
+    (flyff.js_safe_number) = true
+  ];
+  // dropped: hasPet flag (the presence of `pet` replaces it)
+  // present iff legacy hasPet
+  PetData pet = 19 [(flyff.legacy_type) = "u8+CPet"];
+  // __PETVIS
+  bool transform_vis_pet = 20 [(flyff.legacy_type) = "BOOL"];
+}
+
+// CPiercing (ref/08 section 7.7.2).
+message Piercing {
+  // card item ids, at most 10 (suit 4, weapon 10)
+  repeated uint32 card_item_ids = 1 [(flyff.legacy_type) = "i32 n + u32[n]"];
+  // __EXT_PIERCING ultimate gem ids, at most 5
+  repeated uint32 ultimate_gem_ids = 2 [(flyff.legacy_type) = "i32 m + u32[m]"];
+  // __PETVIS vis keep times, at most 9; legacy remaining seconds became unix seconds
+  repeated sint64 vis_expire_at = 3 [
+    (flyff.legacy_type) = "u32 k + i32[k]",
+    (flyff.js_safe_number) = true
+  ];
+}
+
+// CPet (ref/08 section 7.7.5, ref/13 section 5.4).
+message PetData {
+  uint32 kind = 1 [(flyff.legacy_type) = "u8"];
+  // PL_EGG 0, D 1, C 2, B 3, A 4, S 5
+  uint32 level = 2 [(flyff.legacy_type) = "u8"];
+  uint32 exp = 3 [(flyff.legacy_type) = "u32"];
+  uint32 energy = 4 [(flyff.legacy_type) = "u16"];
+  uint32 life = 5 [(flyff.legacy_type) = "u16"];
+  // exactly 6 entries (stat bonus per level, 1..9)
+  repeated uint32 avail_level = 6 [(flyff.legacy_type) = "raw(u8[6])"];
+  // <= 16 B
+  string name = 7 [(flyff.legacy_type) = "str<=16"];
+}
+
+// CItemContainer<CItemElem>::Serialize (ref/08 section 7.7.3, ref/13 section 6.2).
+message ItemContainer {
+  // m_dwItemMax: inventory 199 (168 + 31 equip), bank 42, guild bank 42, pocket 18/42, shop tab 100, trade 25
+  uint32 max = 1 [(flyff.legacy_type) = "implicit"];
+  // apIndex[max]: visible slot -> storage index; -1 is the legacy NULL_ID (Plan/11 section 5.4 redefinition)
+  repeated sint32 index = 2 [(flyff.legacy_type) = "raw(u32[M])"];
+  // non-empty storage entries (legacy u8 count + {u8 objId, CItemElem}); objId equals items[i].obj_id
+  repeated ItemElem items = 3 [(flyff.legacy_type) = "u8 count + {u8, CItemElem}"];
+  // objIndex[max]: storage index -> slot; -1 is the legacy NULL_ID
+  repeated sint32 obj_index = 4 [(flyff.legacy_type) = "raw(u32[M])"];
+}
+
+// CPocket (ref/08 section 7.7.4).
+message PocketSlot {
+  bool exists = 1 [(flyff.legacy_type) = "u8"];
+  ItemContainer items = 2;
+  bool expired = 3 [(flyff.legacy_type) = "BOOL"];
+  // tExpirationDate (unix seconds), 0 = none; the legacy remaining seconds are dropped
+  sint64 expire_at = 4 [
+    (flyff.legacy_type) = "i32",
+    (flyff.js_safe_number) = true
+  ];
+}
+
+// CPocketController: exactly 3 slots (MAX_POCKET).
+message PocketSet {
+  repeated PocketSlot slots = 1;
+}
+
+// EQUIP_INFO (raw, 12 B).
+message EquipInfo {
+  uint32 item_id = 1 [(flyff.legacy_type) = "u32"];
+  // GetAttrOption
+  sint32 option = 2 [(flyff.legacy_type) = "i32"];
+  uint32 flag = 3 [(flyff.legacy_type) = "u8"];
+}
+
+// {u8 part, u16 itemId, u8 flag} of the other-player spawn (ref/08 section 7.5.4); item_id widened from u16.
+message EquipVisual {
+  // PARTS_* index
+  uint32 part = 1 [(flyff.legacy_type) = "u8"];
+  uint32 item_id = 2 [(flyff.legacy_type) = "u16"];
+  // NPC equipment carries no flag (0)
+  uint32 flag = 3 [(flyff.legacy_type) = "u8"];
+}
+
+// CTransformStuff (ref/09b section 7.7).
+message TransformStuff {
+  sint32 transform_id = 1 [(flyff.legacy_type) = "i32"];
+  // the shipped transformer wants exactly 10 distinct eggs; the cap (32) is a sanity bound for the C2S TransformItem
+  repeated TransformStuffItem items = 2 [
+    (flyff.legacy_type) = "u32 n + raw{i32,i16,pad2}[n]",
+    (flyff.max_len) = 32
+  ];
+}
+
+message TransformStuffItem {
+  sint32 item_obj_id = 1 [(flyff.legacy_type) = "i32"];
+  sint32 num = 2 [(flyff.legacy_type) = "i16"];
+}

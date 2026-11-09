@@ -1,0 +1,496 @@
+/* Base styles of the window framework (Plan/42 §4.8). Geometry comes from inline styles (integer UI pixels); this
+   file only holds what is the same for every window. The UI root is transparent to the pointer so that clicks reach
+   the 3-D canvas; only windows (and the modal blocker) take pointer events. */
+.ui-root {
+  position: absolute;
+  left: 0;
+  top: 0;
+  isolation: isolate; /* its own stacking context: the title wallpaper (z-index -1) stays inside the root */
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transform-origin: 0 0;
+}
+
+/* Integer scales above 1 keep skins, sprites and icons crisp (Plan/42 §16); fractional scales smooth them. The
+   inherited property reaches every background sprite; the wallpaper is stretched art and always smooth. */
+.ui-root.ui-pixelated,
+.ui-root.ui-pixelated .wnd-skin {
+  image-rendering: pixelated;
+}
+
+.ui-root.ui-pixelated .ui-backdrop-img {
+  image-rendering: auto;
+}
+
+/* The title wallpaper (Plan/42 §7.7): black clear colour behind everything, the image in its centred box. */
+.ui-backdrop {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: #000;
+  pointer-events: none;
+}
+
+.ui-backdrop-img {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
+.wnd {
+  position: absolute;
+  overflow: hidden; /* every window is clipped to its window rect (the clip rect of PaintRoot) */
+  pointer-events: auto;
+  color: #000;
+  font-family: Verdana, 'Flyff DejaVu Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  font-synthesis: none;
+  font-kerning: none;
+}
+
+.wnd[data-visible='false'] {
+  display: none;
+}
+
+.wnd-skin {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  image-rendering: auto;
+}
+
+.wnd-title {
+  position: absolute;
+  white-space: pre;
+  color: #fff;
+  pointer-events: none;
+}
+
+.wnd-titlebar {
+  position: absolute;
+}
+
+.wnd-tbtn {
+  position: absolute;
+  box-sizing: border-box;
+  background-repeat: no-repeat;
+  cursor: default;
+}
+
+.wnd-tbtn[data-sprite='false'] {
+  border: 1px solid #000;
+  border-radius: 2px;
+  background: linear-gradient(#fff, #969696 40%, #e6e6e6);
+  color: #404040;
+  font-size: 11px;
+  line-height: 17px;
+  text-align: center;
+}
+
+.wnd-tbtn[data-sprite='false'][data-pushed='true'] {
+  color: #ffff64;
+}
+
+.wnd-client {
+  position: absolute;
+}
+
+.ctrl {
+  position: absolute;
+  overflow: hidden; /* a control is clipped to its window rect; an inverted rect (b < t) shows nothing */
+}
+
+.ctrl[data-visible='false'] {
+  display: none;
+}
+
+.wnd-custom {
+  position: absolute;
+}
+
+.wnd-custom canvas {
+  display: block;
+}
+
+.wnd-modal-blocker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: auto;
+}
+
+/* the placeholder look of controls whose kind is not implemented yet (WP-UI-05..07 replace it) */
+.ctrl-generic {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  white-space: pre;
+  font-size: 12px;
+  line-height: 15px;
+}
+
+.ui-dev-outline .ctrl {
+  outline: 1px dashed rgba(255, 0, 255, 0.55);
+}
+
+.wnd-page {
+  position: absolute;
+  overflow: hidden;
+}
+
+.wnd-page[data-visible='false'] {
+  display: none;
+}
+
+/* controls (WP-UI-05..07) */
+
+/* rich text (one block per line); declared BEFORE the absolutely positioned text classes below, which are often
+   put on a `.rt` element too (`.lb-row`, `.tr-text`): the later rule must win */
+.rt {
+  position: relative;
+  white-space: pre;
+}
+
+.rt-line {
+  white-space: pre;
+}
+
+.st,
+.tl,
+.tx,
+.lb,
+.tr,
+.tab,
+.cb,
+.ed,
+.bt,
+.sb,
+.gau {
+  position: relative;
+}
+
+.st-text,
+.tl-item,
+.bt-text,
+.cb-text,
+.tab-caption,
+.tr-text,
+.lb-row {
+  position: absolute;
+  white-space: pre;
+}
+
+.st-picture {
+  position: absolute;
+  inset: 0;
+  border: 1px solid #000;
+  box-sizing: border-box;
+}
+
+.tx-client,
+.lb-client,
+.tr-client {
+  position: absolute;
+  overflow: hidden;
+}
+
+.tx-select {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.bt-sprite,
+.bt-icon,
+.sb-arrow,
+.sb-track,
+.sb-thumb,
+.sb-cap,
+.gau-cap,
+.gau-mid,
+.tab-tile,
+.tr-icon {
+  position: absolute;
+  background-repeat: no-repeat;
+}
+
+.bt-radio,
+.bt-check {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 10px;
+  height: 10px;
+  box-sizing: border-box;
+  border: 1px solid #404040;
+}
+
+.bt-radio {
+  border-radius: 50%;
+}
+
+.bt-radio-dot {
+  position: absolute;
+  inset: 1px;
+  border-radius: 50%;
+}
+
+.bt-face {
+  position: absolute;
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1px rgba(200, 200, 200, 0.6);
+}
+
+.bt-menuitem .bt-icon {
+  left: 0;
+  top: 0;
+}
+
+.bt-tick {
+  position: absolute;
+  left: 2px;
+  top: 2px;
+}
+
+.bt-arrow {
+  position: absolute;
+}
+
+.ed-field {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #000;
+  caret-color: #000;
+  resize: none;
+  overflow: hidden;
+  pointer-events: auto;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.cb-field {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  box-sizing: border-box;
+  border: 1px solid #c8c8c8;
+  clip-path: polygon(
+    1px 0,
+    calc(100% - 1px) 0,
+    100% 1px,
+    100% calc(100% - 1px),
+    calc(100% - 1px) 100%,
+    1px 100%,
+    0 calc(100% - 1px),
+    0 1px
+  );
+}
+
+.cb-text {
+  overflow: hidden;
+}
+
+.tab-caption {
+  pointer-events: none;
+}
+
+/* the tooltip layer (WP-UI-08) sits above every window and the dragged icon */
+.tt-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  z-index: 2147483000;
+}
+
+.tt-frame {
+  position: absolute;
+}
+
+.tt-text {
+  position: absolute;
+  color: #000;
+}
+
+.tt-ultimate {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  background-repeat: no-repeat;
+}
+
+.tt-slot,
+.tt-slot-bg,
+.tt-gem {
+  position: absolute;
+}
+
+.tt-slot-bg,
+.tt-gem {
+  left: 0;
+  top: 0;
+  width: 32px;
+  height: 32px;
+  background-repeat: no-repeat;
+}
+
+/* the drag layer (WP-UI-12): the dragged icon below the tooltips, the forbid icon above them (Neuz.cpp render order) */
+.dnd-icon,
+.dnd-text,
+.dnd-forbid {
+  position: absolute;
+  pointer-events: none;
+  background-repeat: no-repeat;
+}
+
+.dnd-icon,
+.dnd-text {
+  z-index: 2147482000;
+}
+
+.dnd-forbid {
+  z-index: 2147483500;
+}
+
+.dnd-text {
+  white-space: pre;
+  color: #fff;
+}
+
+/* icon cells and the item grid (WP-UI-12) */
+.icon-cell {
+  position: absolute;
+  overflow: visible;
+}
+
+.icon-img {
+  pointer-events: none;
+}
+
+.icon-count {
+  position: absolute;
+  white-space: pre;
+  pointer-events: none;
+}
+
+.ig {
+  position: relative;
+}
+
+.ig-client {
+  position: absolute;
+  overflow: hidden;
+}
+
+/* the paper doll of the inventory (WP-UI-21) */
+.paper {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.paper-icon {
+  pointer-events: none;
+}
+
+.paper-count {
+  position: absolute;
+  white-space: pre;
+  pointer-events: none;
+}
+
+/* the icon strip of the buff icons and the summon pictures (WP-UI-28) */
+.strip {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.strip-entry {
+  position: absolute;
+}
+
+.strip-text {
+  position: absolute;
+  white-space: pre;
+  pointer-events: none;
+}
+
+/* `m_nAlpha` 64..192 in steps of 6 per 60 Hz frame (192 - 64) / 6 = 21.3 frames up, the same down: 0.711 s per cycle */
+@keyframes ui-strip-flash {
+  from {
+    opacity: 0.251;
+  }
+  to {
+    opacity: 0.753;
+  }
+}
+
+.ui-strip-flash {
+  animation: ui-strip-flash 0.356s linear infinite alternate;
+}
+
+/* the weapon stage of the jewel setting window (WP-UI-32): the 3-D weapon of the original as its turning icon */
+.weapon-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  perspective: 420px;
+  pointer-events: none;
+}
+
+.weapon-stage-icon {
+  transform-origin: 50% 50%;
+}
+
+/* `m_fRotate += 2` per 60 Hz frame: 120 degrees per second */
+.weapon-stage-idle {
+  animation: weapon-idle 3s linear infinite;
+}
+
+@keyframes weapon-idle {
+  from {
+    transform: rotateX(0deg);
+  }
+  to {
+    transform: rotateX(360deg);
+  }
+}
+
+@keyframes weapon-spin {
+  from {
+    transform: rotateX(0deg);
+  }
+  to {
+    transform: rotateX(var(--spin-deg, 17000deg));
+  }
+}
+
+/* the pale quad of `m_nAlpha` (18 per frame up to 230) */
+.weapon-stage-flash {
+  position: absolute;
+  inset: 0;
+  background: rgb(240, 255, 255);
+  opacity: 0;
+}
+
+@keyframes weapon-flash {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.9;
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "$defs": {
+    "LoadClass": {
+      "description": "When the client loads a bundle.",
+      "oneOf": [
+        {
+          "const": "boot",
+          "description": "Fetched at boot (the 19 boot-class bundles, about 9.6 MB raw / 1.6 MB gzip).",
+          "type": "string"
+        },
+        {
+          "const": "lazy",
+          "description": "Fetched on first use (`help`, `quests`, `defines`).",
+          "type": "string"
+        }
+      ]
+    },
+    "ManifestEntry": {
+      "description": "One bundle in `manifest.json`.",
+      "properties": {
+        "bytes": {
+          "description": "The size of the uncompressed file.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "gz_bytes": {
+          "description": "The size of the gzip file (level 9).",
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "load": {
+          "$ref": "#/$defs/LoadClass",
+          "description": "Boot or lazy."
+        },
+        "schema": {
+          "description": "The schema version of the bundle.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "url": {
+          "description": "`/data/<bundle>.<h16>.json`.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "url",
+        "schema",
+        "bytes",
+        "gz_bytes",
+        "load"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`cache/data/manifest.json` (14 §10.3).",
+  "properties": {
+    "bundles": {
+      "additionalProperties": {
+        "$ref": "#/$defs/ManifestEntry"
+      },
+      "description": "The bundles by name.",
+      "type": "object"
+    },
+    "data_version": {
+      "description": "`xxh3_64` (16 lower-hex digits) over the sorted `name:h16` lines of the bundles; the client reloads\nwhen it differs from the one it loaded.",
+      "type": "string"
+    },
+    "format": {
+      "description": "[`BUNDLE_FORMAT`].",
+      "format": "uint32",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "server_build": {
+      "description": "`flyff <version> (<commit>)`.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "format",
+    "data_version",
+    "server_build",
+    "bundles"
+  ],
+  "title": "BundleManifest",
+  "type": "object"
+}

@@ -1,0 +1,646 @@
+/* The grant UI (Plan/25 section 5.3): three columns - catalogue (320 px), builder with the live tooltip, basket and recipients. */
+.grant-panel {
+  display: grid;
+  grid-template-columns: 320px minmax(300px, 1fr) 360px;
+  gap: var(--s-3);
+  align-items: start;
+  min-height: 0;
+}
+
+.grant-panel--dialog {
+  height: min(78vh, 780px);
+}
+
+.adm-dialog:has(.grant-panel--dialog) {
+  width: min(100%, 1280px);
+}
+
+.grant-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+  max-height: calc(100vh - 180px);
+  padding: var(--s-3);
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.grant-panel--dialog .grant-col {
+  max-height: 100%;
+  height: 100%;
+}
+
+.grant-side {
+  gap: var(--s-4);
+}
+
+@media (max-width: 1100px) {
+  .grant-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .grant-col,
+  .grant-panel--dialog .grant-col {
+    max-height: none;
+    height: auto;
+  }
+
+  .grant-panel--dialog {
+    height: auto;
+  }
+}
+
+.grant-h {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+h4.grant-h {
+  font-size: var(--fs);
+}
+
+.grant-hint {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.grant-empty {
+  padding: var(--s-4);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.grant-note {
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--radius);
+  background: var(--info-soft);
+  font-size: var(--fs-sm);
+}
+
+.grant-note--warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.grant-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.grant-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.grant-count {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+/* ---- catalogue ---- */
+.grant-search {
+  display: flex;
+}
+
+.grant-facets {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-2);
+}
+
+.grant-facet {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.grant-facet .adm-input {
+  width: 100%;
+}
+
+.grant-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 52px);
+  gap: var(--s-1);
+}
+
+.grant-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.grant-cell {
+  position: relative;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+}
+
+.grant-cell:hover,
+.grant-cell:focus-within {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+
+.grant-cell.is-selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.grant-cell__pick {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  padding: 2px;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.grant-list .grant-cell__pick {
+  padding-right: 28px;
+}
+
+.grant-cell__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.grant-cell__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grant-cell__add {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--accent);
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.grant-list .grant-cell__add {
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+}
+
+.grant-cell:hover .grant-cell__add,
+.grant-cell:focus-within .grant-cell__add,
+.grant-cell__add:focus-visible {
+  opacity: 1;
+}
+
+.grant-icon {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  border-radius: 4px;
+  background: var(--surface-3);
+  image-rendering: auto;
+  object-fit: contain;
+}
+
+.grant-icon--missing,
+.grant-icon--penya {
+  border: 1px dashed var(--border-strong);
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.grant-icon--penya {
+  width: 32px;
+  height: 32px;
+  border-style: solid;
+  color: var(--warn);
+}
+
+/* ---- builder ---- */
+.grant-builder__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.grant-builder__name {
+  margin: 0;
+  font-size: var(--fs-lg);
+}
+
+.grant-builder__badges {
+  margin-left: auto;
+}
+
+.grant-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--s-3);
+}
+
+.grant-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: 0;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.grant-group legend {
+  padding: 0 var(--s-1);
+  font-weight: 600;
+}
+
+.grant-option {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.grant-option > .adm-select {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+.grant-grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-2);
+}
+
+.grant-avail {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.grant-avail__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--fs-sm);
+}
+
+.grant-avail__cell .adm-input {
+  width: 4.5em;
+}
+
+.grant-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: var(--fs-sm);
+}
+
+.grant-chip button {
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.grant-chip--info {
+  background: var(--info-soft);
+}
+
+.grant-issues {
+  margin: 0;
+  padding-left: var(--s-4);
+  font-size: var(--fs-sm);
+}
+
+.grant-issues__error {
+  color: var(--danger);
+}
+
+.grant-issues__warn {
+  color: var(--warn);
+}
+
+.grant-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+/* the game tooltip: the game's own colours (black text, the cream frame of the client) in either console theme */
+.grant-tip-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.grant-tip {
+  position: relative;
+  box-sizing: content-box;
+  padding: 6px;
+  border: 1px solid #a89868;
+  border-radius: 4px;
+  background: #f4eed8;
+  color: #000;
+}
+
+.grant-tip--empty {
+  padding: var(--s-3);
+  border-style: dashed;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.grant-tip__sockets {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.grant-tip__socket {
+  width: 26px;
+  height: 26px;
+  border: 1px solid #8a7b52;
+  border-radius: 4px;
+  background: #d9cfae;
+}
+
+.grant-tip__socket.is-full {
+  background: #6d5bb3;
+}
+
+/* ---- basket, recipients, delivery ---- */
+.grant-basket,
+.grant-recipients,
+.grant-delivery,
+.grant-submit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+/* the send button stays in view while the long side column scrolls */
+.grant-submit {
+  position: sticky;
+  bottom: calc(-1 * var(--s-3));
+  margin: 0 calc(-1 * var(--s-3)) calc(-1 * var(--s-3));
+  padding: var(--s-3);
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.grant-lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.grant-line {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.grant-line.is-editing {
+  outline: 1px solid var(--accent);
+  border-radius: var(--radius);
+}
+
+.grant-line__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.grant-line__count {
+  width: 6em;
+}
+
+.grant-line__gold {
+  width: 9em;
+}
+
+.grant-line__one {
+  width: 6em;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.grant-line__spacer {
+  width: 28px;
+}
+
+.grant-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.grant-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.grant-dot {
+  color: var(--text-muted);
+}
+
+.grant-dot.is-online {
+  color: var(--ok);
+}
+
+.grant-typeahead {
+  position: relative;
+}
+
+.grant-suggest {
+  position: absolute;
+  z-index: 5;
+  top: 100%;
+  right: 0;
+  left: 0;
+  max-height: 260px;
+  margin: 2px 0 0;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+  list-style: none;
+}
+
+.grant-suggest button {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  width: 100%;
+  padding: 6px var(--s-2);
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.grant-suggest button:hover,
+.grant-suggest button:focus-visible {
+  background: var(--accent-soft);
+}
+
+.grant-paste {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.grant-ground {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-2);
+}
+
+.grant-ground > .grant-hint {
+  grid-column: 1 / -1;
+}
+
+.grant-modes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.grant-mode {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+}
+
+.grant-mode.is-disabled {
+  opacity: 0.6;
+}
+
+.grant-reason {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.grant-summary {
+  font-weight: 600;
+}
+
+.grant-report {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.grant-report__line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+}
+
+/* ---- the Items & Economy tabs ---- */
+.items-tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.items-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s-3);
+}
+
+.items-toolbar .adm-field {
+  min-width: 140px;
+}
+
+.items-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--s-3);
+}
+
+.items-card {
+  padding: var(--s-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.items-card h3 {
+  margin: 0 0 var(--s-1);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.items-card__value {
+  font-size: var(--fs-xl);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.items-progress {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--surface-3);
+}
+
+.items-progress > div {
+  height: 100%;
+  background: var(--accent);
+  transition: width var(--ease);
+}
+
+.items-json {
+  min-height: 160px;
+  font-family: var(--mono);
+  font-size: var(--fs-sm);
+}

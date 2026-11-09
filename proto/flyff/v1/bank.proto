@@ -1,0 +1,364 @@
+// Bank messages (Plan/11 section 4.2, WP-PROTO-17; tag block 416-447): the personal bank, its password and the
+// remote bank. Transcribed from ref/07a section 14, ref/08 section 12.5, ref/13 section 16 and Plan/19 section
+// 10.
+//
+// Model: every character owns three bank compartments indexed by the ACCOUNT character slot 0..2 (42 items and
+// a penya balance each); the own compartment is the character's `slot`, the others need an active SM_BANK15 /
+// BANK30 / BANK001 premium mode (`IsCommBank`). The bank password is four characters, default "0000".
+// OpenBankWnd / ConfirmBank / ChangeBankPassReq carry `obj_id` + `item_id` of the INSTANT-BANK item that opened
+// the window (II_SYS_SYS_SCR_CUSTODY, VR-014) or `obj_id = NULL_ID` (0xFFFFFFFF, kept verbatim) for the banker
+// NPC; the answers echo them. FIX (VR-014): the put / get messages need a confirmed bank session.
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+import "flyff/v1/item_types.proto";
+
+// legacy OPENBANKWND 0xFFFFFF40 (C2S): open the bank window (ref/07a section 14.1, Plan/19 section 10.2). FIX
+// (VR-012, VR-014): `obj_id == NULL_ID` needs an MMI_BANKING NPC within range, otherwise the item must be the
+// instant-bank item. Answer: BankWindow.
+message OpenBankWnd {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF40
+    name: "OPENBANKWND"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the instant-bank item (inventory object id) or NULL_ID = the banker NPC (kept verbatim)
+  uint32 obj_id = 1 [(flyff.legacy_type) = "u32 dwId"];
+  // the ItemProp id of that item
+  uint32 item_id = 2 [(flyff.legacy_type) = "u32 dwItemId"];
+}
+
+// legacy CLOSEBANKWND 0xFFFFFF41 (C2S): close the bank window and drop the bank session (ref/07a section
+// 14.4). No payload.
+message CloseBankWnd {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF41
+    name: "CLOSEBANKWND"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy PUTITEMBACK 0xFFFFFF42 (C2S): put an inventory item into a bank compartment (ref/07a section 14.5,
+// Plan/19 section 10.2). Refused for bound, in-use, equipped, event-main, link, guild-cloak and vagrant-ride
+// items; quest items only into the own compartment. Answer: PutItemBank + UpdateItem, or BankIsFull.
+message PutItemBack {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF42
+    name: "PUTITEMBACK"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the bank compartment 0..2 (the account character slot)
+  uint32 slot = 1 [(flyff.legacy_type) = "u8 nSlot"];
+  // the inventory object id
+  uint32 obj_id = 2 [(flyff.legacy_type) = "u8 nId"];
+  // the count (clamped to 1..stack)
+  sint32 num = 3 [(flyff.legacy_type) = "i16 nItemNum"];
+}
+
+// legacy GETITEMBACK 0xFFFFFF44 (C2S): take an item from a bank compartment into the inventory (ref/07a
+// section 14.6, Plan/19 section 10.2); the bag needs one free slot even when the item would stack. Answer:
+// GetItemBank + UpdateBankItem, or BankIsFull.
+message GetItemBack {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF44
+    name: "GETITEMBACK"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the bank compartment 0..2
+  uint32 slot = 1 [(flyff.legacy_type) = "u8 nSlot"];
+  // the object id of the item inside the compartment
+  uint32 obj_id = 2 [(flyff.legacy_type) = "u8 nId"];
+  // the count (clamped to 1..stack)
+  sint32 num = 3 [(flyff.legacy_type) = "i16 nItemNum"];
+}
+
+// legacy PUTGOLDBACK 0xFFFFFF43 (C2S): move penya from the wallet into a compartment (ref/07a section 14.7,
+// Plan/19 section 10.2). Answer: PutGoldBank.
+message PutGoldBack {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF43
+    name: "PUTGOLDBACK"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the bank compartment 0..2
+  uint32 slot = 1 [(flyff.legacy_type) = "u8 nSlot"];
+  // the penya; read as i32 it must be > 0 (clamped to the wallet)
+  uint32 gold = 2 [(flyff.legacy_type) = "u32 dwGold"];
+}
+
+// legacy GETGOLDBACK 0xFFFFFF45 (C2S): move penya from a compartment into the wallet (ref/07a section 14.8,
+// Plan/19 section 10.2). Answer: PutGoldBank.
+message GetGoldBack {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF45
+    name: "GETGOLDBACK"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the bank compartment 0..2
+  uint32 slot = 1 [(flyff.legacy_type) = "u8 nSlot"];
+  // the penya; read as i32 it must be > 0 (clamped to the balance)
+  uint32 gold = 2 [(flyff.legacy_type) = "u32 dwGold"];
+}
+
+// legacy PUTBACKTOBANK 0xFFFFFF49 (C2S): move an item or penya between two compartments (ref/07a section
+// 14.9, Plan/19 section 10.2). Needs the remote-bank premium mode and both compartments occupied. The legacy
+// payload continues with `u8 nId, i16 nItemNum` when `flag == 1` and with `u32 dwGold` otherwise; both tails
+// are fields here and the one that does not apply stays 0. (ref/09b section 4.1 swaps the two slot names; the
+// server code and ref/07a are authoritative: the FIRST slot is the source.)
+message PutBackToBank {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF49
+    name: "PUTBACKTOBANK"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // 1 = move an item (obj_id, num), 0 = move penya (gold)
+  uint32 flag = 1 [(flyff.legacy_type) = "u8 nFlag"];
+  // the source compartment 0..2
+  uint32 src_slot = 2 [(flyff.legacy_type) = "u8 nPutSlot"];
+  // the destination compartment 0..2
+  uint32 dst_slot = 3 [(flyff.legacy_type) = "u8 nSlot"];
+  // flag == 1: the object id of the item inside the source compartment
+  uint32 obj_id = 4 [(flyff.legacy_type) = "u8 nId"];
+  // flag == 1: the count
+  sint32 num = 5 [(flyff.legacy_type) = "i16 nItemNum"];
+  // flag == 0: the penya
+  uint32 gold = 6 [(flyff.legacy_type) = "u32 dwGold"];
+}
+
+// legacy CHANGEBANKPASS 0xFFFFFF47 (C2S): change the bank password (ref/07a section 14.3, Plan/19 section
+// 10.2). Both strings are at most 4 characters on the server; FIX: the new one must be four ASCII digits; the
+// failure lock of PL-061 applies to the old one. Answer: ChangeBankPassNtf.
+message ChangeBankPassReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF47
+    name: "CHANGEBANKPASS"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the current password
+  string old_pass = 1 [
+    (flyff.legacy_type) = "str<=9 szOldPass",
+    (flyff.max_len) = 9
+  ];
+  // the new password
+  string new_pass = 2 [
+    (flyff.legacy_type) = "str<=9 szNewPass",
+    (flyff.max_len) = 9
+  ];
+  // the instant-bank item or NULL_ID (echoed)
+  uint32 obj_id = 3 [(flyff.legacy_type) = "u32 dwId"];
+  // the ItemProp id of that item (echoed)
+  uint32 item_id = 4 [(flyff.legacy_type) = "u32 dwItemId"];
+}
+
+// legacy CONFIRMBANK 0xFFFFFF48 (C2S): enter the bank password (ref/07a section 14.2, Plan/19 section 10.2).
+// VR-015 / PL-061: repeated wrong passwords lock the bank for a while. Correct: an instant-bank item is
+// consumed and the session is confirmed. Answer: ConfirmBankPass.
+message ConfirmBank {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF48
+    name: "CONFIRMBANK"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the password
+  string pass = 1 [
+    (flyff.legacy_type) = "str<=9",
+    (flyff.max_len) = 9
+  ];
+  // the instant-bank item or NULL_ID (echoed)
+  uint32 obj_id = 2 [(flyff.legacy_type) = "u32 dwId"];
+  // the ItemProp id of that item (echoed)
+  uint32 item_id = 3 [(flyff.legacy_type) = "u32 dwItemId"];
+}
+
+// legacy PUTITEMBANK 0x0050 (S2C); obj_id: 0 (self). An item was added to a compartment (ref/07a section
+// 14.5, ref/08 section 12.5). `item.num` is the count that was put. Boxed in ServerMsg (an ItemElem is 248
+// B).
+message PutItemBank {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x50
+    name: "PUTITEMBANK"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the bank compartment 0..2
+  uint32 slot = 1 [(flyff.legacy_type) = "u8 nSlot"];
+  // the item as stored in the compartment
+  ItemElem item = 2 [(flyff.legacy_type) = "CItemElem::Serialize"];
+}
+
+// legacy GETITEMBANK 0x0051 (S2C); obj_id: 0 (self). An item left a compartment for the inventory (ref/07a
+// section 14.6, ref/08 section 12.5); the inventory side arrives as CreateItem and the compartment side as
+// UpdateBankItem. Boxed in ServerMsg.
+message GetItemBank {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x51
+    name: "GETITEMBANK"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the item taken, with the count taken
+  ItemElem item = 1 [(flyff.legacy_type) = "CItemElem::Serialize"];
+}
+
+// legacy PUTGOLDBANK 0x0052 (S2C); obj_id: 0 (self). The wallet and one compartment balance after a gold move
+// (ref/07a sections 14.7-14.9, ref/08 section 12.5). A bank-to-bank gold move sends one message per
+// compartment.
+message PutGoldBank {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x52
+    name: "PUTGOLDBANK"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the bank compartment 0..2
+  uint32 slot = 1 [(flyff.legacy_type) = "u8 nSlot"];
+  // the wallet after the move
+  uint32 gold = 2 [(flyff.legacy_type) = "u32 dwGold"];
+  // the compartment balance after the move
+  uint32 bank_gold = 3 [(flyff.legacy_type) = "u32 dwGoldBank"];
+}
+
+// legacy MOVEBANKITEM 0x0053 (S2C); obj_id: 0 (self). Swap two positions inside a compartment (ref/08 section
+// 12.5). Defined but never emitted: the C2S request is dropped (Plan/19 section 10.2).
+message MoveBankItem {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x53
+    name: "MOVEBANKITEM"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the source position
+  uint32 src = 1 [(flyff.legacy_type) = "u8 nSrcIndex"];
+  // the destination position
+  uint32 dst = 2 [(flyff.legacy_type) = "u8 nDestIndex"];
+}
+
+// legacy CHANGEBANKPASS 0x0057 (S2C); obj_id: 0 (self). The answer of ChangeBankPassReq (ref/07a section
+// 14.3, ref/08 section 12.5).
+message ChangeBankPassNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x57
+    name: "CHANGEBANKPASS"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // true = the password was changed (legacy 1), false = refused (legacy 0)
+  bool ok = 1 [(flyff.legacy_type) = "i32 nMode"];
+  // echoed from the request
+  uint32 obj_id = 2 [(flyff.legacy_type) = "u32 dwId"];
+  // echoed from the request
+  uint32 item_id = 3 [(flyff.legacy_type) = "u32 dwItemId"];
+}
+
+// legacy CONFIRMBANKPASS 0x0058 (S2C); obj_id: 0 (self). The answer of ConfirmBank (ref/07a section 14.2,
+// ref/08 section 12.5, Plan/19 section 10.2).
+message ConfirmBankPass {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x58
+    name: "CONFIRMBANKPASS"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // true = the password is right and the bank session is confirmed (legacy 1), false = wrong or locked
+  // (legacy 0)
+  bool ok = 1 [(flyff.legacy_type) = "i32 nMode"];
+  // echoed from the request
+  uint32 obj_id = 2 [(flyff.legacy_type) = "u32 dwId"];
+  // echoed from the request
+  uint32 item_id = 3 [(flyff.legacy_type) = "u32 dwItemId"];
+}
+
+// legacy UPDATE_BANKITEM 0x0054 (S2C); obj_id: 0 (self). One property of an item inside a compartment
+// changed, in practice its count (UI_NUM); 0 removes the item (ref/07a section 14.6, ref/08 section 12.5).
+// The UI_* values are those of UpdateItem (inventory.proto).
+message UpdateBankItem {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x54
+    name: "UPDATE_BANKITEM"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the bank compartment 0..2
+  uint32 slot = 1 [(flyff.legacy_type) = "u8 nSlot"];
+  // the object id of the item inside the compartment
+  uint32 obj_id = 2 [(flyff.legacy_type) = "u8 nId"];
+  // UI_NUM 0 (the only value sent)
+  sint32 param = 3 [(flyff.legacy_type) = "i8 cParam"];
+  // the new value (the remaining count)
+  uint32 value = 4 [(flyff.legacy_type) = "u32 dwValue"];
+}
+
+// legacy BANKISFULL 0x0055 (S2C); obj_id: 0 (self). The compartment (or, for a take, the bag) has no room
+// (ref/07a sections 14.5-14.6). No payload.
+message BankIsFull {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x55
+    name: "BANKISFULL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy BANKWINDOW 0x0056 (S2C); obj_id: 0 (self). Open the bank window on the client; the answer of
+// OpenBankWnd (ref/07a section 14.1, ref/08 section 12.5, Plan/19 section 10.2).
+message BankWindow {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x56
+    name: "BANKWINDOW"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // 0 = the password is still "0000": ask for a new one; 1 = ask for the password
+  sint32 mode = 1 [(flyff.legacy_type) = "i32 nMode"];
+  // echoed from the request
+  uint32 obj_id = 2 [(flyff.legacy_type) = "u32 dwId"];
+  // echoed from the request
+  uint32 item_id = 3 [(flyff.legacy_type) = "u32 dwItemId"];
+}

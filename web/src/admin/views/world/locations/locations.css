@@ -1,0 +1,242 @@
+/* The quick-locations panel and the Locations editor (Plan/25 section 3.13, 7.4). */
+.loc {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.loc__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: 0 var(--s-2) var(--s-2);
+  overflow: auto;
+}
+
+.loc[data-rail='true'] .loc__body {
+  align-items: stretch;
+  padding: 0 var(--s-1) var(--s-2);
+}
+
+.loc__h {
+  margin: var(--s-1) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.loc__hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.loc__list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.loc__group {
+  display: grid;
+  gap: 2px;
+}
+
+.loc__group > summary {
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.loc__group-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  width: 100%;
+  padding: 3px var(--s-1);
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.loc__group-head:hover,
+.loc__group-head:focus-visible {
+  background: var(--accent-soft);
+}
+
+.loc__group-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loc__count {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.loc__live {
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.loc-item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  width: 100%;
+  padding: 4px var(--s-2);
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.loc-item:hover,
+.loc-item:focus-visible {
+  background: var(--accent-soft);
+}
+
+.loc-item--rail {
+  justify-content: center;
+  padding: 4px 0;
+  font-size: var(--fs-sm);
+}
+
+.loc-item__key {
+  flex: none;
+  min-width: 14px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.loc-item__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loc-item__mark {
+  color: var(--accent);
+  font-size: 8px;
+}
+
+.loc-thumb {
+  position: fixed;
+  z-index: 40;
+  width: 176px;
+  padding: 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+  pointer-events: none;
+}
+
+.loc-thumb img {
+  display: block;
+  width: 160px;
+  height: auto;
+  border-radius: 3px;
+}
+
+.loc-thumb__cap {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.loc__error {
+  display: grid;
+  gap: var(--s-1);
+}
+
+/* the editor tab and the forms */
+.loc-editor {
+  display: grid;
+  gap: var(--s-3);
+}
+
+.loc-editor__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.loc-editor__bar .adm-input {
+  max-width: 260px;
+}
+
+.loc-form__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-2);
+}
+
+.loc-picker {
+  display: grid;
+  gap: var(--s-1);
+  justify-items: start;
+}
+
+.loc-picker__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.loc-row-actions {
+  display: flex;
+  gap: var(--s-1);
+}
+
+.loc-editor__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--s-3);
+}
+
+.loc-editor__body:not(:has(.loc-preview)) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.loc-preview {
+  display: grid;
+  gap: var(--s-2);
+  width: 240px;
+  padding: var(--s-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.loc-preview h4 {
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .loc-editor__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

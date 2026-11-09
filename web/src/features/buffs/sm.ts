@@ -1,0 +1,103 @@
+// The state-mode items (`SM_*` of `_Network/CmnHdr.h`, `ADDSMMODE::dwSMItemID`): the kinds the server reports with `SmMode` /
+// `SmModeAll`, the premium item behind each and the helpers the strip and the duration list need.
+
+import {
+  II_CHR_FOO_COO_BULLHAMS,
+  II_CHR_FOO_COO_GRILLEDEEL,
+  II_CHR_POT_DRI_VITALX,
+  II_CHR_REF_REF_HOLD,
+  II_CHR_SYS_SCR_ACTIVITION,
+  II_CHR_SYS_SCR_COMMBANK001,
+  II_CHR_SYS_SCR_COMMBANK15,
+  II_CHR_SYS_SCR_COMMBANK30,
+  II_CHR_SYS_SCR_ESCAPEBLINKWING,
+  II_CHR_SYS_SCR_PSKILLFULL1,
+  II_CHR_SYS_SCR_PSKILLFULL15,
+  II_CHR_SYS_SCR_PSKILLFULL30,
+  II_CHR_SYS_SCR_SHOUTFULL001,
+  II_CHR_SYS_SCR_SHOUTFULL15,
+  II_CHR_SYS_SCR_SHOUTFULL30,
+  II_CHR_SYS_SCR_UPCUTSTONE,
+  II_CHR_SYS_SCR_UPCUTSTONE01,
+  II_SYS_SYS_SCR_BLESSING,
+  II_SYS_SYS_SCR_VELOCIJUMP,
+  II_SYS_SYS_VIR_PENALTYDEX,
+  II_SYS_SYS_VIR_PENALTYINT,
+  II_SYS_SYS_VIR_PENALTYSTA,
+  II_SYS_SYS_VIR_PENALTYSTR,
+} from '../../gen/defs/item';
+
+/** The kinds of the `SM_*` enum, in order. */
+export const SM = {
+  BANK15: 0,
+  BANK30: 1,
+  PARTYSKILL15: 2,
+  PARTYSKILL30: 3,
+  SHOUT15: 4,
+  SHOUT30: 5,
+  MAINTAIN_MP: 6,
+  MAINTAIN_FP: 7,
+  MAX_HP: 8,
+  MAX_HP50: 9,
+  ACTPOINT: 10,
+  STR_DOWN: 11,
+  STA_DOWN: 12,
+  DEX_DOWN: 13,
+  INT_DOWN: 14,
+  ATTACK_UP: 15,
+  RESIST_ATTACK_LEFT: 16,
+  RESIST_ATTACK_RIGHT: 17,
+  RESIST_DEFENSE: 18,
+  ESCAPE: 19,
+  REVIVAL: 20,
+  VELOCIJUMP: 21,
+  PARTYSKILL1: 22,
+  ATTACK_UP1: 23,
+  SHOUT001: 24,
+  BANK001: 25,
+} as const;
+export const SM_MAX = 26;
+
+/** `ADDSMMODE::dwSMItemID` (0 = the resist kinds, whose item depends on the element). */
+export const SM_ITEM_ID: readonly number[] = [
+  II_CHR_SYS_SCR_COMMBANK15,
+  II_CHR_SYS_SCR_COMMBANK30,
+  II_CHR_SYS_SCR_PSKILLFULL15,
+  II_CHR_SYS_SCR_PSKILLFULL30,
+  II_CHR_SYS_SCR_SHOUTFULL15,
+  II_CHR_SYS_SCR_SHOUTFULL30,
+  II_CHR_REF_REF_HOLD,
+  II_CHR_POT_DRI_VITALX,
+  II_CHR_FOO_COO_BULLHAMS,
+  II_CHR_FOO_COO_GRILLEDEEL,
+  II_CHR_SYS_SCR_ACTIVITION,
+  II_SYS_SYS_VIR_PENALTYSTR,
+  II_SYS_SYS_VIR_PENALTYSTA,
+  II_SYS_SYS_VIR_PENALTYDEX,
+  II_SYS_SYS_VIR_PENALTYINT,
+  II_CHR_SYS_SCR_UPCUTSTONE,
+  0,
+  0,
+  0,
+  II_CHR_SYS_SCR_ESCAPEBLINKWING,
+  II_SYS_SYS_SCR_BLESSING,
+  II_SYS_SYS_SCR_VELOCIJUMP,
+  II_CHR_SYS_SCR_PSKILLFULL1,
+  II_CHR_SYS_SCR_UPCUTSTONE01,
+  II_CHR_SYS_SCR_SHOUTFULL001,
+  II_CHR_SYS_SCR_COMMBANK001,
+];
+
+/** The element resist kinds: their pictures follow the chosen element (not drawn here). */
+export function isResistKind(kind: number): boolean {
+  return (
+    kind === SM.RESIST_ATTACK_LEFT || kind === SM.RESIST_ATTACK_RIGHT || kind === SM.RESIST_DEFENSE
+  );
+}
+
+/** The penalty kinds always show (`STR / STA / DEX / INT` down). */
+export function isPenaltyKind(kind: number): boolean {
+  return (
+    kind === SM.STR_DOWN || kind === SM.STA_DOWN || kind === SM.DEX_DOWN || kind === SM.INT_DOWN
+  );
+}

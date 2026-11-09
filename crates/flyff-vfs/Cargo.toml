@@ -1,0 +1,19 @@
+[package]
+name = "flyff-vfs"
+description = "Case-insensitive virtual file system over Resource/ + overrides/ (Plan/14 §2; tier N)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+flyff-common = { workspace = true }
+thiserror = { workspace = true }
+encoding_rs = { workspace = true }
+walkdir = { workspace = true }
+xxhash-rust = { workspace = true }
+

@@ -1,0 +1,47 @@
+{
+  "$defs": {
+    "MusicBundle": {
+      "description": "`music`: `BGM_` id to `music/<file>` (a canonical path), `null` = the file is missing; ids absent from\n`default.bgm` are absent.",
+      "properties": {
+        "music": {
+          "additionalProperties": false,
+          "description": "id to file.",
+          "patternProperties": {
+            "^\\d+$": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "music"
+      ],
+      "title": "MusicBundle",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`music.<h16>.json`: the envelope of the `music` bundle (schema version 1).",
+  "properties": {
+    "bundle": {
+      "const": "music"
+    },
+    "data": {
+      "$ref": "#/$defs/MusicBundle"
+    },
+    "schema": {
+      "const": 1
+    }
+  },
+  "required": [
+    "bundle",
+    "schema",
+    "data"
+  ],
+  "title": "MusicBundleEnvelope",
+  "type": "object"
+}

@@ -1,0 +1,176 @@
+{
+  "$defs": {
+    "AppletRow": {
+      "description": "One window layout.",
+      "properties": {
+        "controls": {
+          "description": "The controls in paint order.",
+          "items": {
+            "$ref": "#/$defs/ControlRow"
+          },
+          "type": "array"
+        },
+        "h": {
+          "description": "Initial height including the frame.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "help": {
+          "description": "The help key (non-empty adds the `?` button).",
+          "type": "string"
+        },
+        "id": {
+          "description": "The define value.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "description": "`APP_*` name.",
+          "type": "string"
+        },
+        "style": {
+          "description": "`WBS_*` bits.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "texture": {
+          "description": "A bare file name under `theme/`.",
+          "type": "string"
+        },
+        "tile": {
+          "description": "12-tile skin versus single image.",
+          "type": "boolean"
+        },
+        "title": {
+          "description": "The window title.",
+          "type": "string"
+        },
+        "w": {
+          "description": "Initial width including the frame.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name",
+        "id",
+        "texture",
+        "tile",
+        "w",
+        "h",
+        "style",
+        "title",
+        "help",
+        "controls"
+      ],
+      "type": "object"
+    },
+    "ControlRow": {
+      "description": "One control of an applet (14 §10.5; `visible`, `disabled` and `tab_stop` are dropped).",
+      "properties": {
+        "caption": {
+          "description": "Caption.",
+          "type": "string"
+        },
+        "group": {
+          "description": "Starts a radio group.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The define value, -1 for the four unknown names.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "name": {
+          "description": "`WIDC_*` name as written.",
+          "type": "string"
+        },
+        "rect": {
+          "description": "`[left, top, right, bottom]` relative to the parent client area.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "type": "array"
+        },
+        "style": {
+          "description": "Style bits.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "texture": {
+          "description": "A bare file name under `theme/` (42), may be empty.",
+          "type": "string"
+        },
+        "tile": {
+          "description": "9-tile skin versus single image.",
+          "type": "boolean"
+        },
+        "tooltip": {
+          "description": "Tooltip.",
+          "type": "string"
+        },
+        "type": {
+          "description": "`WTYPE_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "type",
+        "name",
+        "id",
+        "texture",
+        "tile",
+        "rect",
+        "style",
+        "group",
+        "caption",
+        "tooltip"
+      ],
+      "type": "object"
+    },
+    "ResdataBundle": {
+      "description": "`resdata-layouts`: 365 applets with 2,809 controls.",
+      "properties": {
+        "applets": {
+          "description": "The applets in file order.",
+          "items": {
+            "$ref": "#/$defs/AppletRow"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "applets"
+      ],
+      "title": "ResdataBundle",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`resdata-layouts.<h16>.json`: the envelope of the `resdata-layouts` bundle (schema version 1).",
+  "properties": {
+    "bundle": {
+      "const": "resdata-layouts"
+    },
+    "data": {
+      "$ref": "#/$defs/ResdataBundle"
+    },
+    "schema": {
+      "const": 1
+    }
+  },
+  "required": [
+    "bundle",
+    "schema",
+    "data"
+  ],
+  "title": "ResdataBundleEnvelope",
+  "type": "object"
+}

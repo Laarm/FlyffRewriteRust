@@ -1,0 +1,626 @@
+// Event messages (Plan/11 section 4.2, WP-PROTO-25; tag block 848-879): Event.lua descriptions, event flags, game rates,
+// attendance and coupon, the mini-games, the quiz event and the rainbow race. Transcribed from ref/08 sections 14 and
+// 15.3, ref/07c sections 7, 23 and 27, ref/09b sections 3.15, 3.16 and 7.10 and Plan/22. The helper types are
+// RainbowRace (CRainbowRace), MiniGamePacket and MiniGameExtPacket (__MINIGAME_PACKET, __MINIGAME_EXT_PACKET).
+// Mini-game result codes: KAWIBAWIBO WIN 0, LOST 1, DRAW 2, FAILED 3, GETITEM 4; ALPHABET NOTENOUGH_MONEY 998,
+// FAILED 999; FIVESYSTEM BETOK 996, FAILED 997, OVERMAX 998, NOTENOUGH 999, a rolled face 0..5 otherwise. Rainbow
+// race mini-game states: NONE 0, OPENWND 1, TRUE 2, FALSE 3, FINISH 4, FAIL 5; game bits: GAWIBAWIBO 1, DICEPLAY 2,
+// ARITHMATIC 4, STOPWATCH 8, TYPING 16, PAIRGAME 32, LADDER 64. Quiz states: CLOSE 0, OPEN 1, CLOSE_WAIT 2,
+// WATCHINGZONE_OPEN 3, QUESTION 4, CORRECT_ANSWER 5, DROP_OUT 6, WINNER 7. Every C2S message acts for the session
+// character (VR-001).
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+
+// __MINIGAME_PACKET (ref/07c section 23, ref/09b section 7.10): the base packet of a rainbow race mini-game.
+message MiniGamePacket {
+  // bit of the mini-game this packet belongs to
+  uint32 now_game = 1 [(flyff.legacy_type) = "u16 wNowGame"];
+  // NONE 0, OPENWND 1, TRUE 2, FALSE 3, FINISH 4, FAIL 5
+  sint32 state = 2 [(flyff.legacy_type) = "i32 nState"];
+  sint32 param1 = 3 [(flyff.legacy_type) = "i32 nParam1"];
+  sint32 param2 = 4 [(flyff.legacy_type) = "i32 nParam2"];
+}
+
+// __MINIGAME_EXT_PACKET (ref/07c section 23, ref/09b section 7.10): the base packet plus a list of texts
+// (questions, typing words).
+message MiniGameExtPacket {
+  // the base packet
+  MiniGamePacket packet = 1 [(flyff.legacy_type) = "__MINIGAME_PACKET"];
+  // dropped: n (u32, the list length)
+  // the texts
+  repeated string data = 2 [(flyff.legacy_type) = "n x str<=255"];
+}
+
+// CRainbowRace::Serialize (ref/09b section 7.10): the running state of the rainbow race for one racer.
+message RainbowRace {
+  // bit of the current mini-game
+  uint32 now_game = 1 [(flyff.legacy_type) = "u16 nowGameBit"];
+  // bits of the finished mini-games
+  uint32 completed_mask = 2 [(flyff.legacy_type) = "u16 completedMask"];
+  // milliseconds left, 0 = no timer
+  uint32 remain_ms = 3 [(flyff.legacy_type) = "u32 remainMs"];
+}
+
+// legacy KAWIBAWIBO_START 0xF000F100 (C2S): play a round of rock-paper-scissors (ref/07c section 7, Plan/22).
+// Needs the coupon item unless the last round was a draw or a win. No payload. Answer: MiniGame
+// (kawibawibo_result).
+message KawibawiboStart {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F100
+    name: "KAWIBAWIBO_START"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy KAWIBAWIBO_GETITEM 0xF000F101 (C2S): take the prize of the current win streak (ref/07c section 7,
+// Plan/22). No payload. Answer: MiniGame (kawibawibo_result, GETITEM).
+message KawibawiboGetItem {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F101
+    name: "KAWIBAWIBO_GETITEM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy REASSEMBLE_START 0xF000F102 (C2S): hand in the nine puzzle cards (ref/07c section 7, Plan/22).
+// Answer: MiniGame (reassemble_result).
+message ReassembleStart {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F102
+    name: "REASSEMBLE_START"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // exactly 9 inventory object ids; the item ids must match the card list in order
+  repeated uint32 item_obj_ids = 1 [
+    (flyff.legacy_type) = "9 x OBJID",
+    (flyff.max_len) = 9
+  ];
+}
+
+// legacy REASSEMBLE_OPENWND 0xF000F103 (C2S): open the puzzle window (ref/07c section 7, Plan/22). No payload.
+// Answer: MiniGame (reassemble_open_wnd).
+message ReassembleOpenWnd {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F103
+    name: "REASSEMBLE_OPENWND"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy ALPHABET_OPENWND 0xF000F104 (C2S): open the find-the-word window (ref/07c section 7, Plan/22). No
+// payload. Answer: MiniGame (alphabet_open_wnd).
+message AlphabetOpenWnd {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F104
+    name: "ALPHABET_OPENWND"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy ALPHABET_START 0xF000F105 (C2S): hand in the five letter cards (ref/07c section 7, Plan/22). Answer:
+// MiniGame (alphabet_result).
+message AlphabetStart {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F105
+    name: "ALPHABET_START"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  sint32 question_id = 1 [(flyff.legacy_type) = "i32 nQuestionID"];
+  // exactly 5 inventory object ids of letter cards
+  repeated uint32 item_obj_ids = 2 [
+    (flyff.legacy_type) = "5 x OBJID",
+    (flyff.max_len) = 5
+  ];
+}
+
+// legacy FIVESYSTEM_OPENWND 0xF000F106 (C2S): open the dice window and clear the stakes (ref/07c section 7,
+// Plan/22). No payload. Answer: MiniGame (five_system_open_wnd).
+message FiveSystemOpenWnd {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F106
+    name: "FIVESYSTEM_OPENWND"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy FIVESYSTEM_DESTROYWND 0xF000F107 (C2S): close the dice window and refund every stake (ref/07c section
+// 7, Plan/22). No payload.
+message FiveSystemDestroyWnd {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F107
+    name: "FIVESYSTEM_DESTROYWND"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy FIVESYSTEM_BET 0xF000F108 (C2S): change the stake on one face (ref/07c section 7, Plan/22). A face
+// outside 0..5 is refused (FIX). Answer: MiniGame (five_system_result, BETOK or an error).
+message FiveSystemBet {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F108
+    name: "FIVESYSTEM_BET"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // the face, 0..5
+  sint32 bet_num = 1 [(flyff.legacy_type) = "i32 nBetNum"];
+  // the new stake in penya, 0 or within the limits
+  sint32 bet_penya = 2 [(flyff.legacy_type) = "i32 nBetPenya"];
+}
+
+// legacy FIVESYSTEM_START 0xF000F109 (C2S): roll the dice (ref/07c section 7, Plan/22). No payload. Answer:
+// MiniGame (five_system_result).
+message FiveSystemStart {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F109
+    name: "FIVESYSTEM_START"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy QUIZ_ENTRANCE 0xFF000003 (C2S): enter the quiz event (ref/07c section 27, Plan/22). No payload.
+// Answer: QuizState and a teleport.
+message QuizEntrance {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF000003
+    name: "QUIZ_ENTRANCE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy QUIZ_TELEPORT 0xFF000004 (C2S): move to a zone of the quiz world (ref/07c section 27, Plan/22).
+message QuizTeleport {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF000004
+    name: "QUIZ_TELEPORT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // 100 the quiz zone, 101..104 the answer zones (OX only 101 and 102), 105 the watch zone, 106 the exit (22 section 15.2)
+  sint32 zone = 1 [(flyff.legacy_type) = "i32 nZone"];
+}
+
+// legacy RAINBOWRACE_PREVRANKING_OPENWND 0x70002000 (C2S): open the previous ranking (ref/07c section 23,
+// Plan/22). No payload. Answer: RainbowRacePrevRankingOpenWndNtf.
+message RainbowRacePrevRankingOpenWndReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x70002000
+    name: "RAINBOWRACE_PREVRANKING_OPENWND"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy RAINBOWRACE_APPLICATION_OPENWND 0x70002001 (C2S): open the application window (ref/07c section 23,
+// Plan/22). No payload. Answer: RainbowRaceApplicationOpenWndNtf.
+message RainbowRaceApplicationOpenWndReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x70002001
+    name: "RAINBOWRACE_APPLICATION_OPENWND"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy RAINBOWRACE_APPLICATION 0x70002002 (C2S): apply for the race and pay the fee (ref/07c section 23,
+// Plan/22). No payload.
+message RainbowRaceApplication {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x70002002
+    name: "RAINBOWRACE_APPLICATION"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy RAINBOWRACE_MINIGAME_PACKET 0x70002003 (C2S): a move in the racer's current mini-game (ref/07c
+// section 23, Plan/22). The legacy `BOOL bExt` selects the plain or the extended packet.
+message RainbowRaceMiniGamePacket {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x70002003
+    name: "RAINBOWRACE_MINIGAME_PACKET"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // true = the packet carries the texts
+  bool ext = 1 [(flyff.legacy_type) = "BOOL bExt"];
+  // the base packet
+  MiniGamePacket packet = 2 [(flyff.legacy_type) = "__MINIGAME_PACKET"];
+  // dropped: n (u32, the list length; iff bExt)
+  // the texts, for example the typed words
+  repeated string data = 3 [
+    (flyff.legacy_type) = "n x str<=255 (iff bExt)",
+    (flyff.max_len) = 32
+  ];
+}
+
+// legacy RAINBOWRACE_REQ_FINISH 0x70002004 (C2S): the racer says all mini-games are done (ref/07c section 23,
+// Plan/22). No payload.
+message RainbowRaceReqFinish {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x70002004
+    name: "RAINBOWRACE_REQ_FINISH"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy EVENTLUA_DESC 0x0121 (S2C); obj_id: 0 (self). The description of the running Event.lua events, at
+// login and when an event starts or stops (ref/08 section 14, Plan/22). Not sent when empty.
+message EventLuaDesc {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x121
+    name: "EVENTLUA_DESC"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M4";
+  // 0 stopped, 1 started, 2 login or periodic refresh
+  sint32 state = 1 [(flyff.legacy_type) = "i32 state"];
+  // the text of the running events
+  string description = 2 [(flyff.legacy_type) = "str"];
+}
+
+// legacy FLYFF_EVENT 0x00B2 (S2C); obj_id: 0 (self). The event state flags, in the join batch (ref/08 sections
+// 6.1 and 14, Plan/22).
+message FlyffEvent {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xB2
+    name: "FLYFF_EVENT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M2";
+  // exactly 1024 bytes in the legacy CFlyffEvent layout
+  bytes flags = 1 [(flyff.legacy_type) = "raw(u8[1024])"];
+}
+
+// legacy SET_LOCAL_EVENT 0x00B3 (S2C); obj_id: 0 (self). One event flag changed; broadcast to everyone (ref/08
+// section 14, Plan/22).
+message SetLocalEvent {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xB3
+    name: "SET_LOCAL_EVENT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M2";
+  sint32 event_id = 1 [(flyff.legacy_type) = "i16 eventId"];
+  // 0 off, 1 on
+  uint32 state = 2 [(flyff.legacy_type) = "u8 state"];
+}
+
+// legacy GAMERATE: SNAPSHOTTYPE 0x002E and PACKETTYPE 0x0000FF06 (S2C, merged); obj_id: 0 (self). A game rate
+// (ref/08 sections 6.1 and 14, ref/03 section 9.2, Plan/22).
+message GameRate {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x2E
+    name: "GAMERATE"
+  };
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF06
+    name: "GAMERATE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M4";
+  // the rate
+  float rate = 1 [(flyff.legacy_type) = "f32"];
+  // SHOPCOST 0, ITEMDROP 1, GOLDDROP 2, MONSTEREXP 3, MONSTERHIT 4, X3 5, REBIRTH 6, HITPOINT 7, AGGRESSIVE 8,
+  // RESPAWN 9, SKILL_VAGSP 0x10, EXPERTSP 0x11, PROSP 0x12, SHOP_BUY 0x13, SHOP_SELL 0x14
+  uint32 kind = 2 [(flyff.legacy_type) = "u8"];
+}
+
+// legacy CALLTHEROLL 0x003D (S2C); obj_id: 0 (self). The attendance event flags of the receiver (ref/08
+// section 14, ref/09b section 3.16, Plan/22). Bit-packed: no js_safe_number, a bigint in TypeScript (Plan/11
+// section 4.3).
+message CallTheRoll {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x3D
+    name: "CALLTHEROLL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // one bit per day
+  sint64 attendance_bits = 1 [(flyff.legacy_type) = "i64 attendanceBits"];
+}
+
+// legacy EVENT_COUPON 0x0146 (S2C); obj_id: 0 (self). The coupon event notice (ref/08 section 15.3, ref/09b
+// section 3.16, Plan/22).
+message EventCoupon {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x146
+    name: "EVENT_COUPON"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // the coupon count (the V15 client ignores it)
+  sint32 coupons = 1 [(flyff.legacy_type) = "i32"];
+}
+
+// legacy MINIGAME 0x00E8 (S2C); obj_id: 0 (self). The mini-game multiplexer (ref/08 section 15.3, ref/09b
+// section 3.15, Plan/22). The legacy `u8 sub` selects the payload; the field number is sub + 1:
+// KAWIBAWIBO_RESUTLT 1, REASSEMBLE_RESULT 2, REASSEMBLE_OPENWND 3, ALPHABET_OPENWND 4, ALPHABET_RESULT 5,
+// FIVESYSTEM_OPENWND 6, FIVESYSTEM_RESULT 7.
+message MiniGame {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xE8
+    name: "MINIGAME"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  oneof sub {
+    // MINIGAME_KAWIBAWIBO_RESUTLT 1
+    KawibawiboResult kawibawibo_result = 2;
+    // MINIGAME_REASSEMBLE_RESULT 2
+    ReassembleResult reassemble_result = 3;
+    // MINIGAME_REASSEMBLE_OPENWND 3
+    ReassembleOpenWnd reassemble_open_wnd = 4;
+    // MINIGAME_ALPHABET_OPENWND 4
+    AlphabetOpenWnd alphabet_open_wnd = 5;
+    // MINIGAME_ALPHABET_RESULT 5
+    AlphabetResult alphabet_result = 6;
+    // MINIGAME_FIVESYSTEM_OPENWND 6
+    FiveSystemOpenWnd five_system_open_wnd = 7;
+    // MINIGAME_FIVESYSTEM_RESULT 7
+    FiveSystemResult five_system_result = 8;
+  }
+
+  message KawibawiboResult {
+    // WIN 0, LOST 1, DRAW 2, FAILED 3, GETITEM 4
+    sint32 result = 1 [(flyff.legacy_type) = "i32"];
+    sint32 win_count = 2 [(flyff.legacy_type) = "i32"];
+    // the prize item now (WIN: of the current streak; GETITEM: the item received)
+    uint32 item_id = 3 [(flyff.legacy_type) = "u32 (iff WIN or GETITEM)"];
+    // the prize item of the next streak
+    uint32 next_item_id = 4 [(flyff.legacy_type) = "u32 (iff WIN)"];
+    sint32 item_count = 5 [(flyff.legacy_type) = "i32 (iff WIN or GETITEM)"];
+    sint32 next_item_count = 6 [(flyff.legacy_type) = "i32 (iff WIN)"];
+    // the longest streak
+    sint32 max_win_count = 7 [(flyff.legacy_type) = "i32 (iff WIN)"];
+  }
+
+  message ReassembleResult {
+    uint32 item_id = 1 [(flyff.legacy_type) = "u32"];
+    sint32 count = 2 [(flyff.legacy_type) = "i32"];
+  }
+
+  message ReassembleOpenWnd {
+    // dropped: n (u32, the list length)
+    // the nine card item ids
+    repeated uint32 card_item_ids = 1 [(flyff.legacy_type) = "n x u32"];
+  }
+
+  message AlphabetOpenWnd {
+    sint32 question_id = 1 [(flyff.legacy_type) = "i32"];
+    // 0-based position of the revealed letter
+    sint32 public_pos = 2 [(flyff.legacy_type) = "i32"];
+    // the revealed letter
+    sint32 public_char = 3 [(flyff.legacy_type) = "i8"];
+    string question = 4 [(flyff.legacy_type) = "str<=255"];
+  }
+
+  message AlphabetResult {
+    // the question id on success, 998 or 999
+    sint32 result = 1 [(flyff.legacy_type) = "i32"];
+    uint32 item_id = 2 [(flyff.legacy_type) = "u32 (iff result != 999)"];
+    sint32 count = 3 [(flyff.legacy_type) = "i32 (iff result != 999)"];
+  }
+
+  message FiveSystemOpenWnd {
+    sint32 min_bet = 1 [(flyff.legacy_type) = "i32"];
+    sint32 max_bet = 2 [(flyff.legacy_type) = "i32"];
+    sint32 multiple = 3 [(flyff.legacy_type) = "i32"];
+  }
+
+  message FiveSystemResult {
+    // BETOK 996, FAILED 997, OVERMAX 998, NOTENOUGH 999, or the rolled face 0..5
+    sint32 result = 1 [(flyff.legacy_type) = "i32"];
+    // BETOK: the stake now on the face; a rolled face: the prize paid
+    sint32 penya = 2 [(flyff.legacy_type) = "i32 (iff not FAILED / OVERMAX / NOTENOUGH)"];
+    // the face the stake is on
+    sint32 bet_num = 3 [(flyff.legacy_type) = "i32 (iff BETOK)"];
+  }
+}
+
+// legacy QUIZ_STATE 0x9920 (S2C); obj_id: 0 (self). The quiz type and state (ref/08 section 15.3, ref/09b
+// section 3.16, Plan/22).
+message QuizState {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9920
+    name: "QUIZ_STATE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // 1 = OX, 2 = four choices
+  sint32 type = 1 [(flyff.legacy_type) = "i32"];
+  // quiz state 0..7 (see the file header)
+  sint32 state = 2 [(flyff.legacy_type) = "i32"];
+}
+
+// legacy QUIZ_MESSAGE 0x9921 (S2C); obj_id: 0 (self). A quiz caption and an optional state change (ref/08
+// section 15.3, ref/09b section 3.16, Plan/22).
+message QuizMessage {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9921
+    name: "QUIZ_MESSAGE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  string message = 1 [(flyff.legacy_type) = "str<=256"];
+  // 0 = no state change, else the new state
+  sint32 state = 2 [(flyff.legacy_type) = "i32"];
+}
+
+// legacy QUIZ_QUESTION 0x9922 (S2C); obj_id: 0 (self). The question of the round (ref/08 section 15.3, ref/09b
+// section 3.16, Plan/22).
+message QuizQuestion {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9922
+    name: "QUIZ_QUESTION"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // 1 = OX, 2 = four choices
+  sint32 type = 1 [(flyff.legacy_type) = "i32"];
+  string question = 2 [(flyff.legacy_type) = "str<=1024"];
+  // the seconds the players have to answer (QuestionTime / 1000, 15 with the shipped script): the countdown the client
+  // shows (m_nQCount), not the number of the question
+  sint32 count = 3 [(flyff.legacy_type) = "i32 questionNo"];
+}
+
+// legacy QUIZ_NOTICE 0xFF000002 (S2C); obj_id: 0 (self). A quiz announcement (ref/03 section 9.2, ref/09b
+// section 3.16, Plan/22).
+message QuizNotice {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF000002
+    name: "QUIZ_NOTICE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  sint32 text_id = 1 [(flyff.legacy_type) = "i32 textId"];
+  // true = also shown as a caption inside the quiz world
+  bool all = 2 [(flyff.legacy_type) = "BOOL bAll"];
+  // 0 = no channel name in the text
+  sint32 channel = 3 [(flyff.legacy_type) = "i32 channel"];
+  sint32 time = 4 [(flyff.legacy_type) = "i32 time"];
+}
+
+// legacy RAINBOWRACE_PREVRANKING_OPENWND 0x9000 (S2C); obj_id: 0 (self). The previous ranking, at most 5
+// players (ref/08 section 15.3, ref/09b section 3.16, Plan/22).
+message RainbowRacePrevRankingOpenWndNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9000
+    name: "RAINBOWRACE_PREVRANKING_OPENWND"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // dropped: n (i32, the list length)
+  // the winners in rank order
+  repeated uint32 id_players = 1 [(flyff.legacy_type) = "n x u32 idPlayer"];
+}
+
+// legacy RAINBOWRACE_APPLICATION_OPENWND 0x9001 (S2C); obj_id: 0 (self). The application window (ref/08
+// section 15.3, ref/09b section 3.16, Plan/22).
+message RainbowRaceApplicationOpenWndNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9001
+    name: "RAINBOWRACE_APPLICATION_OPENWND"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // the number of racers who applied
+  sint32 applicants = 1 [(flyff.legacy_type) = "i32"];
+}
+
+// legacy RAINBOWRACE_NOWSTATE 0x9002 (S2C); obj_id: 0 (self). The racer's progress (CRainbowRace::Serialize;
+// ref/09b sections 3.16 and 7.10, Plan/22).
+message RainbowRaceNowState {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9002
+    name: "RAINBOWRACE_NOWSTATE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  RainbowRace race = 1 [(flyff.legacy_type) = "CRainbowRace::Serialize"];
+}
+
+// legacy RAINBOWRACE_MINIGAMESTATE 0x9003 (S2C); obj_id: 0 (self). A mini-game state (__MINIGAME_PACKET;
+// ref/09b section 3.16, Plan/22). Ignored by the client unless it belongs to the current game.
+message RainbowRaceMiniGameState {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9003
+    name: "RAINBOWRACE_MINIGAMESTATE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  MiniGamePacket packet = 1 [(flyff.legacy_type) = "__MINIGAME_PACKET"];
+}
+
+// legacy RAINBOWRACE_MINIGAMEEXTSTATE 0x9004 (S2C); obj_id: 0 (self). A mini-game state with texts
+// (__MINIGAME_EXT_PACKET; ref/09b section 3.16, Plan/22).
+message RainbowRaceMiniGameExtState {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9004
+    name: "RAINBOWRACE_MINIGAMEEXTSTATE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  MiniGameExtPacket packet = 1 [(flyff.legacy_type) = "__MINIGAME_EXT_PACKET"];
+}

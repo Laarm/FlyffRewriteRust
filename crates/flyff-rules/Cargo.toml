@@ -1,0 +1,25 @@
+[package]
+name = "flyff-rules"
+description = "Pure formulas: stats, damage, prices, odds (Plan/16; tier S)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+default = []
+# Native-only constructors that read the loaded `GameData` (`RulesData::from_game_data`, Plan/16 §18.2).
+game = []
+
+[dependencies]
+flyff-common = { workspace = true }
+flyff-data = { workspace = true }
+libm = { workspace = true }
+smallvec = { workspace = true }
+# `RulesData::from_bundles`: the browser path parses the JSON `tables` and `item-ext` bundles (Plan/16 §18.2).
+serde_json = { workspace = true }
+

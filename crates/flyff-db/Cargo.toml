@@ -1,0 +1,30 @@
+[package]
+name = "flyff-db"
+description = "SQLite persistence actor, schema, migrations, backups, audit (Plan/13; tier N; the only crate linking rusqlite, X5)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+default = []
+# (WP-CORE-93). Never in shipped builds (dep-rules).
+
+[dependencies]
+flyff-common = { workspace = true, features = ["rt"] }
+rusqlite = { workspace = true }
+flume = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+xxhash-rust = { workspace = true }
+argon2 = { workspace = true }
+md-5 = { workspace = true }
+tempfile = { workspace = true, optional = true }
+rustix = { workspace = true, features = ["fs"] }
+

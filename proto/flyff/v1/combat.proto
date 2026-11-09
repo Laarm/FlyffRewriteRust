@@ -1,0 +1,565 @@
+// Combat messages (Plan/11 sections 8.3, 8.6 and 9.4, WP-PROTO-12; tag block 192-223 plus the hot tags 4, 6, 8, 10,
+// 11 and 14). Transcribed from ref/08 section 10, ref/07a sections 10 and 12, ref/07c section 4, ref/09a section
+// 6.5/6.6, ref/20 section 7.4 and Plan/17 (message ownership in 17 section 0.2, behaviour in 3, 4, 5.17, 9).
+//
+// The final death pose is the MoverStateNtf of movement.proto (legacy MOVERBEHAVIOR2) followed by MoverDeath
+// (Plan/11 G6). The SFX_ID / SFX_HIT / SFX_CLEAR client reports do not exist: the server simulates projectiles
+// (Plan/11 section 8.3, D4). A fight-state notification is not a legacy message and has no counterpart here.
+//
+// AF_* attack flags (`atk_flags`, _AIInterface/ActionMover.h): GENERIC 0x1, MISS 0x2, RESERVED 0x4, MAGIC 0x8,
+// MELEESKILL 0x10, MAGICSKILL 0x20, CRITICAL1 0x40 (x2.3), CRITICAL2 0x80 (x2.6), CRITICAL 0xC0, PUSH 0x100,
+// PARRY 0x200, RESIST 0x400, STUN 0x800, BLOCKING 0x1000, FORCE 0x2000, RANGE 0x4000, MONSTER_SP_CLIENT 0x8000,
+// FLYING 0x10000000 (knocked into the air; adds the defender position and angle).
+//
+// OBJMSG_* attack messages (`atk_msg`): ATK1 29, ATK2 30, ATK3 31, ATK4 32, SP_ATK1 33, SP_ATK2 34, ATK_RANGE1 35,
+// ATK_MAGIC1 36 (the full list is in movement.proto).
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+import "flyff/v1/common.proto";
+
+// Behaviour classes of the server-simulated projectiles (ref/20 section 7.4, Plan/11 section 8.3).
+enum ProjectileKind {
+  PROJECTILE_KIND_UNSPECIFIED = 0;
+  // CSfxShoot
+  PROJECTILE_KIND_SHOOT = 1;
+  // CSfxItemWandAtk1
+  PROJECTILE_KIND_WAND_ATK1 = 2;
+  // CSfxItemWandAtkAir (inertial)
+  PROJECTILE_KIND_WAND_ATK_AIR = 3;
+  // arrow
+  PROJECTILE_KIND_RANGE_ATK1 = 4;
+  PROJECTILE_KIND_RANGE_ATK_JUNKBOW = 5;
+  PROJECTILE_KIND_MAG_STRONG_WIND = 6;
+  PROJECTILE_KIND_MAG_SWORD_WIND = 7;
+  PROJECTILE_KIND_MAG_FIRE_BOOMERANG = 8;
+  PROJECTILE_KIND_MAG_ICE_MISSILE = 9;
+  PROJECTILE_KIND_MAG_LIGHTNING_BALL = 10;
+  PROJECTILE_KIND_MAG_SPIKE_STONE = 11;
+  PROJECTILE_KIND_SHOOT_WAVE = 12;
+  PROJECTILE_KIND_YOYO_ATK = 13;
+  // fixed destination
+  PROJECTILE_KIND_ATK_STRAIGHT = 14;
+  // CSfxSkillMagHotAir (XI_SKILL_MAG_FIRE_HOTAIR01): attached to the attacker, no flight; the damage happens at
+  // the hit frame and the client shows the effect only (Plan/17 section 4.3)
+  PROJECTILE_KIND_MAG_HOT_AIR = 15;
+}
+
+// legacy MELEE_ATTACK 0x00FF0010 and MELEE_ATTACK2 0x00FF0014 (C2S), merged (Plan/11a R1-2, Plan/11 section
+// 9.4): one melee swing request, ground or flying. VR-004: atk_msg must be ATK1..ATK4 (29..32). The server
+// forces param2 to 0 and the low word of param3 to 0 so it always rolls hit and miss itself; a busy action
+// queues the swing (ground and flying alike). Answer: MeleeAttackNtf to near minus self; the damage follows
+// at the hit frame (Plan/17 sections 3.2, 3.7).
+message MeleeAttackReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF0010
+    name: "MELEE_ATTACK"
+  };
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF0014
+    name: "MELEE_ATTACK2"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M3";
+  // OBJMSG_ATK1..ATK4 = the combo step
+  uint32 atk_msg = 1 [(flyff.legacy_type) = "u32 dwAtkMsg"];
+  // target mover object id
+  uint32 target = 2 [(flyff.legacy_type) = "u32 objid"];
+  // the client sends MAKELONG(0, 0)
+  sint32 param2 = 3 [(flyff.legacy_type) = "i32 nParam2"];
+  // the client sends MAKELONG(0, result of its local SendActMsg)
+  sint32 param3 = 4 [(flyff.legacy_type) = "i32 nParam3"];
+  // dropped: fAttackSpeed (the __HACK_1023 weapon speed check, AC-07)
+}
+
+// legacy SETTARGET 0x00FF0023 (C2S): the focus target changed. Used for the kill-steal claim
+// (CMover::IsSteal) and the party-skill target (ref/07a section 12.6, Plan/17 section 3.10). No reply.
+message SetTargetReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF0023
+    name: "SETTARGET"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M3";
+  uint32 target = 1 [(flyff.legacy_type) = "u32 idTarget"];
+  // 0 claim the target (target.id_targeter = me when unclaimed), 1 release the claim (and cancel a Hero
+  // Drawing cast), 2 remember it as the party-skill / queue target; any other value is dropped (VR-004)
+  uint32 clear = 2 [(flyff.legacy_type) = "u8 bClear"];
+}
+
+// legacy MAGIC_ATTACK 0x00FF0011 (C2S): wand attack (ref/07a section 12.3, Plan/17 section 3.3). VR-004:
+// atk_msg == ATK_MAGIC1 (36), magic_power 0..4; param2 is forced to 0. The wand charge is paid at power 3
+// only (KQ-05). Answer: MagicAttackNtf; the damage happens when the server projectile arrives.
+message MagicAttackReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF0011
+    name: "MAGIC_ATTACK"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M3";
+  uint32 atk_msg = 1 [(flyff.legacy_type) = "u32 dwAtkMsg"];
+  // target mover object id
+  uint32 target = 2 [(flyff.legacy_type) = "u32 objid"];
+  sint32 param2 = 3 [(flyff.legacy_type) = "i32 nParam2"];
+  sint32 param3 = 4 [(flyff.legacy_type) = "i32 nParam3"];
+  // wand charge level 0..4 (4 = full charge)
+  sint32 magic_power = 5 [(flyff.legacy_type) = "i32 nMagicPower"];
+  // dropped: idSfxHit (the client-chosen projectile id; the server allocates projectile_id, D4)
+}
+
+// legacy RANGE_ATTACK 0x00FF0012 (C2S): bow attack (ref/07a section 12.4, Plan/17 section 3.4). VR-004:
+// atk_msg == ATK_RANGE1 (35), power 0..4. Answer: RangeAttackNtf; the damage happens when the server
+// projectile arrives.
+message RangeAttackReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF0012
+    name: "RANGE_ATTACK"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M3";
+  uint32 atk_msg = 1 [(flyff.legacy_type) = "u32 dwAtkMsg"];
+  // target mover object id
+  uint32 target = 2 [(flyff.legacy_type) = "u32 objid"];
+  // for players this is the bow charge power 0..4, not an item id
+  uint32 item_id = 3 [(flyff.legacy_type) = "u32 dwItemID"];
+  // dropped: idSfxHit (the client-chosen projectile id; the server allocates projectile_id, D4)
+}
+
+// legacy REVIVAL 0x00FF00C0 (C2S): revive in place with a Resurrection scroll (II_SYS_SYS_SCR_RESURRECTION
+// 10431) of the inventory (ref/07a section 10.1, Plan/17 section 9.4). Ignored unless dead. No payload.
+message RevivalReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00C0
+    name: "REVIVAL"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M3";
+}
+
+// legacy REVIVAL_TO_LODESTAR 0x00FF00C1 (C2S): respawn at the revival point of the region (ref/07a section
+// 10.2, Plan/17 section 9.4). Ignored unless dead. No payload. The legacy REVIVAL_TO_LODELIGHT is dropped
+// (empty handler).
+message RevivalToLodestarReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00C1
+    name: "REVIVAL_TO_LODESTAR"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M3";
+}
+
+// legacy SETLODELIGHT 0x00FF00C3 (C2S): store the current position as the marking position at a MMI_MARKING
+// NPC (ref/07a section 10.4, Plan/17 section 9.6). Answer: DefinedText TID_GAME_LODELIGHT. No payload.
+message SetLodelight {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00C3
+    name: "SETLODELIGHT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy RESURRECTION_OK 0xFFFFFF78 (C2S): accept a Resurrection skill offer (ref/07b section 13). No
+// payload.
+message ResurrectionOk {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF78
+    name: "RESURRECTION_OK"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+}
+
+// legacy RESURRECTION_CANCEL 0xFFFFFF79 (C2S): decline a Resurrection skill offer (ref/07b section 13). No
+// payload.
+message ResurrectionCancel {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF79
+    name: "RESURRECTION_CANCEL"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+}
+
+// legacy DAMAGE 0x0013 (S2C); obj_id: the defender. Every resolved hit with the victim surviving, every miss
+// (damage 0, AF_MISS), counter-attack hits and trap damage; never the killing blow (Plan/11 G6, Plan/17
+// section 5.17). Audience: near of the defender, including the defender. The client sets HP to `hp_after`
+// (no client-side subtraction, PL-083) and shows the feedback of ref/09a section 6.5 (numbers, miss,
+// critical, block, parry, resist from atk_flags).
+//
+// The legacy tail of AF_FLYING (defender_pos, defender_angle) is kept as fields 4 and 5: they are set only
+// when `atk_flags & AF_FLYING`. The client then snaps the defender to them and applies the same knock-back
+// as the server (DoDamageFly(attacker_angle, 145, 0.18)) starting at `server_frame`.
+message Damage {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x13
+    name: "DAMAGE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M3";
+  // attacking object id
+  uint32 attacker = 1 [(flyff.legacy_type) = "u32 objidAttacker"];
+  // damage dealt (0 for a miss)
+  uint32 damage = 2 [(flyff.legacy_type) = "u32 dwHit"];
+  // AF_* bit set (see the file header)
+  uint32 atk_flags = 3 [(flyff.legacy_type) = "u32 dwAtkFlags"];
+  // defender position at the hit
+  Vec3 defender_pos = 4 [(flyff.legacy_type) = "vec3 (iff AF_FLYING)"];
+  // defender yaw at the hit, degrees
+  float defender_angle = 5 [(flyff.legacy_type) = "f32 (iff AF_FLYING)"];
+  // added (PL-083): the defender HP after the hit (for a miss: the current HP)
+  sint32 hp_after = 100;
+  // added: the first frame of the damage motion on the defender (the attacker hit frame + 1),
+  // movement::effect_frame (Plan/11 section 9.4)
+  uint64 server_frame = 101 [(flyff.js_safe_number) = true];
+  // added (Plan/31 Q10): the attacker yaw in degrees at the hit frame, exactly the angle the server passes
+  // to its knock-back
+  float attacker_angle = 102;
+}
+
+// legacy MELEE_ATTACK 0x00E0 and MELEE_ATTACK2 0x00E4 (S2C), merged (Plan/11a R1-2); obj_id: the attacker.
+// Relay of a melee swing (a player request, or a monster melee: param3 = MAKELONG(0, nError), the hit/miss
+// pre-roll). Audience: near minus self (the attacker predicted the swing locally).
+message MeleeAttackNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xE0
+    name: "MELEE_ATTACK"
+  };
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xE4
+    name: "MELEE_ATTACK2"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M3";
+  uint32 atk_msg = 1 [(flyff.legacy_type) = "u32 dwAtkMsg"];
+  // target mover object id
+  uint32 target = 2 [(flyff.legacy_type) = "u32 objid"];
+  sint32 param2 = 3 [(flyff.legacy_type) = "i32 nParam2"];
+  sint32 param3 = 4 [(flyff.legacy_type) = "i32 nParam3"];
+  // added (Plan/11 section 9.4): the sim frame at which the server started the action, so observers start
+  // the swing in phase
+  uint64 server_frame = 100 [(flyff.js_safe_number) = true];
+  // added (Plan/11 section 8.6): the attacker animation speed (m_fAniSpeed) when the action started on the
+  // server
+  float ani_speed = 101;
+}
+
+// ext 0xFE000020; legacy CREATESFXALLOW 0x00AA (merged); obj_id: the attacker. A server-simulated projectile
+// starts at the attacker hit frame (Plan/11 section 8.3, Plan/17 section 4). Audience: near including self
+// (the shooter's own projectile is server-driven too). The client runs the same flight with the shared sim
+// from `server_frame`; `ProjectileHit` ends it.
+message ProjectileSpawn {
+  option (flyff.ext_id) = 0xFE000020;
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xAA
+    name: "CREATESFXALLOW"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M3";
+  // per process, never reused; equals the *AttackNtf.projectile_id
+  uint32 projectile_id = 1;
+  ProjectileKind kind = 2;
+  // XI_* flying effect
+  uint32 sfx_id = 3;
+  // XI_* spawned on impact (0 = none)
+  uint32 hit_sfx_id = 4;
+  // homing target (0 for ATK_STRAIGHT)
+  uint32 target_obj_id = 5;
+  // attacker hit-frame origin
+  Vec3 origin = 6;
+  // initial destination (target + 1 y, or a fixed point)
+  Vec3 dest = 7;
+  // the frame at which the projectile is at `origin`
+  uint64 server_frame = 8 [(flyff.js_safe_number) = true];
+  // units per 60 Hz frame (e.g. 0.4, 0.7, 0.45 with __FASTER_PROJECTILES)
+  float speed = 9;
+  // 0 = normal attack
+  uint32 skill_id = 10;
+  // always 0: the impact sound comes from the client IMPACT_SOUND table
+  uint32 hit_sound_id = 11;
+  // multi-shot index (one shot every 4th frame)
+  uint32 shot_index = 12;
+}
+
+// legacy MAGIC_ATTACK 0x00E1 (S2C); obj_id: the attacker. Relay of a wand attack (ref/08 section 10.1).
+// Audience: near minus self. The projectile itself is announced by ProjectileSpawn at the hit frame.
+message MagicAttackNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xE1
+    name: "MAGIC_ATTACK"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M3";
+  uint32 atk_msg = 1 [(flyff.legacy_type) = "u32 dwAtkMsg"];
+  // target mover object id
+  uint32 target = 2 [(flyff.legacy_type) = "u32 objid"];
+  sint32 param2 = 3 [(flyff.legacy_type) = "i32 nParam2"];
+  sint32 param3 = 4 [(flyff.legacy_type) = "i32 nParam3"];
+  // wand charge level 0..4
+  sint32 magic_power = 5 [(flyff.legacy_type) = "i32 nMagicPower"];
+  // replaces the legacy idSfxHit (Plan/11 section 8.3): the id the ProjectileSpawn of this attack will
+  // carry
+  uint32 projectile_id = 6 [(flyff.legacy_type) = "i32 idSfxHit"];
+  // added (Plan/11 section 9.4): the sim frame at which the server started the action, so observers start
+  // the swing in phase
+  uint64 server_frame = 100 [(flyff.js_safe_number) = true];
+  // added (Plan/11 section 8.6): the attacker animation speed (m_fAniSpeed) when the action started on the
+  // server
+  float ani_speed = 101;
+}
+
+// legacy RANGE_ATTACK 0x00E2 (S2C); obj_id: the attacker. Relay of a bow or yo-yo attack, also the ranged
+// attack of a monster (ref/08 section 10.1; the legacy AddRangeAttack writes dwItemID as param2 and 0 as
+// param3). Audience: near minus self.
+message RangeAttackNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xE2
+    name: "RANGE_ATTACK"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M3";
+  uint32 atk_msg = 1 [(flyff.legacy_type) = "u32 dwAtkMsg"];
+  uint32 target = 2 [(flyff.legacy_type) = "u32 objid"];
+  // the bow charge power 0..4 (players) or the weapon item id (monsters)
+  uint32 item_id = 3 [(flyff.legacy_type) = "i32 nParam2"];
+  // always 0
+  sint32 param3 = 4 [(flyff.legacy_type) = "i32 nParam3"];
+  // replaces the legacy idSfxHit (Plan/11 section 8.3)
+  uint32 projectile_id = 5 [(flyff.legacy_type) = "i32 idSfxHit"];
+  // added (Plan/11 section 9.4): the sim frame at which the server started the action, so observers start
+  // the swing in phase
+  uint64 server_frame = 100 [(flyff.js_safe_number) = true];
+  // added (Plan/11 section 8.6): the attacker animation speed (m_fAniSpeed) when the action started on the
+  // server
+  float ani_speed = 101;
+}
+
+// legacy SP_ATTACK 0x00E3 (S2C); obj_id: the attacker. Monster special attack (SP_ATK1, ref/08 section
+// 10.1). Audience: near minus self.
+message SpAttack {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xE3
+    name: "SP_ATTACK"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M3";
+  // OBJMSG_SP_ATK1 33
+  uint32 atk_msg = 1 [(flyff.legacy_type) = "u32 dwAtkMsg"];
+  uint32 target = 2 [(flyff.legacy_type) = "u32 objid"];
+  // the special attack item id
+  uint32 item_id = 3 [(flyff.legacy_type) = "i32 nParam2"];
+  sint32 param3 = 4 [(flyff.legacy_type) = "i32 nParam3"];
+  // added (Plan/11 section 9.4): the sim frame at which the server started the action, so observers start
+  // the swing in phase
+  uint64 server_frame = 100 [(flyff.js_safe_number) = true];
+  // added (Plan/11 section 8.6): the attacker animation speed (m_fAniSpeed) when the action started on the
+  // server
+  float ani_speed = 101;
+}
+
+// legacy MOVERDEATH 0x00C7 (S2C); obj_id: the dead mover. Sent after the last Damage and the final
+// MoverStateNtf (Plan/11 G6, ref/08 section 10.2). Audience: near including self. The client zeroes HP and
+// plays the death motion (ref/09a section 6.6); the own player opens the revival window.
+message MoverDeath {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xC7
+    name: "MOVERDEATH"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M3";
+  // killing object id (0 = none)
+  uint32 attacker = 1 [(flyff.legacy_type) = "u32 objidAttacker"];
+  // the OBJMSG of the killing blow (OBJMSG_DAMAGE_FORCE 42 = fly-back death)
+  uint32 attack_msg = 2 [(flyff.legacy_type) = "u32 dwMsg"];
+}
+
+// legacy REVIVAL 0x00A1 (S2C); obj_id: the player. Revived in place. Followed by SetPointParam HP/MP/FP
+// (absolute, PL-083). Audience: near including self. No payload.
+message RevivalNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xA1
+    name: "REVIVAL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M3";
+}
+
+// legacy REVIVAL_TO_LODESTAR 0x00A2 (S2C); obj_id: the player. Revived at the revival point; the world
+// change (Replace) follows. Audience: near including self. No payload.
+message RevivalToLodestarNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xA2
+    name: "REVIVAL_TO_LODESTAR"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M3";
+}
+
+// legacy RESURRECTION 0x00EB (S2C); obj_id: the revived player. A Resurrection skill was accepted (ref/07b
+// section 13). Audience: near including self. No payload.
+message Resurrection {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xEB
+    name: "RESURRECTION"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+}
+
+// legacy RESURRECTION_MESSAGE 0x0027 (S2C); obj_id: 0 (self). A priest offers to resurrect the dead player:
+// the client opens the confirm window and answers ResurrectionOk or ResurrectionCancel. No payload.
+message ResurrectionMessage {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x27
+    name: "RESURRECTION_MESSAGE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+}
+
+// legacy SETTARGET 0x00AE (S2C); obj_id: 0 (self; the legacy header is NULL_ID). The server forced a target
+// (ref/09b section 3.1). The client ignores a NULL_ID target (Plan/17 section 3.10).
+message SetTargetNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xAE
+    name: "SETTARGET"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M3";
+  uint32 target = 1 [(flyff.legacy_type) = "u32 idTarget"];
+}
+
+// legacy CLEAR_TARGET 0x9500 (S2C); obj_id: 0 (self). The server forces the client to drop its focus target.
+// No payload.
+message ClearTarget {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9500
+    name: "CLEAR_TARGET"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M3";
+}
+
+// legacy SETSTUN 0x0059 (S2C); obj_id: the mover. A stun was applied or ended (ref/08 section 10.1, ref/09b
+// section 3.1). Audience: near including self.
+message SetStun {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x59
+    name: "SETSTUN"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // > 0 starts the stun for that long, 0 ends it
+  uint32 duration_ms = 1 [(flyff.legacy_type) = "i32 nMaxTime"];
+}
+
+// legacy DPS_UPDATE 0x8903 (S2C; custom __DPS_METER); obj_id: 0 (self). The damage meter of a boss fight
+// (ref/08 section 10.1, Plan/17 section 10). The legacy multiplexed `mode` is the inner oneof.
+message DpsUpdate {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8903
+    name: "DPS_UPDATE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // The legacy `i32 mode` selects the case; the field number is mode + 1 (Plan/11 section 5.2).
+  oneof sub {
+    // mode 0: the damage per second of every listed player (the only list the server sends)
+    DpsList dps = 1;
+    // mode 1: total damage plus the monster HP (never sent by the server, KEEP)
+    DpsTotals totals = 2;
+    // mode 2: show or hide the window
+    DpsShow show = 3;
+  }
+
+  message DpsEntry {
+    uint32 id_player = 1 [(flyff.legacy_type) = "u32"];
+    string name = 2 [(flyff.legacy_type) = "str"];
+    sint32 value = 3 [(flyff.legacy_type) = "i32"];
+  }
+
+  // mode 0
+  message DpsList {
+    repeated DpsEntry entries = 1 [(flyff.legacy_type) = "u32 n + n x {u32 idPlayer, str name, i32 nDPS}"];
+  }
+
+  // mode 1
+  message DpsTotals {
+    repeated DpsEntry entries = 1 [(flyff.legacy_type) = "u32 n + n x {u32 idPlayer, str name, i32 nDPSTotal}"];
+    sint32 monster_total_hp = 2 [(flyff.legacy_type) = "i32"];
+  }
+
+  // mode 2
+  message DpsShow {
+    bool show = 1 [(flyff.legacy_type) = "i32 bShow"];
+  }
+}
+
+// ext 0xFE000021; no legacy id (the legacy SFX_HIT / SFX_CLEAR client reports are dropped); obj_id: the
+// attacker. A server projectile ended: it hit, timed out (10 s) or lost its target. It precedes the Damage
+// it causes (Plan/11 G6). Audience: the same as ProjectileSpawn.
+message ProjectileHit {
+  option (flyff.ext_id) = 0xFE000021;
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M3";
+  uint32 projectile_id = 1;
+  uint32 target_obj_id = 2;
+  // impact position (hit SFX anchor)
+  Vec3 pos = 3;
+  uint64 server_frame = 4 [(flyff.js_safe_number) = true];
+  // true: timeout (10 s) or the target vanished; remove without the hit SFX
+  bool expired = 5;
+}

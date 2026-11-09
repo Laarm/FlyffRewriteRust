@@ -1,0 +1,63 @@
+# The new-character template (Plan/13 §24; replaces the legacy BASE_VALUE_TBL, ref/04 §5.4, §C).
+#
+# Operators override this file by placing a `new_character.toml` in `overrides/` (the original Resource/ has none).
+# It is parsed and checked at server start: every define name must resolve (the loaded define table first, the
+# compiled-in legacy headers second), every item must exist and fit its slot, otherwise the server refuses to
+# start with a message naming the key.
+schema_version = 1
+world        = "WI_WORLD_MADRIGAL"        # 1
+start_region = "RI_BEGIN"                 # random RI_BEGIN region of the world's .rgn; Madrigal has one: (6971.984375, 100.0, 3336.884277)
+layer        = 0
+return_world = "WI_WORLD_MADRIGAL"        # KEEP-QUIRK: CHARACTER_STR I1 sets return world 1, position (0,0,0)
+return_pos   = [0.0, 0.0, 0.0]
+level = 1
+job   = "JOB_VAGRANT"
+stats = { str = 15, sta = 15, dex = 15, int = 15 }
+stat_points = 0
+hp = 230
+mp = 63
+fp = 32
+gold = 0
+bank_gold = 0
+fuel = -1
+scale = 1.0
+skin_set = 0                               # client fixes SKINSET_01
+mode_flags = ["FRESH_MODE", "EQUIP_DENIAL_MODE"]   # 0x10020000 = 268566528 (BASE_VALUE_TBL m_dwMode; ref/04/05 mislabel it as OLDBOY)
+
+skills = [                                 # tblSkillPoint rows written by I1 (SQL:10698-10702): vagrant skills 1,2,3 at level 0
+  { position = 0, skill = 1, level = 0 },
+  { position = 1, skill = 2, level = 0 },
+  { position = 2, skill = 3, level = 0 },
+]
+
+[inventory]
+bag = [                                    # added in order with the normal Inventory::add
+  { item = "II_GEN_FOO_INS_LOLLIPOP", count = 3 },   # 2800
+  { item = "II_GEN_FOO_INS_BISCUIT",  count = 1 },   # 2801
+]
+[inventory.equip_male]                     # added then equipped with the normal equip code (ascending part index)
+PARTS_UPPER_BODY = "II_ARM_M_VAG_SUIT01"       # 502
+PARTS_HAND       = "II_ARM_M_VAG_GAUNTLET01"   # 506
+PARTS_FOOT       = "II_ARM_M_VAG_BOOTS01"      # 510
+PARTS_RWEAPON    = "II_WEA_SWO_WOODEN"         # 21
+[inventory.equip_female]
+PARTS_UPPER_BODY = "II_ARM_F_VAG_SUIT01"       # 504
+PARTS_HAND       = "II_ARM_F_VAG_GAUNTLET01"   # 508
+PARTS_FOOT       = "II_ARM_F_VAG_BOOTS01"      # 512
+PARTS_RWEAPON    = "II_WEA_SWO_WOODEN"         # 21
+
+[taskbar]
+applets = [
+  { slot = 2, kind = "APPLET", id = "APP_CHARACTER3", index = 2 },   # FIX: legacy 2010 APP_CHARACTER (dropped window, ref/22)
+  { slot = 3, kind = "APPLET", id = "APP_SKILL3",     index = 3 },   # FIX: legacy 581 APP_SKILL1 (VER<10 window)
+  { slot = 4, kind = "MOTION", id = 25,               index = 4 },
+]
+items = [                                  # page 0; data = 1 (item row); `bag_ref` = index into inventory.bag above
+  { page = 0, slot = 0, kind = "ITEM",   bag_ref = 0, index = 0 },  # lollipop (FIX: legacy pointed to stale obj id 45)
+  { page = 0, slot = 1, kind = "ITEM",   bag_ref = 1, index = 1 },  # biscuit
+  { page = 0, slot = 2, kind = "MOTION", id = 3,      index = 2 },
+  { page = 0, slot = 8, kind = "MOTION", id = 2,      index = 8 },
+]
+
+[pockets]
+pocket0_available = true                   # pockets 1–2 available iff [features] perm_extrabags (default true)

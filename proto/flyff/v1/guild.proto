@@ -1,0 +1,923 @@
+// Guild messages (Plan/11 section 4.2, WP-PROTO-22; tag block 672-719). Transcribed from ref/08 section 13.3 and
+// 12.6, ref/03 section 9, ref/07a section 15, ref/07b section 14.2, ref/07c section 15.1, ref/09a section 7,
+// ref/09b sections 3.7, 4.8 and 7.1-7.4, ref/14 section 5 and Plan/21 section 5. The guild records are GuildBrief /
+// GuildFull / GuildMember (social_types.proto). Every C2S message acts for the session character (VR-001): the
+// legacy leading own-id fields are dropped. The guild vote messages (NC_*VOTE, GUILD_ADDVOTE, GUILD_MODIFYVOTE) and
+// the guild ranking are dropped (Plan/21 section 5.14). Member ranks (member_level, `rank`): 0 master, 1 kingpin,
+// 2 captain, 3 supporter, 4 rookie; member classes 0..2; guild bank object ids 0..41.
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+import "flyff/v1/item_types.proto";
+import "flyff/v1/social_types.proto";
+
+// legacy GUILD_INVITE 0xFFFFFF35 (C2S): invite a player into the guild (ref/07a section 15.10, Plan/21 section
+// 5.5). Needs the INVITATION power. Answer: GuildInviteNtf to the target.
+message GuildInviteReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF35
+    name: "GUILD_INVITE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // object id of the invited player
+  uint32 target_obj = 1 [(flyff.legacy_type) = "u32 objid"];
+}
+
+// legacy IGNORE_GUILD_INVITE 0xFFFFFF36 (C2S): decline a guild invitation (ref/07a section 15.11, Plan/21
+// section 5.5). The inviter is told by a DefinedText.
+message IgnoreGuildInvite {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF36
+    name: "IGNORE_GUILD_INVITE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // character id of the inviting member
+  uint32 inviter = 1 [(flyff.legacy_type) = "u32 idPlayer"];
+}
+
+// legacy ADD_GUILD_MEMBER 0xFFFFFF33 (C2S): accept a guild invitation (ref/03 section 9.1, Plan/21 section
+// 5.5). Needs a live invitation (VR-041). Answer: Guild to the newcomer, AddGuildMemberNtf to the members.
+message AddGuildMemberReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF33
+    name: "ADD_GUILD_MEMBER"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // character id of the inviting member
+  uint32 inviter = 1 [(flyff.legacy_type) = "u32 idMaster"];
+  // dropped: GUILD_MEMBER_INFO info (raw 8 B: idPlayer, multiNo; FIX, VR-001: the session character joins,
+  // multi number 1)
+}
+
+// legacy REMOVE_GUILD_MEMBER 0xFFFFFF34 (C2S): leave the guild (own id) or remove a member (the master only)
+// (ref/03 section 9.1, Plan/21 section 5.5). Answer: RemoveGuildMemberNtf to the members and the removed
+// player.
+message RemoveGuildMemberReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF34
+    name: "REMOVE_GUILD_MEMBER"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: idRequester (u32, the session character)
+  // the member to remove; the sender's own id leaves the guild
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32 idPlayer"];
+}
+
+// legacy DESTROY_GUILD 0xFFFFFF32 (C2S): dissolve the guild (ref/03 section 9.1, Plan/21 section 5.4). The
+// master only, not at war. No payload. Answer: DestroyGuildNtf to everyone.
+message DestroyGuildReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF32
+    name: "DESTROY_GUILD"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: idMaster (u32, the session character)
+}
+
+// legacy GUILD_MEMBER_LEVEL 0xFFFFFF3A (C2S): change the rank of a member (ref/03 section 9.1, Plan/21 section
+// 5.5). Needs the MEMBERLEVEL power and a higher rank than the target and the new rank. Answer:
+// GuildMemberLevelNtf to the members.
+message GuildMemberLevelReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF3A
+    name: "GUILD_MEMBER_LEVEL"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: idMaster (u32, the session character)
+  // the member whose rank changes
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32 idPlayer"];
+  // the new rank, 0 master .. 4 rookie
+  sint32 rank = 2 [(flyff.legacy_type) = "i32 memberLv"];
+}
+
+// legacy GUILD_CLASS 0xFFFFFF74 (C2S): raise or lower the class (rank stars) of a member (ref/03 section 9.1,
+// Plan/21 section 5.5). Needs the LEVEL power. Answer: GuildClassNtf to the members.
+message GuildClassReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF74
+    name: "GUILD_CLASS"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // true = raise (1), false = lower (0)
+  bool up = 1 [(flyff.legacy_type) = "u8 up"];
+  // dropped: idMaster (u32, the session character)
+  // the member whose class changes
+  uint32 id_player = 2 [(flyff.legacy_type) = "u32 idPlayer"];
+}
+
+// legacy GUILD_NICKNAME 0xFFFFFF75 (C2S): set the alias of a member (ref/03 section 9.1, Plan/21 section 5.5).
+// The master only, guild level 10 or more, 2 to 12 bytes. Answer: GuildNicknameNtf to the members.
+message GuildNicknameReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF75
+    name: "GUILD_NICKNAME"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: idSelf (u32, the session character)
+  // the member who gets the alias
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32 idPlayer"];
+  // the alias
+  string alias = 2 [
+    (flyff.legacy_type) = "str<=47",
+    (flyff.max_len) = 47
+  ];
+}
+
+// legacy CHG_MASTER 0xF000F000 (C2S): hand the guild over to another member (ref/03 section 9.1, Plan/21
+// section 5.5). The master only, both online, not at war. Answer: ChgMasterNtf to the members.
+message ChgMasterReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F000
+    name: "CHG_MASTER"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: idOld (u32, the session character is the master)
+  // the new master (character id)
+  uint32 new_master = 1 [(flyff.legacy_type) = "u32 idNew"];
+}
+
+// legacy GUILD_AUTHORITY 0xF000B026 (C2S): set the power bits of every rank (ref/03 section 9.1, Plan/21
+// section 5.5). The master only, not at war. Answer: GuildAuthorityNtf to the members. Power bits: MEMBERLEVEL
+// 0x01, LEVEL 0x02, INVITATION 0x04, PENYA 0x08, ITEM 0x10, GH_FURNITURE 0x20, GH_UPKEEP 0x40.
+message GuildAuthorityReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B026
+    name: "GUILD_AUTHORITY"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: idSelf, idGuild (u32, u32; the session character and guild)
+  // exactly 5 entries, index = member rank
+  repeated uint32 power = 1 [
+    (flyff.legacy_type) = "u32[5]",
+    (flyff.max_len) = 5
+  ];
+}
+
+// legacy GUILD_PENYA 0xF000B027 (C2S): set the salary of a rank (ref/03 section 9.1, Plan/21 section 5.5). The
+// master only; rank 0..4 and a salary below 1000000 (FIX VR-004: the original wrote out of bounds). Answers:
+// GuildPenyaNtf to the members, or GuildError code 2.
+message GuildPenyaReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B027
+    name: "GUILD_PENYA"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: idSelf, idGuild (u32, u32; the session character and guild)
+  // the rank whose salary is set, 0..4
+  uint32 rank = 1 [(flyff.legacy_type) = "u32 memberLv"];
+  // the salary in penya per payout
+  uint32 penya = 2 [(flyff.legacy_type) = "u32 salary"];
+}
+
+// legacy GUILD_SETNAME 0xF000B032 (C2S): give the guild its first name (ref/03 section 9.1, Plan/21 section
+// 5.4). The master only, while the guild is unnamed; unique, case-insensitive. Answers: GuildSetNameNtf to
+// everyone, or GuildError code 1.
+message GuildSetNameReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B032
+    name: "GUILD_SETNAME"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: idSelf, idGuild (u32, u32; the session character and guild)
+  // the guild name; the name rules (at most 16 characters) are a handler check
+  string name = 1 [
+    (flyff.legacy_type) = "str<=47",
+    (flyff.max_len) = 47
+  ];
+}
+
+// legacy NW_GUILDLOGO 0xF000B010 (C2S): set the guild logo once (ref/07a section 15.7, Plan/21 section 5.7).
+// The master only, guild level 2 or more, logo 1..20 (21..27 need game master authority). Answer: GuildLogoNtf
+// to everyone.
+message GuildLogoReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B010
+    name: "NW_GUILDLOGO"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // the logo number
+  uint32 logo = 1 [(flyff.legacy_type) = "u32 dwLogo"];
+}
+
+// legacy NW_GUILDCONTRIBUTION 0xF000B011 (C2S): donate penya or all usable gems to the guild (ref/07a section
+// 15.8, Plan/21 section 5.3). Needs the guild-bank event. Answer: GuildContributionNtf to the members.
+message GuildContributionReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B011
+    name: "NW_GUILDCONTRIBUTION"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: cbPxpCount (u8, unused by the original)
+  // penya to donate; > 0 selects the penya donation
+  sint32 gold = 1 [(flyff.legacy_type) = "i32 nGold"];
+  // true = donate every usable gem stack (used when gold <= 0)
+  bool item_flag = 2 [(flyff.legacy_type) = "u8 cbItemFlag"];
+}
+
+// legacy NW_GUILDNOTICE 0xF000B012 (C2S): set the guild notice (ref/07a section 15.9, Plan/21 section 5.7).
+// The master only (FIX VR-045); empty is ignored. Answer: GuildNoticeNtf to the members.
+message GuildNoticeReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B012
+    name: "NW_GUILDNOTICE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // the notice, at most 127 bytes
+  string notice = 1 [
+    (flyff.legacy_type) = "str<=127",
+    (flyff.max_len) = 127
+  ];
+}
+
+// legacy CREATE_GUILDCLOAK 0x00FF0FFD (C2S): make the guild cloak out of 10000 guild penya (ref/07a section
+// 15.6, Plan/21 section 5.8). The master only, the logo must be set, the guild bank must have room. No
+// payload. Answers: PutItemGuildBankNtf, GetItemGuildBankNtf and a DefinedText.
+message CreateGuildCloak {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF0FFD
+    name: "CREATE_GUILDCLOAK"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+}
+
+// legacy QUERYSETGUILDNAME 0x00000010 (C2S): rename the guild with a rename scroll (ref/07b section 14.2,
+// Plan/21 section 5.4). The master only; an invalid name stops the request (FIX VR-046). Answer:
+// GuildSetNameNtf to everyone.
+message QuerySetGuildName {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x10
+    name: "QUERYSETGUILDNAME"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // inventory object id of the rename scroll (0x7F = the forced rename without a scroll)
+  uint32 item_obj_id = 1 [(flyff.legacy_type) = "u8 nId"];
+  // the new guild name
+  string name = 2 [
+    (flyff.legacy_type) = "str<=47",
+    (flyff.max_len) = 47
+  ];
+}
+
+// legacy GUILD_BANK_WND 0xF000B020 (C2S): open the guild bank (ref/07a section 15.1, Plan/21 section 5.9).
+// Needs the guild-bank event and a guild; not while trading, vending or with the personal bank open. No
+// payload. Answer: GuildBankWndNtf.
+message GuildBankWndReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B020
+    name: "GUILD_BANK_WND"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+}
+
+// legacy GUILD_BANK_WND_CLOSE 0xFFFFFF3E (C2S): close the guild bank (ref/07a section 15.2, Plan/21 section
+// 5.9). No payload.
+message GuildBankWndClose {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF3E
+    name: "GUILD_BANK_WND_CLOSE"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+}
+
+// legacy PUTITEMGUILDBANK 0xF000B021 (C2S): put an inventory item into the guild bank (ref/07a section 15.3,
+// Plan/21 section 5.9). Needs the guild-bank NPC in range, the window open and a depositable item; gold
+// deposits (mode 0) are refused. Answers: PutItemGuildBankNtf, or a DefinedText when the bank is full.
+message PutItemGuildBankReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B021
+    name: "PUTITEMGUILDBANK"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // inventory object id of the item (Plan/21 calls it inv_slot)
+  uint32 obj_id = 1 [(flyff.legacy_type) = "u8 nId"];
+  // stack count to put, clamped to 1..stack
+  uint32 count = 2 [(flyff.legacy_type) = "u32 nItemNum"];
+  // 1 = item; 0 = gold is refused
+  uint32 mode = 3 [(flyff.legacy_type) = "u8 mode"];
+}
+
+// legacy GETITEMGUILDBANK 0xF000B022 (C2S): take penya or an item out of the guild bank (ref/07a section 15.4,
+// Plan/21 section 5.9). Needs the guild-bank NPC in range, the window open and the PENYA (mode 0) or ITEM
+// (mode 1) power. Answers: GetItemGuildBankNtf, or BankIsFull when the inventory has no room.
+message GetItemGuildBankReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B022
+    name: "GETITEMGUILDBANK"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // mode 1: the guild bank object id of the item (0..41); ignored for mode 0
+  uint32 obj_id = 1 [(flyff.legacy_type) = "u8 nId"];
+  // mode 0: the penya amount; mode 1: the stack count to take, clamped to 1..stack
+  uint32 count_or_gold = 2 [(flyff.legacy_type) = "u32 dwItemNum"];
+  // 0 = penya, 1 = item; other values are ignored
+  uint32 mode = 3 [(flyff.legacy_type) = "u8 mode"];
+}
+
+// legacy GUILD_BANK_MOVEITEM 0xFFFFFF3F (C2S): swap two slots of the guild bank (ref/07a section 15.5, Plan/21
+// section 5.9). Needs the window open; both indices below 42 and different (FIX VR-016). No message is sent
+// back (KEEP).
+message GuildBankMoveItem {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF3F
+    name: "GUILD_BANK_MOVEITEM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // source bank slot, 0..41
+  uint32 src = 1 [(flyff.legacy_type) = "u8 nSrcIndex"];
+  // destination bank slot, 0..41
+  uint32 dst = 2 [(flyff.legacy_type) = "u8 nDestIndex"];
+}
+
+// legacy GUILDLOG_VIEW 0xF000F810 (C2S): read the guild bank log (ref/07c section 15.1, Plan/21 section 5.9).
+// The master or a kingpin only. Answer: GuildLogViewNtf.
+message GuildLogViewReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F810
+    name: "GUILDLOG_VIEW"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // 1 item added, 2 item removed, 3 penya added, 4 penya removed
+  uint32 kind = 1 [(flyff.legacy_type) = "u8 listType"];
+}
+
+// legacy GUILD_INVITE 0x009A (S2C); obj_id: 0 (self). A guild invitation for the receiver (ref/08 section
+// 13.3, ref/07a section 15.10, ref/09b section 3.7).
+message GuildInviteNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9A
+    name: "GUILD_INVITE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 id_guild = 1 [(flyff.legacy_type) = "u32 idGuild"];
+  // character id of the inviting member
+  uint32 id_inviter = 2 [(flyff.legacy_type) = "u32 idMaster"];
+}
+
+// legacy ADD_GUILD_MEMBER 0xFFFFFF33 (S2C); obj_id: 0 (self). A member joined the guild (ref/03 section 9.2,
+// ref/09b section 3.7).
+message AddGuildMemberNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF33
+    name: "ADD_GUILD_MEMBER"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // the newcomer (character id and multi number)
+  GuildMemberInfo info = 1 [(flyff.legacy_type) = "raw GUILD_MEMBER_INFO"];
+  uint32 id_guild = 2 [(flyff.legacy_type) = "u32"];
+  // the newcomer's name
+  string name = 3 [(flyff.legacy_type) = "str<=42"];
+}
+
+// legacy REMOVE_GUILD_MEMBER 0xFFFFFF34 (S2C); obj_id: 0 (self). A member left or was removed (ref/03 section
+// 9.2, ref/09b section 3.7).
+message RemoveGuildMemberNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF34
+    name: "REMOVE_GUILD_MEMBER"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32"];
+  uint32 id_guild = 2 [(flyff.legacy_type) = "u32"];
+}
+
+// legacy DESTROY_GUILD 0x009D (S2C); obj_id: 0 (self). The guild was dissolved; broadcast to everyone (ref/08
+// section 13.3, ref/09b section 3.7).
+message DestroyGuildNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9D
+    name: "DESTROY_GUILD"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  string master_name = 1 [(flyff.legacy_type) = "str<=42"];
+  uint32 id_guild = 2 [(flyff.legacy_type) = "u32"];
+}
+
+// legacy CREATE_GUILD 0x009C (S2C); obj_id: 0 (self). A guild was founded; broadcast to everyone (ref/08
+// section 13.3, ref/09b section 3.7, Plan/21 section 5.4).
+message CreateGuild {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9C
+    name: "CREATE_GUILD"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // character id of the master
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32 idMaster"];
+  uint32 id_guild = 2 [(flyff.legacy_type) = "u32"];
+  string master_name = 3 [(flyff.legacy_type) = "str<=42"];
+  // the guild name; "" while unnamed
+  string guild_name = 4 [(flyff.legacy_type) = "str<=48"];
+}
+
+// legacy SET_GUILD 0x009B (S2C); obj_id: the player whose guild changed. Announced to the players near (ref/08
+// section 13.3, ref/09b section 3.7, Plan/21 section 5.12).
+message SetGuild {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9B
+    name: "SET_GUILD"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // the guild id, 0 = no guild
+  uint32 id_guild = 1 [(flyff.legacy_type) = "u32"];
+}
+
+// legacy GUILD: SNAPSHOTTYPE 0x009E and PACKETTYPE 0xFFFFFF30 (S2C, merged); obj_id: 0 (self). The whole guild
+// record of the receiver's guild, in the join batch and after joining one (ref/08 section 13.3, ref/09b
+// sections 3.7 and 7.1, Plan/21 section 3.5). Boxed in ServerMsg.
+message Guild {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9E
+    name: "GUILD"
+  };
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF30
+    name: "GUILD"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: idGuild (u32; repeated as guild.brief.id_guild)
+  // the full guild record
+  GuildFull guild = 1 [(flyff.legacy_type) = "CGuild::Serialize bDesc=FALSE"];
+}
+
+// legacy ALL_GUILDS 0x009F (S2C); obj_id: 0 (self). Every guild of the server in brief, in the join batch
+// (ref/08 section 13.3, ref/09b sections 3.7 and 7.2, Plan/11 Q7). Boxed in ServerMsg.
+message AllGuilds {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9F
+    name: "ALL_GUILDS"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // the next free guild id
+  uint32 next_id = 1 [(flyff.legacy_type) = "u32 nextId"];
+  // dropped: count (i32, the list length)
+  // one brief record per guild
+  repeated GuildBrief guilds = 2 [(flyff.legacy_type) = "CGuild::Serialize bDesc=TRUE x n"];
+}
+
+// legacy GUILD_MEMBER_LEVEL 0xFFFFFF3A (S2C); obj_id: 0 (self). The rank of a member changed; its class resets
+// to 0 (ref/03 section 9.2, ref/09b section 3.7).
+message GuildMemberLevelNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF3A
+    name: "GUILD_MEMBER_LEVEL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32"];
+  // the new rank, 0 master .. 4 rookie
+  sint32 rank = 2 [(flyff.legacy_type) = "i32 memberLv"];
+}
+
+// legacy GUILD_CLASS 0xFFFFFF74 (S2C); obj_id: 0 (self). The class of a member changed (ref/03 section 9.2,
+// ref/09b section 3.7).
+message GuildClassNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF74
+    name: "GUILD_CLASS"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32"];
+  // the new class, 0..2
+  // buf:lint:ignore FIELD_LOWER_SNAKE_CASE
+  sint32 class_ = 2 [(flyff.legacy_type) = "i32 class"];
+}
+
+// legacy GUILD_NICKNAME 0xFFFFFF75 (S2C); obj_id: 0 (self). The alias of a member changed (ref/03 section 9.2,
+// ref/09b section 3.7).
+message GuildNicknameNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF75
+    name: "GUILD_NICKNAME"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32"];
+  string alias = 2 [(flyff.legacy_type) = "str<=48"];
+}
+
+// legacy CHG_MASTER 0xF000F000 (S2C); obj_id: 0 (self). The guild has a new master; the old one is a rookie of
+// class 0 (ref/03 section 9.2, ref/09b section 3.7).
+message ChgMasterNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F000
+    name: "CHG_MASTER"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 old_master = 1 [(flyff.legacy_type) = "u32 idOldMaster"];
+  uint32 new_master = 2 [(flyff.legacy_type) = "u32 idNewMaster"];
+}
+
+// legacy GUILD_AUTHORITY 0x00FE (S2C); obj_id: 0 (self). The power bits of every rank (ref/08 section 13.3,
+// ref/09b section 3.7).
+message GuildAuthorityNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xFE
+    name: "GUILD_AUTHORITY"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // exactly 5 entries, index = member rank
+  repeated uint32 power = 1 [(flyff.legacy_type) = "raw(u32[5])"];
+}
+
+// legacy GUILD_PENYA 0x00FF (S2C); obj_id: 0 (self). The salary of a rank changed (ref/08 section 13.3,
+// ref/09b section 3.7).
+message GuildPenyaNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xFF
+    name: "GUILD_PENYA"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 rank = 1 [(flyff.legacy_type) = "u32 memberLv"];
+  uint32 penya = 2 [(flyff.legacy_type) = "u32 salary"];
+}
+
+// legacy GUILD_SETNAME 0xF000B032 (S2C); obj_id: 0 (self). The guild got or changed its name; broadcast to
+// everyone (ref/03 section 9.2, ref/09b section 3.7, Plan/21 section 5.4).
+message GuildSetNameNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B032
+    name: "GUILD_SETNAME"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 id_guild = 1 [(flyff.legacy_type) = "u32"];
+  string name = 2 [(flyff.legacy_type) = "str<=48"];
+}
+
+// legacy GUILD_LOGO 0x00FB (S2C); obj_id: 0 (self). The guild logo was set; broadcast to everyone (ref/08
+// section 13.3, ref/09b section 3.7).
+message GuildLogoNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xFB
+    name: "GUILD_LOGO"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 id_guild = 1 [(flyff.legacy_type) = "u32"];
+  uint32 logo = 2 [(flyff.legacy_type) = "u32"];
+}
+
+// legacy GUILD_CONTRIBUTION 0x00FC (S2C); obj_id: 0 (self). A contribution changed the guild and the
+// contributor (CONTRIBUTION_CHANGED_INFO; ref/08 section 13.3, ref/09b sections 3.7 and 7.4, Plan/21 section
+// 5.3).
+message GuildContributionNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xFC
+    name: "GUILD_CONTRIBUTION"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 id_guild = 1 [(flyff.legacy_type) = "u32"];
+  // the contributor
+  uint32 id_player = 2 [(flyff.legacy_type) = "u32"];
+  // gem points added by this contribution
+  uint32 pxp_delta = 3 [(flyff.legacy_type) = "u32 pxpCount"];
+  // penya added by this contribution
+  uint32 penya_delta = 4 [(flyff.legacy_type) = "u32 penya"];
+  // the guild's points after the contribution
+  uint32 guild_pxp = 5 [(flyff.legacy_type) = "u32 guildPxpTotal"];
+  // the guild's penya after the contribution
+  uint32 guild_penya = 6 [(flyff.legacy_type) = "u32 guildPenyaTotal"];
+  // the guild level after the contribution
+  uint32 guild_level = 7 [(flyff.legacy_type) = "u16 guildLevel"];
+}
+
+// legacy GUILD_NOTICE 0x00FD (S2C); obj_id: 0 (self). The guild notice changed (ref/08 section 13.3, ref/09b
+// section 3.7).
+message GuildNoticeNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xFD
+    name: "GUILD_NOTICE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 id_guild = 1 [(flyff.legacy_type) = "u32"];
+  // at most 127 bytes
+  string notice = 2 [(flyff.legacy_type) = "str<=128"];
+}
+
+// legacy GUILD_REAL_PENYA 0x00D5 (S2C); obj_id: 0 (self). The guild penya after a salary payout, to the paid
+// members (ref/08 section 13.3, ref/09b section 3.7, Plan/21 section 5.10).
+message GuildRealPenya {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xD5
+    name: "GUILD_REAL_PENYA"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // the guild's penya
+  sint32 gold = 1 [(flyff.legacy_type) = "i32 guildGold"];
+  // the rank of the receiver (the legacy `type`); its salary is shown as received
+  sint32 rank = 2 [(flyff.legacy_type) = "i32 memberLv"];
+}
+
+// legacy GUILD_GAMELOGIN 0xF000B029 (S2C); obj_id: 0 (self). A guild member logged in or out (ref/03 section
+// 9.2, ref/09b section 3.7, Plan/21 section 3.4).
+message GuildGameLogin {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B029
+    name: "GUILD_GAMELOGIN"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // true = logged in, false = logged out
+  bool login = 1 [(flyff.legacy_type) = "u8 login"];
+  uint32 id_player = 2 [(flyff.legacy_type) = "u32"];
+  // the channel number: 1 online, 100 on logout
+  uint32 multi_no = 3 [(flyff.legacy_type) = "u32 multiNo"];
+}
+
+// legacy GUILD_GAMEJOIN 0xF000B030 (S2C); obj_id: 0 (self). The online guild members at the receiver's login,
+// including the receiver (ref/03 section 9.2, ref/09b section 3.7, Plan/21 section 3.4).
+message GuildGameJoin {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B030
+    name: "GUILD_GAMEJOIN"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // dropped: n (i32, the list length)
+  // online member ids, in character id order
+  repeated uint32 ids = 1 [(flyff.legacy_type) = "n x u32 idPlayer"];
+  // parallel to ids: the channel number of each member
+  repeated uint32 multis = 2 [(flyff.legacy_type) = "n x u32 multiNo"];
+}
+
+// legacy GUILD_ERROR 0xF000B035 (S2C); obj_id: 0 (self). A guild request failed (ref/03 section 9.2, ref/09b
+// section 3.7, Plan/21 section 2.5).
+message GuildError {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000B035
+    name: "GUILD_ERROR"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // 1 = the guild name is taken, 2 = the salary is out of range
+  sint32 code = 1 [(flyff.legacy_type) = "i32"];
+}
+
+// legacy GUILD_BANK_WND 0x00FA (S2C); obj_id: 0 (self). The guild bank contents, answer of GuildBankWndReq
+// (ref/08 section 12.6, ref/09a section 5.5, Plan/21 section 5.9). Boxed in ServerMsg.
+message GuildBankWndNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xFA
+    name: "GUILD_BANK_WND"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // 0 = the window contents follow; the client ignores other modes
+  sint32 mode = 1 [(flyff.legacy_type) = "i32 nMode"];
+  // the guild's penya
+  uint32 gold = 2 [(flyff.legacy_type) = "u32 m_nGoldGuild"];
+  // the guild bank, max 42 slots
+  ItemContainer items = 3 [(flyff.legacy_type) = "CItemContainer::Serialize"];
+}
+
+// legacy PUTITEMGUILDBANK 0x00EF (S2C); obj_id: 0 (self). An item was put into the guild bank (ref/08 section
+// 12.6, ref/09a section 5.5, Plan/21 sections 5.8 and 5.9). Boxed in ServerMsg.
+message PutItemGuildBankNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xEF
+    name: "PUTITEMGUILDBANK"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // 1 = the receiver put it, 3 = a guild member with the bank open put it
+  uint32 mode = 1 [(flyff.legacy_type) = "u8 mode"];
+  // the stored item (object id = its bank slot)
+  ItemElem item = 2 [(flyff.legacy_type) = "CItemElem"];
+}
+
+// legacy GETITEMGUILDBANK 0x00D4 (S2C); obj_id: 0 (self). Penya or an item left the guild bank (ref/08 section
+// 12.6, ref/09a section 5.5, Plan/21 sections 5.8 and 5.9). The legacy `u8 mode` selects the payload; the
+// field number is mode + 1 (Plan/11 section 5.2). Boxed in ServerMsg.
+message GetItemGuildBankNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xD4
+    name: "GETITEMGUILDBANK"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  oneof sub {
+    // GUILD_PENYA_MINE_UPDATE 0
+    PenyaMineUpdate penya_mine = 1;
+    // GUILD_ITEM_MINE_UPDATE 1
+    ItemMineUpdate item_mine = 2;
+    // GUILD_PENYA_ALL_UPDATE 2
+    PenyaAllUpdate penya_all = 3;
+    // GUILD_ITEM_ALL_UPDATE 3
+    ItemAllUpdate item_all = 4;
+  }
+
+  message PenyaMineUpdate {
+    // penya taken out; the receiver's purse grows by it
+    uint32 gold = 1 [(flyff.legacy_type) = "u32"];
+    // the member who took it (or paid for the cloak)
+    uint32 id_player = 2 [(flyff.legacy_type) = "u32"];
+    // true = the penya paid for a guild cloak (no contribution change)
+    bool cloak = 3 [(flyff.legacy_type) = "u8 cbCloak"];
+  }
+
+  message ItemMineUpdate {
+    // the item taken out; it goes into the receiver's inventory and leaves the bank by its object id
+    ItemElem item = 1 [(flyff.legacy_type) = "CItemElem"];
+  }
+
+  message PenyaAllUpdate {
+    // penya another member took out
+    uint32 gold = 1 [(flyff.legacy_type) = "u32"];
+    uint32 id_player = 2 [(flyff.legacy_type) = "u32"];
+    bool cloak = 3 [(flyff.legacy_type) = "u8 cbCloak"];
+  }
+
+  message ItemAllUpdate {
+    // the item another member took out; only the bank changes
+    ItemElem item = 1 [(flyff.legacy_type) = "CItemElem"];
+  }
+}
+
+// legacy REMOVE_GUILD_BANK_ITEM 0x00F3 (S2C); obj_id: 0 (self). A game master removed penya or an item from
+// the guild bank (ref/08 section 12.6, ref/09b section 3.7, Plan/21 section 5.9).
+message RemoveGuildBankItem {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xF3
+    name: "REMOVE_GUILD_BANK_ITEM"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  uint32 id_guild = 1 [(flyff.legacy_type) = "u32"];
+  // bank object id of the item; 0xFFFFFFFF (NULL_ID, kept) = penya
+  uint32 item_obj_id = 2 [(flyff.legacy_type) = "u32 itemObjId"];
+  // count of the item, or the penya amount
+  uint32 num = 3 [(flyff.legacy_type) = "u32"];
+}
+
+// legacy GUILDLOG_VIEW 0x0142 (S2C); obj_id: 0 (self). The guild bank log, newest first, at most 100 entries,
+// answer of GuildLogViewReq (ref/08 section 12.6, ref/09b section 3.7, Plan/21 section 5.9).
+message GuildLogViewNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x142
+    name: "GUILDLOG_VIEW"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // 1 item added, 2 item removed, 3 penya added, 4 penya removed
+  uint32 kind = 1 [(flyff.legacy_type) = "u8 type"];
+  // dropped: n (i16, the list length)
+  // log lines
+  repeated Entry entries = 2 [(flyff.legacy_type) = "i16 n + entries"];
+
+  // One log line.
+  message Entry {
+    // name of the member who acted
+    string player = 1 [(flyff.legacy_type) = "str<=42"];
+    // unix seconds of the action
+    sint64 logged_at = 2 [
+      (flyff.legacy_type) = "i32 nDate",
+      (flyff.js_safe_number) = true
+    ];
+    // kinds 1 and 2: the item id; kinds 3 and 4: the penya amount (the legacy slot is shared)
+    uint32 item_id = 3 [(flyff.legacy_type) = "i32 nItemID"];
+    // kinds 1 and 2 only: the upgrade level; 0 for kinds 3 and 4
+    sint32 ability_option = 4 [(flyff.legacy_type) = "i32 nItemAbilityOption"];
+    // kinds 1 and 2 only: the stack count; 0 for kinds 3 and 4
+    sint32 count = 5 [(flyff.legacy_type) = "i32 nItemCount"];
+  }
+}

@@ -1,0 +1,36 @@
+# cargo-deny configuration (Plan/02 §11.5 rule 6). `cargo deny check` is not installed by the bootstrap
+# (`cargo xtask tools install` installs it on request); the file is committed so CI can run it.
+[graph]
+all-features = false
+
+[bans]
+multiple-versions = "warn"
+deny = [
+  { name = "openssl-sys" },
+  { name = "native-tls" },
+  { name = "aws-lc-sys" },
+  { name = "aws-lc-rs" },
+]
+
+[licenses]
+allow = [
+  "MIT",
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "Zlib",
+  "Unicode-3.0",
+  "Unicode-DFS-2016",
+  "CC0-1.0",
+  "BSL-1.0",
+  "MPL-2.0",
+]
+
+[licenses.private]
+ignore = true
+
+[advisories]
+unmaintained = "workspace"   # warn only for unmaintained crates the workspace depends on directly
+yanked = "warn"

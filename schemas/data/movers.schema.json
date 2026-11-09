@@ -1,0 +1,876 @@
+{
+  "$defs": {
+    "CtrlProp": {
+      "description": "One row of `propCtrl.txt`.",
+      "properties": {
+        "ctrl_kind1": {
+          "description": "t2: `CK1_*` (chest, trigger, guild house, housing, ...).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "ctrl_kind2": {
+          "description": "t3: `CK2_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "ctrl_kind3": {
+          "description": "t4: `CK3_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "id": {
+          "description": "t0: `CI_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "name": {
+          "description": "t1: display name (IDS key resolved).",
+          "type": "string"
+        },
+        "sfx_ctrl": {
+          "description": "t5.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "snd_damage": {
+          "description": "t6.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "ctrl_kind1",
+        "ctrl_kind2",
+        "ctrl_kind3",
+        "sfx_ctrl",
+        "snd_damage"
+      ],
+      "type": "object"
+    },
+    "MoverProp": {
+      "description": "One row of `propMover.txt` (token index `tN` = position in the row).",
+      "properties": {
+        "abrasion": {
+          "default": 0,
+          "description": "t38.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "action_radius": {
+          "default": 0,
+          "description": "t19.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "add_ability": {
+          "default": 0,
+          "description": "t65.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "add_hp": {
+          "default": 0,
+          "description": "t35.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "add_mp": {
+          "default": 0,
+          "description": "t36.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "adj_atk_delay": {
+          "default": 0,
+          "description": "t40.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "ai": {
+          "default": 0,
+          "description": "t2: `AII_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "air_jump": {
+          "default": 0,
+          "description": "t48.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "arm_rate": {
+          "default": 0,
+          "description": "t31.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "atk1": {
+          "default": 0,
+          "description": "t22: `II_WEA_MOB_*` attack item.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "atk2": {
+          "default": 0,
+          "description": "t23.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "atk3": {
+          "default": 0,
+          "description": "t24.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "atk4": {
+          "default": 0,
+          "description": "t25 (header \"dwHorizontalRate\").",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "atk_max": {
+          "default": 0,
+          "description": "t21.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "atk_min": {
+          "default": 0,
+          "description": "t20.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "attack_speed": {
+          "default": 0,
+          "description": "t33.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "belligerence": {
+          "default": 0,
+          "description": "t10: `BELLI_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "body_state": {
+          "default": 0,
+          "description": "t64.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "cash": {
+          "default": 0,
+          "description": "t56.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "chaotic": {
+          "default": 0,
+          "description": "t17: `nChaotic` (header \"dwKarma\").",
+          "format": "int32",
+          "type": "integer"
+        },
+        "chest_rate": {
+          "default": 0,
+          "description": "t29.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "class": {
+          "default": 0,
+          "description": "t15: `RANK_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "cohesion": {
+          "default": 0,
+          "description": "t59.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "correction_value": {
+          "default": 0,
+          "description": "t61.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "dex": {
+          "default": 0,
+          "description": "t5.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "element_atk": {
+          "default": 0,
+          "description": "t42: `wElementAtk` (short).",
+          "format": "int16",
+          "maximum": 32767,
+          "minimum": -32768,
+          "type": "integer"
+        },
+        "element_type": {
+          "default": 0,
+          "description": "t41: element.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "er": {
+          "default": 0,
+          "description": "t8.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "exp_value": {
+          "default": 0,
+          "description": "t62: `GetExpInteger` (int64).",
+          "format": "int64",
+          "type": "integer"
+        },
+        "flight_level": {
+          "default": 0,
+          "description": "t13.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "flying": {
+          "default": 0,
+          "description": "t46.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "frame": {
+          "default": 0.0,
+          "description": "t26: FLOAT (header \"dwVerticalRate\"); `=` (-1) becomes 1.0 (F1).",
+          "format": "float",
+          "type": "number"
+        },
+        "fxp_value": {
+          "default": 0,
+          "description": "t63.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "gender": {
+          "default": 0,
+          "description": "t11.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "hardness": {
+          "default": 0,
+          "description": "t39.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "head_rate": {
+          "default": 0,
+          "description": "t30.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "hide_level": {
+          "default": 0,
+          "description": "t43.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "holding_time": {
+          "default": 0,
+          "description": "t60: corpse time.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "hr": {
+          "default": 0,
+          "description": "t7.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "id": {
+          "default": 0,
+          "description": "t0: `MI_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "if_parts": {
+          "default": 0,
+          "description": "t16: `bIfParts` (`-1` is an Error only).",
+          "format": "int32",
+          "type": "integer"
+        },
+        "int": {
+          "default": 0,
+          "description": "t6.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "jump_ing": {
+          "default": 0,
+          "description": "t47.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "killable": {
+          "default": 0,
+          "description": "t66.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "leg_rate": {
+          "default": 0,
+          "description": "t32.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "level": {
+          "default": 0,
+          "description": "t12.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "material_amount": {
+          "default": 0,
+          "description": "t58.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "name": {
+          "default": "",
+          "description": "t1: display name (IDS key resolved).",
+          "type": "string"
+        },
+        "name_key": {
+          "default": null,
+          "description": "The IDS key of the name (debug/export).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "natural_armor": {
+          "default": 0,
+          "description": "t37.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "orthograde": {
+          "default": 0,
+          "description": "t27 (header \"dwDiagonalRate\").",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "race": {
+          "default": 0,
+          "description": "t9.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "re_attack_delay": {
+          "default": 0,
+          "description": "t34.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "resist_earth": {
+          "default": 0,
+          "description": "t55 (dark is never loaded).",
+          "format": "int32",
+          "type": "integer"
+        },
+        "resist_electricity": {
+          "default": 0,
+          "description": "t51: `(int)(GetFloat() * 100.0f)`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "resist_fire": {
+          "default": 0,
+          "description": "t52.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "resist_magic": {
+          "default": 0,
+          "description": "t50.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "resist_water": {
+          "default": 0,
+          "description": "t54.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "resist_wind": {
+          "default": 0,
+          "description": "t53.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "shelter": {
+          "default": 0,
+          "description": "t45.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "size": {
+          "default": 0,
+          "description": "t14.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "snd_atk": {
+          "default": [
+            0,
+            0
+          ],
+          "description": "t73..t74.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "snd_die": {
+          "default": [
+            0,
+            0
+          ],
+          "description": "t75..t76.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "snd_dmg": {
+          "default": [
+            0,
+            0,
+            0
+          ],
+          "description": "t77..t79.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "type": "array"
+        },
+        "snd_idle": {
+          "default": [
+            0,
+            0
+          ],
+          "description": "t80..t81.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "source_material": {
+          "default": 0,
+          "description": "t57.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "speed": {
+          "default": 0.0,
+          "description": "t44: FLOAT; x2.80 for `AII_PET`/`AII_EGG` (F1, f32 multiply).",
+          "format": "float",
+          "type": "number"
+        },
+        "sta": {
+          "default": 0,
+          "description": "t4.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "str": {
+          "default": 0,
+          "description": "t3.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "taming": {
+          "default": 0,
+          "description": "t49.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "thrust_rate": {
+          "default": 0,
+          "description": "t28.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "useable": {
+          "default": 0,
+          "description": "t18: `dwUseable`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "virt_item": {
+          "default": [
+            0,
+            0,
+            0
+          ],
+          "description": "t67..t72 read as 3 items (`virt_item`) then 3 types (`virt_type`); unused by the game.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "type": "array"
+        },
+        "virt_type": {
+          "default": [
+            0,
+            0,
+            0
+          ],
+          "description": "See `virt_item`.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "name_key",
+        "ai",
+        "str",
+        "sta",
+        "dex",
+        "int",
+        "hr",
+        "er",
+        "race",
+        "belligerence",
+        "gender",
+        "level",
+        "flight_level",
+        "size",
+        "class",
+        "if_parts",
+        "chaotic",
+        "useable",
+        "action_radius",
+        "atk_min",
+        "atk_max",
+        "atk1",
+        "atk2",
+        "atk3",
+        "atk4",
+        "frame",
+        "orthograde",
+        "thrust_rate",
+        "chest_rate",
+        "head_rate",
+        "arm_rate",
+        "leg_rate",
+        "attack_speed",
+        "re_attack_delay",
+        "add_hp",
+        "add_mp",
+        "natural_armor",
+        "abrasion",
+        "hardness",
+        "adj_atk_delay",
+        "element_type",
+        "element_atk",
+        "hide_level",
+        "speed",
+        "shelter",
+        "flying",
+        "jump_ing",
+        "air_jump",
+        "taming",
+        "resist_magic",
+        "resist_electricity",
+        "resist_fire",
+        "resist_wind",
+        "resist_water",
+        "resist_earth",
+        "cash",
+        "source_material",
+        "material_amount",
+        "cohesion",
+        "holding_time",
+        "correction_value",
+        "exp_value",
+        "fxp_value",
+        "body_state",
+        "add_ability",
+        "killable",
+        "virt_item",
+        "virt_type",
+        "snd_atk",
+        "snd_die",
+        "snd_dmg",
+        "snd_idle"
+      ],
+      "type": "object"
+    },
+    "MoversBundle": {
+      "description": "`movers`: monsters, NPC models and pets (no AI, drops or respawn data) and the controls.",
+      "properties": {
+        "ctrls": {
+          "$ref": "#/$defs/RowTable_CtrlProp",
+          "description": "`propCtrl` rows (`CI_*`)."
+        },
+        "movers": {
+          "$ref": "#/$defs/RowTable_MoverProp",
+          "description": "`propMover` rows (`MI_*`) without the `ex` block and the name key.",
+          "x-flyff-omit": [
+            "name_key",
+            "ex"
+          ]
+        }
+      },
+      "required": [
+        "movers",
+        "ctrls"
+      ],
+      "title": "MoversBundle",
+      "type": "object"
+    },
+    "RowTable_CtrlProp": {
+      "description": "A columnar table: `columns` names the fields of each row, `rows` holds one array of cells per row (14 §10.2).",
+      "properties": {
+        "columns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "rows": {
+          "items": {
+            "type": "array"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "columns",
+        "rows"
+      ],
+      "type": "object",
+      "x-flyff-columns": [
+        "id",
+        "name",
+        "ctrl_kind1",
+        "ctrl_kind2",
+        "ctrl_kind3",
+        "sfx_ctrl",
+        "snd_damage"
+      ],
+      "x-flyff-row": {
+        "$ref": "#/$defs/CtrlProp"
+      }
+    },
+    "RowTable_MoverProp": {
+      "description": "A columnar table: `columns` names the fields of each row, `rows` holds one array of cells per row (14 §10.2).",
+      "properties": {
+        "columns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "rows": {
+          "items": {
+            "type": "array"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "columns",
+        "rows"
+      ],
+      "type": "object",
+      "x-flyff-columns": [
+        "id",
+        "name",
+        "name_key",
+        "ai",
+        "str",
+        "sta",
+        "dex",
+        "int",
+        "hr",
+        "er",
+        "race",
+        "belligerence",
+        "gender",
+        "level",
+        "flight_level",
+        "size",
+        "class",
+        "if_parts",
+        "chaotic",
+        "useable",
+        "action_radius",
+        "atk_min",
+        "atk_max",
+        "atk1",
+        "atk2",
+        "atk3",
+        "atk4",
+        "frame",
+        "orthograde",
+        "thrust_rate",
+        "chest_rate",
+        "head_rate",
+        "arm_rate",
+        "leg_rate",
+        "attack_speed",
+        "re_attack_delay",
+        "add_hp",
+        "add_mp",
+        "natural_armor",
+        "abrasion",
+        "hardness",
+        "adj_atk_delay",
+        "element_type",
+        "element_atk",
+        "hide_level",
+        "speed",
+        "shelter",
+        "flying",
+        "jump_ing",
+        "air_jump",
+        "taming",
+        "resist_magic",
+        "resist_electricity",
+        "resist_fire",
+        "resist_wind",
+        "resist_water",
+        "resist_earth",
+        "cash",
+        "source_material",
+        "material_amount",
+        "cohesion",
+        "holding_time",
+        "correction_value",
+        "exp_value",
+        "fxp_value",
+        "body_state",
+        "add_ability",
+        "killable",
+        "virt_item",
+        "virt_type",
+        "snd_atk",
+        "snd_die",
+        "snd_dmg",
+        "snd_idle",
+        "ex"
+      ],
+      "x-flyff-row": {
+        "$ref": "#/$defs/MoverProp"
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`movers.<h16>.json`: the envelope of the `movers` bundle (schema version 1).",
+  "properties": {
+    "bundle": {
+      "const": "movers"
+    },
+    "data": {
+      "$ref": "#/$defs/MoversBundle"
+    },
+    "schema": {
+      "const": 1
+    }
+  },
+  "required": [
+    "bundle",
+    "schema",
+    "data"
+  ],
+  "title": "MoversBundleEnvelope",
+  "type": "object"
+}

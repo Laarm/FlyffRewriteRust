@@ -1,0 +1,89 @@
+/* Minimal reset and the CSS-only boot screen (shown before any asset is loaded). */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: #101418;
+  color: #e6e9ee;
+  font-family: 'Flyff DejaVu Sans', 'DejaVu Sans', Verdana, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.boot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.boot h1 {
+  margin: 0;
+  font-size: 2.25rem;
+  letter-spacing: 0.04em;
+}
+
+.boot__spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid #2b3540;
+  border-top-color: #6cb6ff;
+  border-radius: 50%;
+  animation: boot-spin 0.9s linear infinite;
+}
+
+.boot__status {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: #9aa7b4;
+  font-size: 0.85rem;
+}
+
+.boot__status li[data-state='ok'] {
+  color: #7ee787;
+}
+
+.boot__status li[data-state='error'] {
+  color: #ff7b72;
+}
+
+.boot a {
+  color: #6cb6ff;
+}
+
+.fatal {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.fatal pre {
+  max-height: 24rem;
+  padding: 0.75rem;
+  overflow: auto;
+  background: #0a0d10;
+  border: 1px solid #2b3540;
+  user-select: text;
+  white-space: pre-wrap;
+}
+
+@keyframes boot-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

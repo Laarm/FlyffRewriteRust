@@ -1,0 +1,211 @@
+// Chat messages (Plan/11 sections 8.5 and 10, WP-PROTO-20; tag block 576-607 plus the hot tags 6 and 15).
+// Transcribed from ref/08 section 11 and section 16, ref/07a section 6, ref/07b section 11, ref/09a section
+// 5.2, ref/09b section 3.3 and ref/24. Routing, spam rules and the command parser are Plan/21 and Plan/23.
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+
+// legacy CHAT 0x00FF0000 (C2S): a chat line, or a `/command` that the server parses (ref/24). Text is UTF-8
+// (Plan/11 section 5.7); the legacy cap is 1023 characters.
+message ChatReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF0000
+    name: "CHAT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M2";
+  string text = 1 [
+    (flyff.legacy_type) = "str<=1023",
+    (flyff.max_len) = 1024
+  ];
+  // Added (Plan/11 section 8.6, Plan/23 section 9.3): the line was sent from a shortcut/macro slot (legacy client
+  // m_bShortcutCommand); selects the server-side spam window of Plan/23 section 6.3.
+  bool shortcut = 100;
+}
+
+// legacy BLOCK 0xFFFFFF5A (C2S): the client refuses a request for a UI-state reason and reports it so the
+// requester is told (ref/07b section 11).
+message BlockReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF5A
+    name: "BLOCK"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // 4 repairing, 5 already trading, 6 friend confirm open, 7 party confirm open, 8 guild bank / angel window
+  // open; any other value is ignored (Plan/21 section 9.4)
+  uint32 gu = 1 [(flyff.legacy_type) = "u8 nGu"];
+  // dropped: szNameTo (the sender's own name; FIX, VR-001: the session identifies the sender)
+  // the player whose request is refused (legacy szNameFrom)
+  string target_name = 2 [
+    (flyff.legacy_type) = "str<=63",
+    (flyff.max_len) = 64
+  ];
+}
+
+// legacy CHAT 0x0001 (S2C); obj_id: the speaker. Normal say to the visibility set, also NPC and monster
+// lines (a leading `/` or `!` is a balloon or emoticon, not a chat-log line).
+message ChatNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x1
+    name: "CHAT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M2";
+  string text = 1 [(flyff.legacy_type) = "str<=1024"];
+}
+
+// legacy SHOUT 0x00D0 (S2C); obj_id: 0 (the legacy header is NULL_ID). Shout to the same world and layer
+// within 255 m, or to everyone with a shout item (ref/24 section 7.2).
+message Shout {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xD0
+    name: "SHOUT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M2";
+  // the speaker's object id (0 when the speaker is not on this server)
+  uint32 obj_id = 1 [(flyff.legacy_type) = "u32 objid"];
+  string name = 2 [(flyff.legacy_type) = "str<=42"];
+  string text = 3 [(flyff.legacy_type) = "str<=260"];
+  // ARGB: 0xFFFF99CC, or 0xFF00FF00 with the lord shout buff
+  uint32 color = 4 [(flyff.legacy_type) = "u32"];
+}
+
+// legacy WHISPER 0x00FF00D4 (S2C top-level); obj_id: 0. Private message; both the target and the sender
+// receive it (the sender's copy is the echo).
+message Whisper {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00D4
+    name: "WHISPER"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M2";
+  string from = 1 [(flyff.legacy_type) = "str<=42"];
+  string to = 2 [(flyff.legacy_type) = "str<=42"];
+  string text = 3 [(flyff.legacy_type) = "str<=260"];
+  uint32 id_from = 4 [(flyff.legacy_type) = "u32"];
+  uint32 id_to = 5 [(flyff.legacy_type) = "u32"];
+  // nonzero: the target is not connected ("That player is not connected.")
+  sint32 search = 6 [(flyff.legacy_type) = "i32 nSearch"];
+}
+
+// legacy SAY 0x00FF00E0 (S2C top-level); obj_id: 0. Messenger instant message; same layout as Whisper.
+message Say {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00E0
+    name: "SAY"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M2";
+  string from = 1 [(flyff.legacy_type) = "str<=42"];
+  string to = 2 [(flyff.legacy_type) = "str<=42"];
+  string text = 3 [(flyff.legacy_type) = "str<=260"];
+  uint32 id_from = 4 [(flyff.legacy_type) = "u32"];
+  uint32 id_to = 5 [(flyff.legacy_type) = "u32"];
+  sint32 search = 6 [(flyff.legacy_type) = "i32 nSearch"];
+}
+
+// legacy RETURNSAY 0x00A9 (S2C); obj_id: 0, or the speaker for flag 1. Whisper feedback.
+message ReturnSay {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xA9
+    name: "RETURNSAY"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M2";
+  // 1: chat line "[name] text"; 2: TID_GAME_MSGNOTTRANSELF (cannot message yourself); other: TID_GAME_MSGNOTEXIST(text)
+  sint32 flag = 1 [(flyff.legacy_type) = "i32"];
+  // the text of flag 1, or the unknown player name
+  string text = 2 [(flyff.legacy_type) = "str<=260"];
+}
+
+// legacy PARTYCHAT 0x0069 (S2C); obj_id: 0. Party chat line to every online member.
+message PartyChat {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x69
+    name: "PARTYCHAT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M5";
+  // the speaker's object id
+  uint32 obj_id = 1 [(flyff.legacy_type) = "u32 objid"];
+  string name = 2 [(flyff.legacy_type) = "str<=42"];
+  string text = 3 [(flyff.legacy_type) = "str<=260"];
+}
+
+// legacy GUILD_CHAT 0xFFFFFF39 (S2C top-level); obj_id: 0. Guild chat line to every online member.
+message GuildChat {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF39
+    name: "GUILD_CHAT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // the speaker's object id
+  uint32 obj_id = 1 [(flyff.legacy_type) = "u32 objid"];
+  string name = 2 [(flyff.legacy_type) = "str<=42"];
+  string text = 3 [(flyff.legacy_type) = "str<=1024"];
+}
+
+// legacy BLOCK 0xFFFFFF5A (S2C top-level); obj_id: 0. A request was refused; the requester is told why.
+message BlockNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF5A
+    name: "BLOCK"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "21";
+  option (flyff.milestone) = "M6";
+  // 1 whisper refused (TID_GAME_MSGCHATDENY), 2 messenger refused (TID_GAME_MSGDENY), 3 trade refused
+  // (TID_GAME_TRADEDENY), 4 TID_GAME_REPAIR_NOTTRADE, 5 TID_GAME_YETTRADE, 6 TID_GAME_YETFRIEND,
+  // 7 TID_GAME_YETPARTY, 8 TID_GAME_TRADELIMITPC
+  uint32 gu = 1 [(flyff.legacy_type) = "u8 nGu"];
+  // the player who refused
+  string name = 2 [(flyff.legacy_type) = "str<=63"];
+}
+
+// ext 0xFE000040 (S2C, M6); obj_id: 0. Server-side privacy toggles and the ignore list (PL-095, Plan/23
+// sections 6.11 and 9.3). Sent in the join batch (from M6) and after every change of a `privacy.*` or
+// `chat.ignore` setting (Plan/11a section 8 R1-4).
+message ChatSettingsNtf {
+  option (flyff.ext_id) = 0xFE000040;
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "23";
+  option (flyff.milestone) = "M6";
+  // SettingsDoc privacy.trade (true = accept)
+  bool trade = 1;
+  // privacy.whisper
+  bool whisper = 2;
+  // privacy.party
+  bool party = 3;
+  // privacy.shout
+  bool shout = 4;
+  // privacy.messenger
+  bool messenger = 5;
+  // privacy.messenger_join
+  bool messenger_join = 6;
+  // chat.ignore, stored order, at most 1000 names
+  repeated string ignored = 7;
+}

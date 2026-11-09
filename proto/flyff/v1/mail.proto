@@ -1,0 +1,191 @@
+// Mail messages (Plan/11 section 4.2, WP-PROTO-17; tag block 448-479): the post office. Transcribed from
+// ref/07b section 16, ref/08 section 15.2, ref/09b sections 3.11 and 7.6, ref/13 section 17 and Plan/19 section
+// 11.
+//
+// The mail record itself is `Mail` (social_types.proto): mail id, sender, optional attached ItemElem, gold,
+// creation time (the legacy age in seconds became `created_at`), read flag, title, text. Limits: 50 mails per
+// box, title 31, text 255 bytes, postage 500 penya. Mail is addressed by its mail id.
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+import "flyff/v1/social_types.proto";
+
+// legacy QUERYPOSTMAIL 0x0000001A (C2S): send a mail (ref/07b section 16.1, Plan/19 section 11.2). Needs an
+// MMI_POST NPC within range, 500 penya postage plus the attached gold (at most 2000000000), and an attachable
+// item (not equipped, quest, bound, in use, a guild cloak, a vagrant ride or charged). Refused while trading,
+// vending or with the bank open. An atomic multi-party commit. Answer: TID_MAIL_SEND_OK; the receiver learns
+// of it from the MODE_MAILBOX flag, PostMail is not pushed.
+message QueryPostMail {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x1A
+    name: "QUERYPOSTMAIL"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the attached item (inventory object id); 0xFF = no item (kept verbatim)
+  uint32 obj_id = 1 [(flyff.legacy_type) = "u8 nItem"];
+  // the attached count (clamped to the stack; <= 0 is refused)
+  sint32 num = 2 [(flyff.legacy_type) = "i16 nItemNum"];
+  // the receiver's character name
+  string receiver = 3 [
+    (flyff.legacy_type) = "str<=41",
+    (flyff.max_len) = 41
+  ];
+  // the attached penya, >= 0
+  sint32 gold = 4 [(flyff.legacy_type) = "i32 nGold"];
+  // the title
+  string title = 5 [
+    (flyff.legacy_type) = "str<=31",
+    (flyff.max_len) = 31
+  ];
+  // the text
+  string text = 6 [
+    (flyff.legacy_type) = "str<=255",
+    (flyff.max_len) = 255
+  ];
+}
+
+// legacy QUERYREMOVEMAIL 0x0000001B (C2S): delete a mail with whatever it still holds (ref/07b section 16.2,
+// Plan/19 section 11.3). Answer: RemoveMail (kind 0).
+message QueryRemoveMail {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x1B
+    name: "QUERYREMOVEMAIL"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the mail id
+  uint32 mail_id = 1 [(flyff.legacy_type) = "u32 nMail"];
+}
+
+// legacy QUERYGETMAILITEM 0x0000001C (C2S): take the attached item into the inventory (ref/07b section 16.3,
+// Plan/19 section 11.4). Needs one free slot; a storage fee applies from day 8 (PL-073). An atomic
+// multi-party commit. Answer: CreateItem + RemoveMail (kind 1).
+message QueryGetMailItem {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x1C
+    name: "QUERYGETMAILITEM"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the mail id
+  uint32 mail_id = 1 [(flyff.legacy_type) = "u32 nMail"];
+}
+
+// legacy QUERYGETMAILGOLD 0x0000001F (C2S): take the attached penya (ref/07b section 16.2, Plan/19 section
+// 11.5). When the wallet cannot take it the penya is re-mailed (KEEP). Answer: SetPointParam + RemoveMail
+// (kind 2).
+message QueryGetMailGold {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x1F
+    name: "QUERYGETMAILGOLD"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the mail id
+  uint32 mail_id = 1 [(flyff.legacy_type) = "u32 nMail"];
+}
+
+// legacy READMAIL 0x00000024 (C2S): mark a mail as read (ref/07b section 16.2, Plan/19 section 11.3). Answer:
+// RemoveMail (kind 3).
+message ReadMail {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x24
+    name: "READMAIL"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the mail id
+  uint32 mail_id = 1 [(flyff.legacy_type) = "u32 nMail"];
+}
+
+// legacy QUERYMAILBOX 0x0000001D (C2S): open the post window and load the mailbox (ref/07b section 16.4,
+// Plan/19 section 11.3); at most one per 3 s. No payload. Answer: QueryMailBoxNtf.
+message QueryMailBoxReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x1D
+    name: "QUERYMAILBOX"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy POSTMAIL 0x00E6 (S2C); obj_id: 0 (self). A mail arrived while the post window is open (ref/08
+// section 15.2, ref/09b section 3.11). Defined but not pushed by the server (Plan/19 section 11.2). Boxed in
+// ServerMsg (the mail may embed an ItemElem).
+message PostMail {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xE6
+    name: "POSTMAIL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the mail record (social_types.proto)
+  Mail mail = 1 [(flyff.legacy_type) = "CMail::Serialize"];
+}
+
+// legacy REMOVEMAIL 0x00E7 (S2C); obj_id: 0 (self). A mail or a part of it is gone (ref/08 section 15.2,
+// ref/09b section 3.11, Plan/19 section 11.3).
+message RemoveMail {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xE7
+    name: "REMOVEMAIL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the mail id
+  uint32 mail_id = 1 [(flyff.legacy_type) = "u32 nMail"];
+  // 0 = delete the mail, 1 = the attached item was taken, 2 = the gold was taken, 3 = the mail is now read
+  sint32 kind = 2 [(flyff.legacy_type) = "i32 nType"];
+}
+
+// legacy QUERYMAILBOX 0x00E9 (S2C); obj_id: 0 (self). The whole mailbox, the answer of QueryMailBoxReq
+// (ref/08 section 15.2, ref/09b sections 3.11 and 7.6). Boxed in ServerMsg.
+message QueryMailBoxNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xE9
+    name: "QUERYMAILBOX"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // the mailbox owner (player id)
+  uint32 id_receiver = 1 [(flyff.legacy_type) = "u32 idReceiver"];
+  // the mails of the box (at most 50)
+  repeated Mail mails = 2 [(flyff.legacy_type) = "i32 n + n x CMail"];
+}
+
+// legacy QUERYMAILBOX_REQ 0x8860 (S2C); obj_id: 0 (self). The legacy "mailbox not cached on this world" state
+// (ref/07b section 16.4, ref/09b section 3.11). Defined but never emitted: the mail service answers directly
+// (Plan/19 section 11.3).
+message QueryMailBoxReqNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x8860
+    name: "QUERYMAILBOX_REQ"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "19";
+  option (flyff.milestone) = "M4";
+  // true = a mailbox transfer is pending, a mail list follows
+  bool check_trans_mailbox = 1 [(flyff.legacy_type) = "i32 bCheckTransMailBox"];
+}

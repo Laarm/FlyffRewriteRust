@@ -1,0 +1,24 @@
+{
+  "generator": "cargo xtask gen-defs",
+  "format": 1,
+  "total": 18387,
+  "headers": [
+    { "module": "define", "file": "define.h", "count": 213, "xxh3": "26aa6f2163b3f82c" },
+    { "module": "neuz", "file": "defineNeuz.h", "count": 978, "xxh3": "4855f76ec20c830e" },
+    { "module": "quest", "file": "defineQuest.h", "count": 405, "xxh3": "6d61cb2aeba8b311" },
+    { "module": "job", "file": "defineJob.h", "count": 100, "xxh3": "fb4ccc90a671d4da" },
+    { "module": "item", "file": "defineItem.h", "count": 5393, "xxh3": "b0ba8ff054488f30" },
+    { "module": "world", "file": "defineWorld.h", "count": 61, "xxh3": "90b3e08750cdd0bd" },
+    { "module": "itemkind", "file": "defineItemkind.h", "count": 179, "xxh3": "5e86e260d0549c9a" },
+    { "module": "lang", "file": "lang.h", "count": 19, "xxh3": "7b29d9a7f6a8c76b" },
+    { "module": "obj", "file": "defineObj.h", "count": 1599, "xxh3": "200ba22c7bc1b8e0" },
+    { "module": "attribute", "file": "defineAttribute.h", "count": 287, "xxh3": "363cc67fe2402471" },
+    { "module": "skill", "file": "defineSkill.h", "count": 2519, "xxh3": "115ba09b27a3cadc" },
+    { "module": "text", "file": "defineText.h", "count": 3019, "xxh3": "7aa6c7b7426744c5" },
+    { "module": "sound", "file": "defineSound.h", "count": 1857, "xxh3": "f98354d41c2f54e4" },
+    { "module": "resdata", "file": "resdata.h", "count": 1613, "xxh3": "c5ab5f912d12f365" },
+    { "module": "wndstyle", "file": "WndStyle.h", "count": 97, "xxh3": "372cb93a8ff7978c" },
+    { "module": "lordskill", "file": "definelordskill.h", "count": 16, "xxh3": "108fc4e7edc5bbfc" },
+    { "module": "honor", "file": "defineHonor.h", "count": 32, "xxh3": "93780a3c4e55636e" }
+  ]
+}

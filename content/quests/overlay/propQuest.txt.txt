@@ -1,0 +1,45 @@
+IDS_PROPQUEST_INC_000001	Aibatt Hunt
+IDS_PROPQUEST_INC_000002	Two Aibatts are bothering the shop. Could you drive them off?
+IDS_PROPQUEST_INC_000003	Thank you. Come back when two of them are gone.
+IDS_PROPQUEST_INC_000004	Maybe another time.
+IDS_PROPQUEST_INC_000005	Well done! Here is your reward.
+IDS_PROPQUEST_INC_000006	The Aibatts are still around. Please keep hunting.
+IDS_PROPQUEST_INC_000007	Defeat two Aibatts and return to Losha.
+IDS_PROPQUEST_INC_000008	The Aibatts are gone.
+IDS_PROPQUEST_INC_000009	Vision Stones
+IDS_PROPQUEST_INC_000010	Collect three vision stones from Aibatts.
+IDS_PROPQUEST_INC_000011	The vision stones were delivered.
+IDS_PROPQUEST_INC_000012	Party Hunt
+IDS_PROPQUEST_INC_000013	Hunt three Aibatts together with a party of two or more.
+IDS_PROPQUEST_INC_000014	The party hunt is over.
+IDS_PROPQUEST_INC_000015	Timed Errand
+IDS_PROPQUEST_INC_000016	Defeat an Aibatt and report to Losha within two minutes.
+IDS_PROPQUEST_INC_000017	The errand is done.
+IDS_PROPQUEST_INC_000018	Patrol
+IDS_PROPQUEST_INC_000019	Walk to the patrol zone.
+IDS_PROPQUEST_INC_000020	Search the zone.
+IDS_PROPQUEST_INC_000021	Defeat a Pukepuke and report to Dior.
+IDS_PROPQUEST_INC_000022	The patrol is over.
+IDS_PROPQUEST_INC_000023	A Quest for Later
+IDS_PROPQUEST_INC_000024	Daily Milk
+IDS_PROPQUEST_INC_000025	Bring 100 penya for a bottle of milk.
+IDS_PROPQUEST_INC_000026	The Next Step
+IDS_PROPQUEST_INC_000027	Report back after the Aibatt hunt.
+IDS_PROPQUEST_INC_000028	The Parcel
+IDS_PROPQUEST_INC_000029	Deliver the parcel to Dior.
+IDS_PROPQUEST_INC_000030	Stone Collector
+IDS_PROPQUEST_INC_000031	Show your vision stones.
+IDS_PROPQUEST_INC_000032	The Old Book
+IDS_PROPQUEST_INC_000033	Show the old book to Losha.
+IDS_PROPQUEST_INC_000034	Losha read the old book.
+IDS_PROPQUEST_INC_000035	Valentine Stones
+IDS_PROPQUEST_INC_000036	Collect an Arcard stone from an Aibatt.
+IDS_PROPQUEST_INC_000037	Catalogue
+IDS_PROPQUEST_INC_000038	Mister Catalogue
+IDS_PROPQUEST_INC_000039	Every directive of the quest grammar.
+IDS_PROPQUEST_INC_000040	State zero condition text (dropped)
+IDS_PROPQUEST_INC_000041	State zero status text (dropped)
+IDS_PROPQUEST_INC_000042	The catalogue is complete.
+IDS_PROPQUEST_INC_000043	Hello from the catalogue.
+IDS_PROPQUEST_INC_000044	Flaris edge
+IDS_PROPQUEST_INC_000045	Catalogue state one

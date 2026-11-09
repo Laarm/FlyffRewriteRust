@@ -1,0 +1,210 @@
+// Social common types (Plan/11 section 7.4, WP-PROTO-03). Transcribed from ref/08 section 13, ref/09b
+// section 7 (7.1-7.7, 7.12) and ref/14. No envelope messages live here. Lord/election, tax, housing,
+// rainbow race and siege lists belong to their own feature files.
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+import "flyff/v1/item_types.proto";
+
+// One member of a party record.
+message PartyMemberRef {
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32"];
+  // marks a member that is being removed
+  bool removed = 2 [(flyff.legacy_type) = "u8"];
+}
+
+// CParty::Serialize (ref/08 section 13.1).
+message PartyInfo {
+  uint32 party_id = 1 [(flyff.legacy_type) = "u32"];
+  // 0 normal, 1 advanced (named)
+  sint32 kind_troupe = 2 [(flyff.legacy_type) = "i32"];
+  // dropped: member count (the list length)
+  sint32 level = 3 [(flyff.legacy_type) = "i32"];
+  sint32 exp = 4 [(flyff.legacy_type) = "i32"];
+  sint32 point = 5 [(flyff.legacy_type) = "i32"];
+  sint32 share_exp_mode = 6 [(flyff.legacy_type) = "i32"];
+  sint32 share_item_mode = 7 [(flyff.legacy_type) = "i32"];
+  uint32 id_duel_party = 8 [(flyff.legacy_type) = "u32"];
+  // exactly 5 entries (MAX_PARTYMODE)
+  repeated sint32 mode_time = 9 [(flyff.legacy_type) = "i32[5]"];
+  // only iff kind_troupe
+  string name = 10 [(flyff.legacy_type) = "str"];
+  repeated PartyMemberRef members = 11;
+}
+
+// CGuild::Serialize with bDesc = TRUE (ref/09b section 7.1): the whole record in ALL_GUILDS.
+message GuildBrief {
+  uint32 id_guild = 1 [(flyff.legacy_type) = "u32"];
+  uint32 id_master = 2 [(flyff.legacy_type) = "u32"];
+  sint32 level = 3 [(flyff.legacy_type) = "i32"];
+  // <= 48 B
+  string name = 4 [(flyff.legacy_type) = "str<=48"];
+  uint32 logo = 5 [(flyff.legacy_type) = "u32"];
+  uint32 guild_gold = 6 [(flyff.legacy_type) = "u32"];
+  sint32 win = 7 [(flyff.legacy_type) = "i32"];
+  sint32 lose = 8 [(flyff.legacy_type) = "i32"];
+  sint32 surrender = 9 [(flyff.legacy_type) = "i32"];
+}
+
+// CGuild::Serialize with bDesc = FALSE: the continuation after GuildBrief.
+message GuildFull {
+  GuildBrief brief = 1;
+  // exactly 5 entries (per member level)
+  repeated uint32 power = 2 [(flyff.legacy_type) = "u32[5]"];
+  // exactly 5 entries (salary per member level)
+  repeated uint32 penya_per_level = 3 [(flyff.legacy_type) = "u32[5]"];
+  // <= 127 B
+  string notice = 4 [(flyff.legacy_type) = "str<=128"];
+  uint32 contribution_pxp = 5 [(flyff.legacy_type) = "u32"];
+  // dropped: level (the legacy repeats it a second time)
+  uint32 id_enemy_guild = 6 [(flyff.legacy_type) = "u32"];
+  repeated GuildMember members = 7 [(flyff.legacy_type) = "i16 n + CGuildMember[n]"];
+  // empty in this build (voting is unreachable, Plan/11a)
+  repeated GuildVote votes = 8 [(flyff.legacy_type) = "i16 n + CGuildVote[n]"];
+  repeated GuildQuest quests = 9 [(flyff.legacy_type) = "u8 n + raw(GUILDQUEST)[n]"];
+}
+
+// CGuildMember (guild.cpp:269).
+message GuildMember {
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32"];
+  sint32 pay = 2 [(flyff.legacy_type) = "i32"];
+  sint32 give_gold = 3 [(flyff.legacy_type) = "i32"];
+  uint32 give_pxp_count = 4 [(flyff.legacy_type) = "u32"];
+  sint32 win = 5 [(flyff.legacy_type) = "i16"];
+  sint32 lose = 6 [(flyff.legacy_type) = "i16"];
+  // 0 master, 1 kingpin, 2 captain, 3 supporter, 4 rookie
+  uint32 member_level = 7 [(flyff.legacy_type) = "u8"];
+  uint32 id_selected_vote = 8 [(flyff.legacy_type) = "u32"];
+  sint32 surrender = 9 [(flyff.legacy_type) = "i32"];
+  // `class` is a keyword in several target languages
+  // buf:lint:ignore FIELD_LOWER_SNAKE_CASE
+  sint32 class_ = 10 [(flyff.legacy_type) = "i32"];
+  // <= 48 B
+  string alias = 11 [(flyff.legacy_type) = "str<=48"];
+}
+
+// CGuildVote (guild.cpp:114).
+message GuildVote {
+  uint32 id_vote = 1 [(flyff.legacy_type) = "u32"];
+  bool completed = 2 [(flyff.legacy_type) = "u8"];
+  // <= 26 B
+  string title = 3 [(flyff.legacy_type) = "str<=26"];
+  // <= 171 B
+  string question = 4 [(flyff.legacy_type) = "str<=171"];
+  // exactly 4 options
+  repeated GuildVoteOption options = 5;
+}
+
+message GuildVoteOption {
+  // <= 21 B
+  string text = 1 [(flyff.legacy_type) = "str<=21"];
+  uint32 count = 2 [(flyff.legacy_type) = "u8"];
+}
+
+// GUILDQUEST (raw, 12 B).
+message GuildQuest {
+  sint32 quest_id = 1 [(flyff.legacy_type) = "i32"];
+  sint32 state = 2 [(flyff.legacy_type) = "i32"];
+  uint32 id_guild = 3 [(flyff.legacy_type) = "u32"];
+}
+
+// GUILD_MEMBER_INFO (raw, 8 B).
+message GuildMemberInfo {
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32"];
+  // default 100
+  uint32 multi_no = 2 [(flyff.legacy_type) = "u8"];
+}
+
+// WAR_ENTRY (raw, 20 B).
+message WarEntry {
+  uint32 id_guild = 1 [(flyff.legacy_type) = "u32"];
+  sint32 size = 2 [(flyff.legacy_type) = "i32"];
+  sint32 surrender = 3 [(flyff.legacy_type) = "i32"];
+  sint32 dead = 4 [(flyff.legacy_type) = "i32"];
+  sint32 absent = 5 [(flyff.legacy_type) = "i32"];
+}
+
+// CGuildWar::Serialize (ref/14 section 6.1, ref/09a section 5.14).
+message GuildWarInfo {
+  uint32 id_war = 1 [(flyff.legacy_type) = "u32"];
+  WarEntry decl = 2 [(flyff.legacy_type) = "WAR_ENTRY"];
+  WarEntry acpt = 3 [(flyff.legacy_type) = "WAR_ENTRY"];
+  // WF_* char '0'..'9' as its ASCII value
+  uint32 flag = 4 [(flyff.legacy_type) = "char"];
+  // legacy time_t start as unix seconds
+  sint64 start_at = 5 [
+    (flyff.legacy_type) = "time_t",
+    (flyff.js_safe_number) = true
+  ];
+}
+
+// sPlayerData (raw, 12 B).
+message PlayerData {
+  uint32 job = 1 [(flyff.legacy_type) = "u8"];
+  uint32 level = 2 [(flyff.legacy_type) = "u8"];
+  uint32 sex = 3 [(flyff.legacy_type) = "u8"];
+  sint32 version = 4 [(flyff.legacy_type) = "i32"];
+  // 0 offline, else channel / multi number
+  uint32 login = 5 [(flyff.legacy_type) = "u8"];
+}
+
+// PDVer (raw, 8 B).
+message PlayerDataVersion {
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32"];
+  sint32 version = 2 [(flyff.legacy_type) = "i32"];
+}
+
+// Friend (raw, 8 B) plus the map key.
+message FriendEntry {
+  uint32 id_friend = 1 [(flyff.legacy_type) = "u32 (map key)"];
+  bool blocked = 2 [(flyff.legacy_type) = "BOOL"];
+  // FRS_* state
+  uint32 state = 3 [(flyff.legacy_type) = "u32"];
+}
+
+// CRTMessenger.
+message Messenger {
+  uint32 my_state = 1 [(flyff.legacy_type) = "u32"];
+  repeated FriendEntry friends = 2;
+}
+
+// CMail with bData = TRUE (ref/08 section 15.2, ref/09b section 7.6).
+message Mail {
+  uint32 mail_id = 1 [(flyff.legacy_type) = "u32"];
+  uint32 id_sender = 2 [(flyff.legacy_type) = "u32"];
+  // iff the legacy hasItem flag
+  ItemElem item = 3 [(flyff.legacy_type) = "u8 hasItem + CItemElem"];
+  uint32 gold = 4 [(flyff.legacy_type) = "u32"];
+  // legacy ageSeconds converted to now - age (unix seconds)
+  sint64 created_at = 5 [
+    (flyff.legacy_type) = "i32 ageSeconds",
+    (flyff.js_safe_number) = true
+  ];
+  bool read = 6 [(flyff.legacy_type) = "u8"];
+  // <= 31 B
+  string title = 7 [(flyff.legacy_type) = "str<=32"];
+  // <= 255 B
+  string text = 8 [(flyff.legacy_type) = "str<=256"];
+}
+
+// CCouple (ref/09b section 7.12).
+message Couple {
+  sint32 experience = 1 [(flyff.legacy_type) = "i32"];
+  uint32 id_first = 2 [(flyff.legacy_type) = "u32"];
+  uint32 id_second = 3 [(flyff.legacy_type) = "u32"];
+}
+
+message CampusMember {
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32"];
+  // 1 master, 2 pupil
+  sint32 member_level = 2 [(flyff.legacy_type) = "i32"];
+}
+
+// CCampus (ref/09b section 7.12).
+message Campus {
+  uint32 id_campus = 1 [(flyff.legacy_type) = "u32"];
+  uint32 id_master = 2 [(flyff.legacy_type) = "u32"];
+  repeated CampusMember members = 3 [(flyff.legacy_type) = "u32 n + {u32, i32}[n]"];
+}

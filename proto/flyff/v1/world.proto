@@ -1,0 +1,310 @@
+// World messages (Plan/11 sections 3.2, 7.3 and 4.2, WP-PROTO-09; tag block 80-111 plus the hot spawn tags).
+// Transcribed from ref/08 sections 6, 7, 14 and 17, ref/09a sections 5.1, 5.9 and 6.1-6.4 and Plan/15.
+// The ADD_OBJ snapshot is split by receiver and object kind (ref/09a port note 3): SpawnSelf (METHOD_NONE),
+// SpawnPlayer (METHOD_EXCLUDE_ITEM), SpawnNpc, SpawnItem, SpawnCtrl. The spawn of an object whose id is
+// already known to the client replaces it (Plan/15 section 7.4).
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+import "flyff/v1/common.proto";
+import "flyff/v1/item_types.proto";
+import "flyff/v1/mover_types.proto";
+
+// legacy WORLD_READINFO 0x9910; obj_id: 0. Join batch step 2: the client starts loading the world on it
+// (ref/08 section 6.1). The __MAP_SECURITY keys are dropped.
+message WorldReadInfo {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x9910
+    name: "WORLD_READINFO"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "15";
+  option (flyff.milestone) = "M2";
+  uint32 world_id = 1 [(flyff.legacy_type) = "u32"];
+  Vec3 pos = 2 [(flyff.legacy_type) = "vec3"];
+}
+
+// legacy ADD_OBJ 0x00F0 with METHOD_NONE: the receiver's own character. obj_id: the player's object id.
+// Sent only by the join sequence, the world change and re-attach (Plan/15 section 7.1); always the first
+// mover of the join batch, the client checks `player.id_player` against the selected character.
+message SpawnSelf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xF0
+    name: "ADD_OBJ"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "15";
+  option (flyff.milestone) = "M2";
+  ObjCommon obj = 1;
+  MoverCommon mover = 2;
+  PlayerPublic player = 3;
+  PlayerSelf self = 4;
+  // CBuffMgr::Serialize (the u32 count is the list length)
+  repeated Buff buffs = 5;
+}
+
+// legacy ADD_OBJ 0x00F0 with METHOD_EXCLUDE_ITEM: another player. obj_id: that player's object id.
+message SpawnPlayer {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xF0
+    name: "ADD_OBJ"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "15";
+  option (flyff.milestone) = "M2";
+  ObjCommon obj = 1;
+  MoverCommon mover = 2;
+  PlayerPublic player = 3;
+  PlayerOther other = 4;
+  repeated Buff buffs = 5;
+}
+
+// legacy ADD_OBJ 0x00F0 of an NPC, monster or pet. obj_id: the mover's object id.
+message SpawnNpc {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xF0
+    name: "ADD_OBJ"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "15";
+  option (flyff.milestone) = "M2";
+  ObjCommon obj = 1;
+  MoverCommon mover = 2;
+  NpcPart npc = 3;
+  repeated Buff buffs = 4;
+}
+
+// legacy ADD_OBJ 0x00F0 of a ground item (CItem::Serialize). obj_id: the ground item's object id.
+// Loot rights are not sent (as in the legacy); `item.obj_id` is 0 for ground items (Plan/15 section 7.2).
+message SpawnItem {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xF0
+    name: "ADD_OBJ"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "15";
+  option (flyff.milestone) = "M2";
+  ObjCommon obj = 1;
+  ItemElem item = 2;
+}
+
+// legacy ADD_OBJ 0x00F0 of an OT_CTRL object (chests, triggers, traps; CCtrl::Serialize is only the CObj
+// prefix and the object id). obj_id: the ctrl's object id.
+message SpawnCtrl {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xF0
+    name: "ADD_OBJ"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "15";
+  option (flyff.milestone) = "M2";
+  ObjCommon obj = 1;
+}
+
+// legacy DEL_OBJ 0x00F1: header only. obj_id: the object that left the viewer's view.
+message DelObj {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xF1
+    name: "DEL_OBJ"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "15";
+  option (flyff.milestone) = "M2";
+}
+
+// legacy REPLACE: snapshot 0x00F2 (the live sender) and the dead top-level PACKETTYPE 0x00FF0F00 (same
+// handler); obj_id: 0. World change or teleport to another world or layer; urgent flush; the client shows
+// the loading screen (ref/09a section 6.3, Plan/11 section 2.6).
+message Replace {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xF2
+    name: "REPLACE"
+  };
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF0F00
+    name: "REPLACE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "15";
+  option (flyff.milestone) = "M2";
+  uint32 world_id = 1 [(flyff.legacy_type) = "u32"];
+  Vec3 pos = 2 [(flyff.legacy_type) = "vec3"];
+}
+
+// legacy GAMETIMER 0x0096; obj_id: 0. Join batch step 4 (ref/09a section 6.8, Plan/15 section 17.1).
+message GameTimer {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x96
+    name: "GAMETIMER"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "15";
+  option (flyff.milestone) = "M2";
+  // in-game clock in real milliseconds since the epoch (CGameTimer): 1 real second = 100 game seconds
+  double current_time_ms = 1 [(flyff.legacy_type) = "f64"];
+}
+
+// legacy ENVIRONMENT 0x0060 (__ENVIRONMENT_EFFECT); obj_id: 0. Join batch step 6, after a world change and
+// to all players when the effect changes (Plan/15 section 17.2).
+message Environment {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x60
+    name: "ENVIRONMENT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "15";
+  option (flyff.milestone) = "M2";
+  // weather effect (rain or snow by season) is active
+  bool effect = 1 [(flyff.legacy_type) = "BOOL"];
+  // event title, only when `effect` is set (legacy: the string follows only then); <= 255 B
+  string title = 2 [(flyff.legacy_type) = "str (only if bEffect)"];
+}
+
+// legacy ENVIRONMENTALL 0x0063 (__ENVIRONMENT_EFFECT); obj_id: 0. Join batch step 1.
+message EnvironmentAll {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x63
+    name: "ENVIRONMENTALL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "15";
+  option (flyff.milestone) = "M2";
+  // SEASON_NONE 0, SPRING 1, SUMMER 2, FALL 3, WINTER 4 (Resource/define.h)
+  sint32 season = 1 [(flyff.legacy_type) = "i32"];
+}
+
+// legacy CREATESFXOBJ 0x000F. obj_id: the anchor object (0 for world-wide effects).
+message CreateSfxObj {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xF
+    name: "CREATESFXOBJ"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "15";
+  option (flyff.milestone) = "M3";
+  // XI_* effect id
+  uint32 sfx_id = 1 [(flyff.legacy_type) = "u32"];
+  // x = y = z = 0: attach the effect to the anchor object; otherwise a world position
+  float x = 2 [(flyff.legacy_type) = "f32"];
+  float y = 3 [(flyff.legacy_type) = "f32"];
+  float z = 4 [(flyff.legacy_type) = "f32"];
+  // ignored by the client
+  bool flag = 5 [(flyff.legacy_type) = "BOOL"];
+}
+
+// legacy REMOVESFXOBJ 0x0204 (same layout as CreateSfxObj): stops a looping effect. obj_id: the anchor.
+message RemoveSfxObj {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x204
+    name: "REMOVESFXOBJ"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "15";
+  option (flyff.milestone) = "M3";
+  uint32 sfx_id = 1 [(flyff.legacy_type) = "u32"];
+  float x = 2 [(flyff.legacy_type) = "f32"];
+  float y = 3 [(flyff.legacy_type) = "f32"];
+  float z = 4 [(flyff.legacy_type) = "f32"];
+  bool flag = 5 [(flyff.legacy_type) = "BOOL"];
+}
+
+// legacy PLAYMUSIC 0x00D1; obj_id: 0. The client plays the BGM id once (PlayMusic(id, 1)).
+message PlayMusic {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xD1
+    name: "PLAYMUSIC"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "15";
+  option (flyff.milestone) = "M3";
+  uint32 music_id = 1 [(flyff.legacy_type) = "u32"];
+}
+
+// legacy PLAYSOUND 0x00D2; obj_id: 0. The inner oneof replaces the legacy `u8 kind` (field number = legacy
+// kind + 1, Plan/11 section 5.2).
+message PlaySound {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xD2
+    name: "PLAYSOUND"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "15";
+  option (flyff.milestone) = "M3";
+  oneof sound {
+    // kind 0: sound table id (SND_*)
+    uint32 id = 1 [(flyff.legacy_type) = "u32 (kind 0)"];
+    // kind 1: wave file name, played only when the client's voice option is on; <= 260 B
+    string file = 2 [(flyff.legacy_type) = "str (kind 1)"];
+  }
+}
+
+// legacy COMMONPlACE 0x007E; obj_id: the ctrl. Ctrl effects (Plan/15 section 14).
+message CommonPlace {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x7E
+    name: "COMMONPlACE"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "15";
+  option (flyff.milestone) = "M4";
+  // COMMONPLACE_ACTION 0 (play the ctrl animation), ALPHA 1 (fade), QUAKE 2 (camera shake)
+  uint32 kind = 1 [(flyff.legacy_type) = "u8"];
+}
+
+// legacy EXPBOXCOLLTIME 0x00BE; obj_id: 0 (self). Ctrl (chest) ready timer.
+message ExpBoxCoolTime {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xBE
+    name: "EXPBOXCOLLTIME"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "15";
+  option (flyff.milestone) = "M4";
+  // the ctrl being opened
+  uint32 ctrl_id = 1 [(flyff.legacy_type) = "u32 objid"];
+  uint32 time_ms = 2 [(flyff.legacy_type) = "u32"];
+}
+
+// legacy EXPBOXCOLLTIMECANCEL 0x00BF (CUser::AddCtrlCoolTimeCancel); obj_id: 0 (self). No payload.
+message ExpBoxCoolTimeCancel {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0xBF
+    name: "EXPBOXCOLLTIMECANCEL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "15";
+  option (flyff.milestone) = "M4";
+}
+
+// legacy CTRL_COOLTIME_CANCEL 0xF000F008 (C2S): aborts the timed opening of a ctrl. No payload.
+message CtrlCoolTimeCancel {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F008
+    name: "CTRL_COOLTIME_CANCEL"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "15";
+  option (flyff.milestone) = "M4";
+}

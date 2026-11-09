@@ -1,0 +1,31 @@
+// Worker decode pool (Plan/40 section 8).
+export {
+  DecodeFailedError,
+  defaultPoolSize,
+  JobCancelledError,
+  PoolBackpressureError,
+  PoolClosedError,
+  Prio,
+  spawnDecodeWorker,
+  WorkerCrashError,
+  WorkerPool,
+  type BitmapJobResult,
+  type DecodeJobResult,
+  type DispatchEvent,
+  type JobHandle,
+  type JobInfo,
+  type JobOptsMap,
+  type JobResultMap,
+  type JobSpec,
+  type JobState,
+  type JsonJobResult,
+  type PoolEvent,
+  type PoolOptions,
+  type PoolPressure,
+  type PoolStats,
+  type ValueJobResult,
+  type WorkerFactory,
+  type WorkerLike,
+} from './pool';
+export { compareRank, type Rank } from './priority';
+export type { JobKind, WorkerJobKind, WorkerRequest, WorkerResponse } from './protocol';

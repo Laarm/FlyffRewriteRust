@@ -1,0 +1,332 @@
+// PvP messages (Plan/11 section 4.2, WP-PROTO-13; tag block 256-287). Transcribed from ref/07a section 17,
+// ref/08 sections 9.1 (PK_RELATION, SETDUEL) and 13.5, ref/09a section 5.8 and Plan/17 sections 8.3, 8.6 and 8.7.
+// The bounty board (wanted board) is dropped (Plan/03 F-179, PL-142, Plan/11a R1-1): there is no `Wanted*`
+// message and the ClientEnvelope tags 262-265 and the ServerMsg tags 268-270 are reserved in envelope.proto.
+//
+// Duel state (Mover fields): `duel` 0 none, 1 solo, 2 party; `duel_state` 104..100 countdown, 1 fighting,
+// 300 out (party duel member left). VR-001: the requester of a C2S message is always the session character;
+// the `src` fields are kept for wire fidelity and ignored where the plan says so.
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+
+// legacy DUELREQUEST 0xFFFFFF23 (C2S): challenge a player to a solo duel (ref/07a section 17.1, Plan/17
+// section 8.6). Refused for the reasons of IsPVPInspection (party, level gap >= 30, vagrant, flying, other
+// world, PVPCONFIRM mode ...) with the matching DefinedText. Answer: DuelRequestNtf to the target.
+message DuelRequestReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF23
+    name: "DUELREQUEST"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // requester player id; ignored (VR-001: the session character)
+  uint32 src = 1 [(flyff.legacy_type) = "u32 uidSrc"];
+  // target player id
+  uint32 dst = 2 [(flyff.legacy_type) = "u32 uidDst"];
+}
+
+// legacy DUELYES 0xFFFFFF24 (C2S): the target accepts a solo duel (ref/07a section 17.2). VR-050: the
+// requester must have a pending request naming the sender, younger than 10 s. Answer: DuelStart to both.
+message DuelYes {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF24
+    name: "DUELYES"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // the requester player id
+  uint32 src = 1 [(flyff.legacy_type) = "u32 uidSrc"];
+  // dropped: uidDst (the legacy ignores it: the destination is the sender, __HACK_1130)
+}
+
+// legacy DUELNO 0xFFFFFF25 (C2S): the target declines a solo duel (ref/07a section 17.3). Answer: DuelNoNtf
+// to the requester.
+message DuelNoReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF25
+    name: "DUELNO"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // the requester player id
+  uint32 src = 1 [(flyff.legacy_type) = "u32 uidSrc"];
+}
+
+// legacy DUELPARTYREQUEST 0xFFFFFF26 (C2S): challenge another party to a party duel; both senders must be
+// party leaders (ref/07a section 17.4, Plan/17 section 8.7). Answer: DuelPartyRequestNtf to the target
+// leader.
+message DuelPartyRequestReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF26
+    name: "DUELPARTYREQUEST"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // requester player id; ignored (VR-001)
+  uint32 src = 1 [(flyff.legacy_type) = "u32 uidSrc"];
+  // target player id (the other leader)
+  uint32 dst = 2 [(flyff.legacy_type) = "u32 uidDst"];
+}
+
+// legacy DUELPARTYYES 0xFFFFFF27 (C2S): the target leader accepts a party duel (ref/07a section 17.5). The
+// port requires a pending request and uses the session character as the destination (VR-001, VR-050).
+message DuelPartyYes {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF27
+    name: "DUELPARTYYES"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // the requesting leader player id
+  uint32 src = 1 [(flyff.legacy_type) = "u32 uidSrc"];
+  // dropped: uidDst (the legacy trusted it; the destination is the sender)
+}
+
+// legacy DUELPARTYNO 0xFFFFFF28 (C2S): the target leader declines a party duel (ref/07a section 17.6).
+// Answer: DuelPartyNoNtf to the requester.
+message DuelPartyNoReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF28
+    name: "DUELPARTYNO"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // the requesting leader player id
+  uint32 src = 1 [(flyff.legacy_type) = "u32 uidSrc"];
+}
+
+// legacy DUELREQUEST 0x0030 (S2C); obj_id: the target of the request. The client opens the duel confirm
+// window with the requester name (ref/09a section 5.8).
+message DuelRequestNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x30
+    name: "DUELREQUEST"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // requester player id
+  uint32 src = 1 [(flyff.legacy_type) = "u32 uidSrc"];
+  // target player id
+  uint32 dst = 2 [(flyff.legacy_type) = "u32 uidDst"];
+}
+
+// legacy DUELNO 0x0032 (S2C); obj_id: the requester. The target declined the duel (TID_GAME_DUELNO).
+message DuelNoNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x32
+    name: "DUELNO"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // object id of the player who declined
+  uint32 decliner = 1 [(flyff.legacy_type) = "u32 idTarget"];
+}
+
+// legacy DUELPARTYREQUEST 0x0034 (S2C); obj_id: the target leader. Opens the party duel confirm window.
+message DuelPartyRequestNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x34
+    name: "DUELPARTYREQUEST"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // requesting leader player id
+  uint32 src = 1 [(flyff.legacy_type) = "u32 uidSrc"];
+  // target leader player id
+  uint32 dst = 2 [(flyff.legacy_type) = "u32 uidDst"];
+}
+
+// legacy DUELPARTYNO 0x0036 (S2C); obj_id: the requesting leader. The target leader declined the party duel.
+message DuelPartyNoNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x36
+    name: "DUELPARTYNO"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // object id of the leader who declined
+  uint32 decliner = 1 [(flyff.legacy_type) = "u32 idTarget"];
+}
+
+// legacy DUELSTART 0x0031 (S2C); obj_id: the receiving player. Solo duel state change (ref/09a section 5.8,
+// Plan/17 section 8.6).
+message DuelStart {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x31
+    name: "DUELSTART"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // player id of the opponent
+  uint32 id_target = 1 [(flyff.legacy_type) = "u32 uidTarget"];
+  // 0 duel accepted, the countdown starts (both get duel = 1, state = 104), 1 the fight begins (state = 1,
+  // TID_GAME_DUELSTART), 2 clear the duel of both, 3 show the win dialog, 4 show the lose dialog
+  sint32 flag = 2 [(flyff.legacy_type) = "i32 nFlag"];
+}
+
+// legacy DUELCANCEL 0x0033 (S2C); obj_id: the receiving player. The solo duel was cancelled (opponent
+// vanished, killed by someone else): the client clears the duel of both (TID_GAME_DUELCANCEL).
+message DuelCancel {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x33
+    name: "DUELCANCEL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // object id of the opponent
+  uint32 target = 1 [(flyff.legacy_type) = "u32 idTarget"];
+}
+
+// legacy DUELPARTYSTART 0x0035 (S2C); obj_id: the receiving member. A party duel starts or begins fighting
+// (ref/09a section 5.8, Plan/17 section 8.7). The legacy i32 member count is the list length.
+message DuelPartyStart {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x35
+    name: "DUELPARTYSTART"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // the opposing party id
+  uint32 id_party = 1 [(flyff.legacy_type) = "u32 idDstParty"];
+  // the opposing party name
+  string party_name = 2 [(flyff.legacy_type) = "str<=64"];
+  // object ids of the opposing members
+  repeated uint32 members = 3 [(flyff.legacy_type) = "u32 objid[nMax]"];
+  // 0 countdown (state 104, enemy marker), 1 fighting (state 1)
+  sint32 flag = 4 [(flyff.legacy_type) = "i32 nFlag"];
+}
+
+// legacy DUELPARTYCANCEL 0x0037 (S2C); obj_id: the receiving member. The party duel was cancelled
+// (TID_GAME_PDCANCEL). The legacy i32 count is the list length.
+message DuelPartyCancel {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x37
+    name: "DUELPARTYCANCEL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // player ids of the members whose duel state is cleared
+  repeated uint32 ids = 1 [(flyff.legacy_type) = "u32 idPlayer[n]"];
+}
+
+// legacy DUELPARTYRESULT 0x0038 (S2C); obj_id: the receiving member. The party duel ended
+// (TID_GAME_PDVICTORY / TID_GAME_PDLOSE). The legacy i32 count is the list length.
+message DuelPartyResult {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x38
+    name: "DUELPARTYRESULT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  bool win = 1 [(flyff.legacy_type) = "BOOL bWin"];
+  // player ids of the members whose duel state is cleared
+  repeated uint32 ids = 2 [(flyff.legacy_type) = "u32 idPlayer[n]"];
+}
+
+// legacy SETDUEL 0x0066 (S2C); obj_id: 0 (the mover is in the payload; the legacy header is the receiver).
+// Mirrors the duel fields of one mover after every change (ref/09b section 3.4).
+message SetDuel {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x66
+    name: "SETDUEL"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // the mover whose duel state this is
+  uint32 mover_obj_id = 1 [(flyff.legacy_type) = "u32 objid"];
+  // 0 none, 1 solo, 2 party
+  sint32 duel = 2 [(flyff.legacy_type) = "i32 nDuel"];
+  // 104..100 countdown, 1 fighting, 300 out
+  sint32 duel_state = 3 [(flyff.legacy_type) = "i32 nDuelState"];
+  // object id of the solo opponent
+  uint32 id_duel_other = 4 [(flyff.legacy_type) = "u32 idDuelOther"];
+  // party id of the opposing party
+  uint32 id_duel_party = 5 [(flyff.legacy_type) = "u32 idDuelParty"];
+}
+
+// legacy DUELCOUNT 0x0067 (S2C); obj_id: 0 (self). The 3-2-1 countdown number of a starting duel.
+message DuelCount {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x67
+    name: "DUELCOUNT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // 3, 2, 1, then 0 when the fight begins
+  sint32 count = 1 [(flyff.legacy_type) = "i32 nCount"];
+}
+
+// legacy PK_RELATION 0x0065 (S2C); obj_id: the player. PvP flagging and chaotic state (ref/08 section 9.1,
+// Plan/17 section 8.3): the pink flag and the propensity go to near including self, the PK value to self.
+// The client colours the name from them.
+message PkRelation {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x65
+    name: "PK_RELATION"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "17";
+  option (flyff.milestone) = "M5";
+  // The legacy `u8 kind` selects the case; the field number is kind + 1 (Plan/11 section 5.2).
+  oneof sub {
+    // PK_PINK 0: audience near
+    PkPink pink = 1;
+    // PK_PROPENSITY 1: audience near
+    PkPropensity propensity = 2;
+    // PK_PKVALUE 2: audience self
+    PkPkValue pk_value = 3;
+  }
+
+  message PkPink {
+    // 1 while the player is pink (recently attacked a player), else 0
+    uint32 pink = 1 [(flyff.legacy_type) = "u8"];
+  }
+
+  message PkPropensity {
+    // the chaotic propensity points (name colour)
+    uint32 propensity = 1 [(flyff.legacy_type) = "u32"];
+  }
+
+  message PkPkValue {
+    // the PK value (number of player kills)
+    sint32 pk_value = 1 [(flyff.legacy_type) = "i32"];
+  }
+}

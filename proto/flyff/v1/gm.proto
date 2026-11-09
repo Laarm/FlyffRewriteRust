@@ -1,0 +1,114 @@
+// GM messages (Plan/11 section 4.2, WP-PROTO-27; tag block 976-1007): the GM focus query, the player address, count and
+// user list replies, and the chat snoop. Transcribed from ref/07a section 16.10, ref/03 sections 8.1 and 9.2, ref/24
+// and Plan/23. The server requires GM authority for every one of them (VR-073); a request from anybody else gets no
+// answer.
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+
+// legacy MOVERFOCOUS 0xFFFFFF2D (C2S): a game master focuses a player and asks for his purse and experience
+// (ref/07a section 16.10, Plan/23 section 3). Needs authority L or more (FIX VR-073: the original answered
+// anybody). Answer: MoverFocusNtf.
+message MoverFocusReq {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFFFFFF2D
+    name: "MOVERFOCOUS"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "23";
+  option (flyff.milestone) = "M8";
+  // the focused player (character id)
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32 uidPlayer"];
+}
+
+// legacy MOVERFOCUS 0x003B (S2C); obj_id: 0 (NULL_ID). The penya and experience of a focused online player, to
+// the game master only (ref/07a section 16.10, Plan/23 section 3).
+message MoverFocusNtf {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x3B
+    name: "MOVERFOCUS"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "23";
+  option (flyff.milestone) = "M8";
+  uint32 id_player = 1 [(flyff.legacy_type) = "u32 idPlayer"];
+  // penya in the purse
+  sint32 gold = 2 [(flyff.legacy_type) = "i32 gold"];
+  // experience points
+  sint64 exp = 3 [
+    (flyff.legacy_type) = "i64 exp1",
+    (flyff.js_safe_number) = true
+  ];
+}
+
+// legacy GETPLAYERADDR 0x00FF00E7 (S2C); obj_id: 0 (self). The address of a player, answer of `/ip` (ref/03
+// section 8.1, ref/24, Plan/23 row 36).
+message GetPlayerAddr {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00E7
+    name: "GETPLAYERADDR"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "23";
+  option (flyff.milestone) = "M8";
+  // character name
+  string name = 1 [(flyff.legacy_type) = "str<=42"];
+  // the peer IP address of his session
+  string addr = 2 [(flyff.legacy_type) = "str<=63"];
+}
+
+// legacy GETPLAYERCOUNT 0x00FF00E8 (S2C); obj_id: 0 (self). The number of players online, answer of `/count`
+// (ref/03 section 8.1, ref/24, Plan/23 row 32).
+message GetPlayerCount {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00E8
+    name: "GETPLAYERCOUNT"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "23";
+  option (flyff.milestone) = "M8";
+  // players in the world
+  uint32 count = 1 [(flyff.legacy_type) = "u16"];
+}
+
+// legacy GETCOREPLAYER 0x00FF00E9 (S2C); obj_id: 0 (self). The names of every online player, answer of
+// `/userlist` (ref/03 section 8.1, ref/24, Plan/23 row 134).
+message GetCorePlayer {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00E9
+    name: "GETCOREPLAYER"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "23";
+  option (flyff.milestone) = "M8";
+  // dropped: n (u32, the list length)
+  // character names
+  repeated string names = 1 [(flyff.legacy_type) = "n x str<=42"];
+}
+
+// legacy SNOOP: PACKETTYPE 0x00000023 and SNAPSHOTTYPE 0x0093 (S2C, merged); obj_id: 0 (NULL_ID). A copy of a
+// snooped chat line for the game master (ref/03 section 9.2, ref/09b section 3.3, Plan/23 section 6.12).
+message Snoop {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x23
+    name: "SNOOP"
+  };
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x93
+    name: "SNOOP"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "23";
+  option (flyff.milestone) = "M8";
+  // the line, for example `[w][from->to] text`
+  string text = 1 [(flyff.legacy_type) = "str<=2047"];
+}

@@ -1,0 +1,141 @@
+# The capabilities of the admin console (Plan/25 §1.6): the single source of truth.
+#
+# `cargo xtask admin-caps` (part of `cargo xtask gen`) writes `caps.rs` next to this file and
+# `web/src/admin/gen/caps.ts`. Edit this file, never the generated ones.
+#
+# * `name`   dotted capability name (the wire name, `GET /admin/api/session` -> `caps[]`)
+# * `min`    the lowest authority letter that holds it (L, M, N, O or P; never below L)
+# * `grants` one line for the staff overview and the generated documentation
+#
+# `[admin.capabilities]` in flyff.toml may raise or lower the letter of a capability (never below L).
+# The owner identities (loopback owner, token owner) hold every capability.
+
+[[cap]]
+name = "view.dashboard"
+min = "L"
+grants = "Dashboard, status, metrics history, alerts"
+
+[[cap]]
+name = "view.map"
+min = "L"
+grants = "Live map: players, monsters, NPCs, drops; entity details (no IP, no email)"
+
+[[cap]]
+name = "view.players"
+min = "L"
+grants = "Online list, character and account search, profiles and account names (no IP, no email)"
+
+[[cap]]
+name = "view.inventory"
+min = "M"
+grants = "Live and offline inventories, banks, pockets, pets, mailboxes, guild banks"
+
+[[cap]]
+name = "view.chat"
+min = "M"
+grants = "Chat monitor for say and shout"
+
+[[cap]]
+name = "view.chat.private"
+min = "P"
+grants = "Party, guild, whisper and messenger channels in the chat monitor (audited gm.snoop)"
+
+[[cap]]
+name = "view.pii"
+min = "P"
+grants = "IPs, emails, registration data, alts"
+
+[[cap]]
+name = "view.audit.own"
+min = "L"
+grants = "Own actions in the audit log (My actions)"
+
+[[cap]]
+name = "view.audit"
+min = "N"
+grants = "Whole audit log"
+
+[[cap]]
+name = "view.staff"
+min = "N"
+grants = "Staff and access tab"
+
+[[cap]]
+name = "act.message.player"
+min = "L"
+grants = "Message one or several players"
+
+[[cap]]
+name = "act.broadcast"
+min = "M"
+grants = "Server-wide or world-wide notices, scheduled notices"
+
+[[cap]]
+name = "act.teleport.self"
+min = "L"
+grants = "Move the own acting character and summon a player to it"
+
+[[cap]]
+name = "act.unstuck"
+min = "L"
+grants = "Return a character to town (online or offline)"
+
+[[cap]]
+name = "act.teleport.others"
+min = "M"
+grants = "Teleport other players to points or locations"
+
+[[cap]]
+name = "act.kick"
+min = "M"
+grants = "Kick"
+
+[[cap]]
+name = "act.mute"
+min = "M"
+grants = "Mute and unmute; moderation notes"
+
+[[cap]]
+name = "act.ban"
+min = "M"
+grants = "Ban and unban accounts, login blocks"
+
+[[cap]]
+name = "act.ip_block"
+min = "P"
+grants = "Add and remove IP blocks (with view.pii)"
+
+[[cap]]
+name = "act.combat"
+min = "N"
+grants = "Heal, resurrect, kill or despawn, spawn monsters, clear areas"
+
+[[cap]]
+name = "act.character.edit"
+min = "N"
+grants = "Level, job, stats, skills, quests, mode flags of others"
+
+[[cap]]
+name = "act.items"
+min = "P"
+grants = "Grant and remove items and penya, kits, templates, cancel grants and removals"
+
+[[cap]]
+name = "act.guild"
+min = "P"
+grants = "Create, edit and disband guilds, members, guild banks"
+
+[[cap]]
+name = "act.accounts"
+min = "P"
+grants = "Create accounts, reset passwords, set authority, rename and undelete characters, end admin sessions"
+
+[[cap]]
+name = "act.world"
+min = "P"
+grants = "Rates, events, weather, spawns, respawn, content controls, shared bookmarks"
+
+[[cap]]
+name = "act.server"
+min = "P"
+grants = "Configuration, maintenance, shutdown, backups, scheduler, logs, console"

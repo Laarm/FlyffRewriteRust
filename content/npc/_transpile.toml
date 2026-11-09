@@ -1,0 +1,129 @@
+# Reproducibility record of content/npc, written by npcscript-transpile (Plan/20 sec. 5.4). Do not edit.
+format = 1
+tool_version = "1.0.0"
+
+[sources]
+"WORLDDIALOG/NpcScript.cpp" = "08052159eb2cfa02ac1a160192a21ef5e2d98cf2922735889234be2754e379bc"
+"WORLDDIALOG/NpcScriptHelper.cpp" = "2b3f424a952ed6d7edf116caab1878a02b62b563d2e87d7d96ab1d59108682ca"
+"WORLDDIALOG/NpcScript.h" = "d98804065fca0d8d9f90fc55de1f1eab3889b23101f39de18a765c8e7a96a6f2"
+"WORLDDIALOG/FunctionsInfo.h" = "7f9f7216f1fe0f9fb8ec6aebd25be3418b0cccbb8bc36d8b978e0b51230ada6b"
+"WorldDialog.txt" = "b166371060be83396e4efee059ffeda2fd6c691fabc6f922de9cc7762d3ea4d4"
+"character.inc" = "5d44674760a073f55b4a6798ea3fca2a3c1bf4f56c1b7d365507f6a999b17bac"
+"character-etc.inc" = "161be1e896192d725927afc651bcb9aac64f081631b52bf9ebd0648bb8cb10ea"
+"character-school.inc" = "1628bf09e855fc4325b15173b1d039b20e66b51f146c0a00504a165836bae0c6"
+
+[counts]
+scripts = 271
+functions = 2845
+registrations = 2785
+unregistered_functions = 60
+registration_name_differs = 1
+capitalised_registrations = 21
+reachable = 2764
+unreachable = 81
+empty_bodies = 995
+shapes = 51
+ifs = 99
+elses = 92
+switches = 19
+cases = 50
+breaks = 50
+max_brace_depth = 6
+float_literals = 9
+constants_distinct = 61
+constants_defined = 59
+missing_string_refs = 17
+helpers_distinct = 43
+
+[counts.operators]
+"&&" = 102
+"<" = 4
+"==" = 168
+">=" = 42
+"||" = 13
+
+[counts.helper_calls]
+AddAnswer = 4
+AddCondKey = 3
+AddGPPoint = 16
+AddKey = 624
+ChangeJob = 30
+CreateGuild = 2
+CreateItem = 4
+Exit = 292
+GetEmptyInventoryNum = 4
+GetGuildQuestState = 6
+GetItemNum = 5
+GetPartyNum = 3
+GetPlayerExpPercent = 16
+GetPlayerGold = 3
+GetPlayerJob = 30
+GetPlayerLvl = 37
+GetQuestState = 69
+InitStat = 14
+IsGuild = 1
+IsGuildMaster = 2
+IsGuildQuest = 3
+IsParty = 4
+IsPartyGuild = 3
+IsPartyMaster = 3
+IsSetQuest = 11
+IsWormonServer = 5
+LaunchQuest = 270
+MonHuntStart = 2
+MonHuntStartParty = 7
+NpcId = 540
+PlaySound = 35
+PrintSystemMessage = 7
+Random = 19
+RemoveAllItem = 1
+RemoveGold = 2
+RemoveItem = 3
+RemoveKey = 4
+Replace = 3
+Say = 889
+SayQuest = 12
+SetLevel = 16
+SetScriptTimer = 280
+Speak = 540
+
+[counts.key_suffix_functions]
+"0" = 271
+"1" = 271
+"2" = 267
+"3" = 267
+"4" = 267
+"5" = 267
+"6" = 267
+"7" = 111
+"8" = 267
+"9" = 261
+"10" = 271
+"11" = 1
+"12" = 5
+"13" = 1
+"14" = 1
+"15" = 1
+"16" = 1
+"17" = 1
+"18" = 1
+"19" = 1
+"20" = 1
+"21" = 1
+"22" = 1
+"23" = 1
+"26" = 9
+"36" = 4
+"37" = 2
+"38" = 1
+"39" = 1
+"40" = 2
+"41" = 2
+"42" = 9
+"43" = 9
+"865" = 1
+"866" = 1
+
+[shapes]
+distinct = 51
+histogram_sha256 = "fe2129f29432c6430c599dbcc17add829d3e084edcd0b79dfa8e5275f5fe09a8"

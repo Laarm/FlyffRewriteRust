@@ -1,0 +1,103 @@
+{
+  "$defs": {
+    "ModelBoundsBundle": {
+      "description": "`model-bounds`: the JSON projection of the binary model bounds (doc 24 §10.6).",
+      "properties": {
+        "files": {
+          "$ref": "#/$defs/RowTable_ModelBoundsRow",
+          "description": "One row per parsable `.o3d`."
+        }
+      },
+      "required": [
+        "files"
+      ],
+      "title": "ModelBoundsBundle",
+      "type": "object"
+    },
+    "ModelBoundsRow": {
+      "description": "One file row of the `model-bounds` projection.",
+      "properties": {
+        "file": {
+          "description": "The `.o3d` VFS path.",
+          "type": "string"
+        },
+        "max": {
+          "description": "The header `bbMax`.",
+          "items": {
+            "format": "float",
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "type": "array"
+        },
+        "min": {
+          "description": "The header `bbMin`.",
+          "items": {
+            "format": "float",
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "type": "array"
+        }
+      },
+      "required": [
+        "file",
+        "min",
+        "max"
+      ],
+      "type": "object"
+    },
+    "RowTable_ModelBoundsRow": {
+      "description": "A columnar table: `columns` names the fields of each row, `rows` holds one array of cells per row (14 §10.2).",
+      "properties": {
+        "columns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "rows": {
+          "items": {
+            "type": "array"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "columns",
+        "rows"
+      ],
+      "type": "object",
+      "x-flyff-columns": [
+        "file",
+        "min",
+        "max"
+      ],
+      "x-flyff-row": {
+        "$ref": "#/$defs/ModelBoundsRow"
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`model-bounds.<h16>.json`: the envelope of the `model-bounds` bundle (schema version 1).",
+  "properties": {
+    "bundle": {
+      "const": "model-bounds"
+    },
+    "data": {
+      "$ref": "#/$defs/ModelBoundsBundle"
+    },
+    "schema": {
+      "const": 1
+    }
+  },
+  "required": [
+    "bundle",
+    "schema",
+    "data"
+  ],
+  "title": "ModelBoundsBundleEnvelope",
+  "type": "object"
+}

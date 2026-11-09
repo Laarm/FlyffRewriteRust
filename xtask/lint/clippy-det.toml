@@ -1,0 +1,86 @@
+# Determinism lint set for tiers S (shared bit-exact), G (game thread) and R (reproducible builders);
+# Plan/02 §11.3, Plan/01 §5.4. An entry with `crate = "x"` is only emitted for crates that depend on x
+# directly, so clippy never sees an unresolvable path. The float entries expand to f32:: and f64::.
+
+[[disallowed-types]]
+path = "std::collections::HashMap"
+reason = "iteration order depends on a random seed: use flyff_common::det::DetMap, BTreeMap or slotmap"
+
+[[disallowed-types]]
+path = "std::collections::HashSet"
+reason = "iteration order depends on a random seed: use flyff_common::det::DetSet or BTreeSet"
+
+[[disallowed-types]]
+path = "std::collections::hash_map::RandomState"
+reason = "random hasher seed: use flyff_common::det::DetBuildHasher"
+
+[[disallowed-types]]
+path = "std::time::Instant"
+reason = "game time comes from the tick clock; Instant::now panics on wasm32"
+
+[[disallowed-types]]
+path = "std::time::SystemTime"
+reason = "wall time is an injected per-tick input"
+
+[[disallowed-types]]
+path = "rand::rngs::ThreadRng"
+crate = "rand"
+reason = "use the seeded per-world PCG (flyff_common::rng)"
+
+[[disallowed-types]]
+path = "rand::rngs::OsRng"
+crate = "rand"
+reason = "use the seeded per-world PCG (flyff_common::rng)"
+
+[[disallowed-types]]
+path = "rand::rngs::StdRng"
+crate = "rand"
+reason = "StdRng's algorithm is not stable across versions"
+
+[[disallowed-types]]
+path = "glam::Vec3A"
+crate = "glam"
+reason = "no SIMD types in bit-exact code (D4)"
+
+[[disallowed-types]]
+path = "glam::Affine3A"
+crate = "glam"
+reason = "no SIMD types in bit-exact code (D4)"
+
+[[disallowed-methods]]
+path = "std::time::Instant::now"
+reason = "game time comes from the tick clock"
+
+[[disallowed-methods]]
+path = "std::time::SystemTime::now"
+reason = "wall time is an injected per-tick input"
+
+[[disallowed-methods]]
+path = "chrono::Utc::now"
+crate = "chrono"
+reason = "wall time is an injected per-tick input"
+
+[[disallowed-methods]]
+path = "chrono::Local::now"
+crate = "chrono"
+reason = "wall time is an injected per-tick input"
+
+[[disallowed-methods]]
+path = "rand::rng"
+crate = "rand"
+reason = "use the seeded per-world PCG"
+
+[[disallowed-methods]]
+path = "rand::random"
+crate = "rand"
+reason = "use the seeded per-world PCG"
+
+# Platform libm / FMA differences: use libm::*f / libm::* (D4). Allowed: + - * /, sqrt, abs, floor,
+# ceil, round, trunc, fract, min, max, clamp, signum, copysign, to_radians, to_degrees.
+[float]
+methods = [
+  "sin", "cos", "tan", "asin", "acos", "atan", "atan2", "sin_cos", "exp", "exp2", "exp_m1",
+  "ln", "log", "log2", "log10", "ln_1p", "powf", "powi", "cbrt", "hypot", "sinh", "cosh", "tanh",
+  "asinh", "acosh", "atanh", "mul_add",
+]
+reason = "platform libm / FMA differences: use the libm crate (D4)"

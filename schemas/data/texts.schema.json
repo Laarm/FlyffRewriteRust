@@ -1,0 +1,138 @@
+{
+  "$defs": {
+    "EmotionRow": {
+      "description": "One chat emoticon command.",
+      "properties": {
+        "id": {
+          "description": "The emoticon index.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "text": {
+          "description": "The command (`laugh`, `sad`, ...).",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "text"
+      ],
+      "type": "object"
+    },
+    "RowTable_TextRow": {
+      "description": "A columnar table: `columns` names the fields of each row, `rows` holds one array of cells per row (14 §10.2).",
+      "properties": {
+        "columns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "rows": {
+          "items": {
+            "type": "array"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "columns",
+        "rows"
+      ],
+      "type": "object",
+      "x-flyff-columns": [
+        "id",
+        "color",
+        "text"
+      ],
+      "x-flyff-row": {
+        "$ref": "#/$defs/TextRow"
+      }
+    },
+    "TextRow": {
+      "description": "One `textClient.inc` entry.",
+      "properties": {
+        "color": {
+          "description": "ARGB colour.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "id": {
+          "description": "The text id (`TID_*`).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "text": {
+          "description": "The format string (`%s`/`%d` placeholders), double quotes removed.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "color",
+        "text"
+      ],
+      "type": "object"
+    },
+    "TextsBundle": {
+      "description": "`texts`: the text table, the emoticon commands and the NPC dialog lines.",
+      "properties": {
+        "dialog": {
+          "description": "`WorldDialog.txt` lines (line `n` is dialog string `n`).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "emotions": {
+          "description": "`textEmotion.txt`.",
+          "items": {
+            "$ref": "#/$defs/EmotionRow"
+          },
+          "type": "array"
+        },
+        "size": {
+          "description": "The `GETTEXT` bound: `getText(tid)` is `\"error\"` for `tid >= size`, `\"\"` for a hole.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "tids": {
+          "$ref": "#/$defs/RowTable_TextRow",
+          "description": "The non-empty texts in ascending id order."
+        }
+      },
+      "required": [
+        "tids",
+        "size",
+        "emotions",
+        "dialog"
+      ],
+      "title": "TextsBundle",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`texts.<h16>.json`: the envelope of the `texts` bundle (schema version 1).",
+  "properties": {
+    "bundle": {
+      "const": "texts"
+    },
+    "data": {
+      "$ref": "#/$defs/TextsBundle"
+    },
+    "schema": {
+      "const": 1
+    }
+  },
+  "required": [
+    "bundle",
+    "schema",
+    "data"
+  ],
+  "title": "TextsBundleEnvelope",
+  "type": "object"
+}

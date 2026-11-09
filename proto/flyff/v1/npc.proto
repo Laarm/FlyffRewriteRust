@@ -1,0 +1,251 @@
+// NPC messages (Plan/11 section 4.2 and 8.4, WP-PROTO-19; tag block 512-543 plus the hot tag 14): the NPC
+// dialog, NPC buffs and the teleporters. Transcribed from ref/07a section 8.1, ref/07c sections 18 and 19,
+// ref/08 section 14, ref/09b section 3.5, ref/16 sections 5 and P2 and Plan/20 sections 7 and 8.
+//
+// Dialog (Plan/20 section 7): the client opens a dialog with ScriptDlg (empty key = "#init"); the server keeps
+// a DialogSession per player and accepts only keys and answers it offered. One accepted request produces at
+// most ONE DialogOps message (the legacy sent one RUNSCRIPTFUNC snapshot per operation); the operations are
+// applied in order. Texts are server-resolved UTF-8 strings. The oneof field number of a DialogOp is the legacy
+// FUNCTYPE_* value (not sub + 1, because the values never include 0): ADDKEY 0x10 = 16 ... CURRQUEST 0x27 = 39.
+// FUNCTYPE_REMOVENAVIGATOR 0x1C (28) and FUNCTYPE_QUERYSETGUILDNAME 0x25 (37) have client handlers but no
+// server sender in V15, so they have no case. FUNCTYPE_QUERYSETPLAYERNAME 0x24 (36) is emitted by the ScriptLib
+// function QuerySetPlayerName (src: _Common/ScriptLib.cpp:2824; ref/08 section 14 omits it; Plan/20 Q1).
+//
+// Heaven tower, arena entry and exit belong to doc 22 (M7).
+syntax = "proto3";
+
+package flyff.v1;
+
+import "flyff/options.proto";
+import "flyff/v1/common.proto";
+
+// legacy SCRIPTDLG 0x00FF00B0 (C2S; hot tag 14): talk to an NPC (ref/07a section 8.1, ref/16 section 5.2-5.3,
+// Plan/20 section 7.2). Rules: 400 ms throttle (shared with RemoveQuestReq), NPC within 32 m, and the key (or
+// answer) must have been offered in the player's current DialogSession (D2; the legacy trusted any key).
+// Answer: DialogOps.
+message ScriptDlg {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xFF00B0
+    name: "SCRIPTDLG"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "20";
+  option (flyff.milestone) = "M4";
+  // the NPC (object id)
+  uint32 npc_obj_id = 1 [(flyff.legacy_type) = "u32 objid"];
+  // "" = "#init"; otherwise a key or answer offered by the current dialog
+  string key = 2 [
+    (flyff.legacy_type) = "str<=255",
+    (flyff.max_len) = 255
+  ];
+  // the dwParam of the clicked button (the script sees it as GetVal())
+  sint32 param = 3 [(flyff.legacy_type) = "i32 nGlobal1"];
+  // the quest id attached to the button
+  sint32 quest_id = 4 [(flyff.legacy_type) = "i32 nGlobal2"];
+  // dropped: nGlobal3, nGlobal4 (the npc id and the player id; never passed to RunDialog, ref/07a section
+  // 8.1)
+}
+
+// legacy NPC_BUFF 0xF000F813 (C2S): ask an NPC for its buffs (ref/07c section 18, Plan/20 section 8.5).
+// VR-012: an MMI_NPC_BUFF NPC must be within 32 m (the legacy applied the repack's job buffs without any
+// check); the rules belong to doc 17 (WP-SKILL-03). Answer: DoApplyUseSkill per buff or TID_GAME_NPCBUFF_*.
+message NpcBuff {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xF000F813
+    name: "NPC_BUFF"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "20";
+  option (flyff.milestone) = "M4";
+  // the NPC's character key (character.inc)
+  string character_key = 1 [
+    (flyff.legacy_type) = "str<=63",
+    (flyff.max_len) = 63
+  ];
+}
+
+// legacy TELEPORTER 0x88100100 (C2S): use a teleporter NPC's destination list (ref/07c section 19, Plan/20
+// section 8.6). The NPC must exist and an MMI_TELEPORTER NPC must be within 32 m; VR-004: `index >= 0`. Free;
+// goes to Madrigal.
+message Teleporter {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x88100100
+    name: "TELEPORTER"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "20";
+  option (flyff.milestone) = "M4";
+  // the NPC's character key
+  string character_key = 1 [
+    (flyff.legacy_type) = "str<=63",
+    (flyff.max_len) = 63
+  ];
+  // the destination in the NPC's teleport list
+  sint32 index = 2 [(flyff.legacy_type) = "i32 nIndex"];
+}
+
+// legacy TELE16 0xAA000005 (C2S; repack teleporter window): teleport to an entry of teleport16.inc (ref/07c
+// section 19, Plan/20 section 8.6, Plan/15 section 10.7). The rules (level, class, cooldown, pets, fight
+// state: VR-063) are doc 15's.
+message Tele16 {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0xAA000005
+    name: "TELE16"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "20";
+  option (flyff.milestone) = "M4";
+  // the entry in teleport16.inc
+  uint32 index = 1 [(flyff.legacy_type) = "u32 nIndex"];
+}
+
+// legacy HEAVENTOWER_TELEPORT 0x70001008 (C2S): enter a heaven tower floor at the MMI_HEAVEN_TOWER NPC
+// (ref/07c section 19, Plan/22 section 10.5). Floors 1..5 cost 10000 / 30000 / 50000 / 70000 / 100000 penya.
+message HeavenTowerTeleport {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x70001008
+    name: "HEAVENTOWER_TELEPORT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+  // the floor 1..5
+  sint32 floor = 1 [(flyff.legacy_type) = "i32 nFloor"];
+}
+
+// legacy ARENA_ENTER 0x70000010 (C2S): enter the arena world (ref/07c section 19, Plan/22 section 17.1).
+// Vagrants are refused. No payload.
+message ArenaEnter {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x70000010
+    name: "ARENA_ENTER"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+}
+
+// legacy ARENA_EXIT 0x70000011 (C2S): leave the arena (ref/07c section 19, Plan/22 section 17.1). Only valid
+// inside the arena world (VR-062). No payload.
+message ArenaExit {
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_PACKETTYPE
+    value: 0x70000011
+    name: "ARENA_EXIT"
+  };
+  option (flyff.dir) = DIRECTION_C2S;
+  option (flyff.doc) = "22";
+  option (flyff.milestone) = "M7";
+}
+
+// ext 0xFE000030; legacy RUNSCRIPTFUNC 0x0024 (merged); obj_id: 0 (self). The ordered operations of one
+// dialog response (Plan/11 section 8.4, Plan/20 section 7.5, ref/08 section 14, ref/09b section 3.5). The
+// client drops a message whose `npc_obj_id` is not its open dialog's NPC or whose `session_seq` is lower than
+// the last applied one.
+message DialogOps {
+  option (flyff.ext_id) = 0xFE000030;
+  option (flyff.legacy_id) = {
+    ns: LEGACY_NAMESPACE_SNAPSHOTTYPE
+    value: 0x24
+    name: "RUNSCRIPTFUNC"
+  };
+  option (flyff.dir) = DIRECTION_S2C;
+  option (flyff.doc) = "20";
+  option (flyff.milestone) = "M4";
+  // the NPC the dialog window belongs to
+  uint32 npc_obj_id = 1;
+  // applied in order; one response = one message
+  repeated DialogOp ops = 2;
+  // increments per response of the DialogSession
+  uint32 session_seq = 3;
+}
+
+// Key and answer operations: ADDKEY, ADDANSWER, NEWQUEST, CURRQUEST (legacy `str val1, str val2, u32 dw1, u32 dw2`).
+message DialogKey {
+  // the label shown (a key word or an answer button text; __YES__ __NO__ __OK__ __CANCEL__ are image buttons)
+  string word = 1 [(flyff.legacy_type) = "str lpszVal1"];
+  // the key sent back in ScriptDlg.key when it is clicked
+  string key = 2 [(flyff.legacy_type) = "str lpszVal2"];
+  // sent back in ScriptDlg.param
+  uint32 param = 3 [(flyff.legacy_type) = "u32 dwVal1"];
+  // sent back in ScriptDlg.quest_id
+  uint32 quest_id = 4 [(flyff.legacy_type) = "u32 dwVal2"];
+}
+
+// Text operations: REMOVEKEY (text = the key), SAY, SAYQUEST (legacy `str text, u32 dw2`).
+message DialogText {
+  string text = 1 [(flyff.legacy_type) = "str lpszVal1"];
+  // the quest the text belongs to (0 = none); a quest text gets the quest title prefix on the client
+  uint32 quest_id = 2 [(flyff.legacy_type) = "u32 dwVal2"];
+}
+
+// INITSTAT, INITSTR, INITSTA, INITDEX, INITINT (legacy `u32 dw1`).
+message DialogValue {
+  // the remaining growth points after the reset
+  uint32 value = 1 [(flyff.legacy_type) = "u32 dwVal1"];
+}
+
+// SETNAVIGATOR (legacy `u32 dw1, vec3 pos`).
+message DialogNavigator {
+  // the world id of the target
+  uint32 value = 1 [(flyff.legacy_type) = "u32 dwVal1"];
+  Vec3 pos = 2 [(flyff.legacy_type) = "vec3 vPos"];
+}
+
+// The operations without payload: SETMARK, GOMARK, EXIT, ENDSAY, CREATEGUILD, DESTROYGUILD, REMOVEALLKEY,
+// QUERYSETPLAYERNAME.
+message DialogEmpty {}
+
+// One dialog operation. The field number is the legacy FUNCTYPE_* value (Plan/11 section 8.4).
+message DialogOp {
+  oneof op {
+    // FUNCTYPE_ADDKEY 0x10: add a key button (deduplicated by word, at most 32)
+    DialogKey add_key = 16;
+    // FUNCTYPE_REMOVEKEY 0x11: remove the key buttons with this key (text = key)
+    DialogText remove_key = 17;
+    // FUNCTYPE_SAY 0x12: append a text page
+    DialogText say = 18;
+    // FUNCTYPE_ADDANSWER 0x13: add an answer button on the last page
+    DialogKey add_answer = 19;
+    // FUNCTYPE_SETMARK 0x14: never sent
+    DialogEmpty set_mark = 20;
+    // FUNCTYPE_GOMARK 0x15: never sent
+    DialogEmpty go_mark = 21;
+    // FUNCTYPE_EXIT 0x16: close the dialog window
+    DialogEmpty exit = 22;
+    // FUNCTYPE_ENDSAY 0x17: never sent
+    DialogEmpty end_say = 23;
+    // FUNCTYPE_CREATEGUILD 0x18: never sent
+    DialogEmpty create_guild = 24;
+    // FUNCTYPE_DESTROYGUILD 0x19: a no-op on the client (KEEP)
+    DialogEmpty destroy_guild = 25;
+    // FUNCTYPE_INITSTAT 0x1A: all four stats back to 15, remaining points = value
+    DialogValue init_stat = 26;
+    // FUNCTYPE_SETNAVIGATOR 0x1B: set the navigator arrow
+    DialogNavigator set_navigator = 27;
+    // FUNCTYPE_REMOVEALLKEY 0x1D: clear the key buttons and both quest lists
+    DialogEmpty remove_all_key = 29;
+    // FUNCTYPE_SAYQUEST 0x1E: as say (ScriptLib SayQuest uses SAY; the client ignores this one)
+    DialogText say_quest = 30;
+    // FUNCTYPE_INITSTR 0x20: STR back to 15, remaining points = value
+    DialogValue init_str = 32;
+    // FUNCTYPE_INITSTA 0x21: STA back to 15, remaining points = value
+    DialogValue init_sta = 33;
+    // FUNCTYPE_INITDEX 0x22: DEX back to 15, remaining points = value
+    DialogValue init_dex = 34;
+    // FUNCTYPE_INITINT 0x23: INT back to 15, remaining points = value
+    DialogValue init_int = 35;
+    // FUNCTYPE_QUERYSETPLAYERNAME 0x24: open the free rename window (no payload; Plan/11 section 8.6, Plan/20 Q1)
+    DialogEmpty query_set_player_name = 36;
+    // FUNCTYPE_NEWQUEST 0x26: add an available quest to the "new quest" list
+    DialogKey new_quest = 38;
+    // FUNCTYPE_CURRQUEST 0x27: add a running quest to the "current quest" list
+    DialogKey curr_quest = 39;
+  }
+}

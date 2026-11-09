@@ -1,0 +1,986 @@
+{
+  "$defs": {
+    "QuestBegin": {
+      "description": "The begin conditions B1-B15.",
+      "properties": {
+        "add_items": {
+          "description": "`[item, num]` slots of `SetBeginSetAddItem`.",
+          "items": {
+            "items": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "disguise": {
+          "description": "B11: 0 none, -1 must not be disguised.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "exclusive": {
+          "description": "B2: 6 quests.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "guild": {
+          "$ref": "#/$defs/QuestPartyCond",
+          "description": "B6."
+        },
+        "items": {
+          "description": "B14: items that must be owned.",
+          "items": {
+            "$ref": "#/$defs/QuestItemCond"
+          },
+          "type": "array"
+        },
+        "jobs": {
+          "description": "B3: empty = any.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "level": {
+          "description": "B4.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "not_items": {
+          "description": "B10: items that must not be owned.",
+          "items": {
+            "$ref": "#/$defs/QuestItemCond"
+          },
+          "type": "array"
+        },
+        "party": {
+          "$ref": "#/$defs/QuestPartyCond",
+          "description": "B5."
+        },
+        "pet_exp": {
+          "description": "B12.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "pet_level": {
+          "description": "B12.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "pk_value": {
+          "description": "B9.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "previous": {
+          "$ref": "#/$defs/QuestPrevious",
+          "description": "B1."
+        },
+        "sex": {
+          "description": "B7: -1 any.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "skill": {
+          "description": "B8: `[skill, level]`.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "tsp": {
+          "description": "B15.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "tutorial_state": {
+          "description": "B13.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "previous",
+        "exclusive",
+        "jobs",
+        "level",
+        "party",
+        "guild",
+        "sex",
+        "skill",
+        "pk_value",
+        "not_items",
+        "items",
+        "disguise",
+        "pet_exp",
+        "pet_level",
+        "tutorial_state",
+        "tsp",
+        "add_items"
+      ],
+      "type": "object"
+    },
+    "QuestClientDef": {
+      "description": "The client definition of one quest (14 §10.5.1; empty in this data set).",
+      "properties": {
+        "begin": {
+          "$ref": "#/$defs/QuestBegin",
+          "description": "The begin conditions."
+        },
+        "end": {
+          "$ref": "#/$defs/QuestEnd",
+          "description": "The end conditions."
+        },
+        "givers": {
+          "description": "`[npc, item]` givers in file order.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "format": "uint32",
+                "minimum": 0,
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "head_quest": {
+          "description": "`SetHeadQuest` after the remap: the quest-log tree.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "id": {
+          "description": "The quest id.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "no_remove": {
+          "description": "`SetRemove(0)`: the player cannot cancel.",
+          "type": "boolean"
+        },
+        "quest_type": {
+          "description": "`SetQuestType` (`QT_*`).",
+          "format": "int32",
+          "type": "integer"
+        },
+        "repeat": {
+          "description": "`SetRepeat`.",
+          "type": "boolean"
+        },
+        "rewards": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/QuestRewards"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The rewards, `null` when hidden."
+        },
+        "states": {
+          "description": "The described states in ascending order.",
+          "items": {
+            "$ref": "#/$defs/QuestStateDesc"
+          },
+          "type": "array"
+        },
+        "title": {
+          "description": "`SetTitle`, at most 63 bytes.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "head_quest",
+        "quest_type",
+        "repeat",
+        "no_remove",
+        "givers",
+        "begin",
+        "end",
+        "rewards",
+        "states"
+      ],
+      "type": "object"
+    },
+    "QuestCompleteQuests": {
+      "description": "The \"complete these quests\" condition (E11).",
+      "properties": {
+        "oper": {
+          "description": "0 none, 1 or, 2 and.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "quests": {
+          "description": "6 quests.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "oper",
+        "quests"
+      ],
+      "type": "object"
+    },
+    "QuestEnd": {
+      "description": "The end conditions E1-E16.",
+      "properties": {
+        "character": {
+          "$ref": "#/$defs/QuestEndCharacter",
+          "description": "The completing NPC."
+        },
+        "complete_quest": {
+          "$ref": "#/$defs/QuestCompleteQuests",
+          "description": "E11."
+        },
+        "dialog": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/QuestEndDialog"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The end dialog."
+        },
+        "disguise": {
+          "description": "E9.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "exp_percent": {
+          "description": "E7: units of 1/100 percent.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "gold": {
+          "description": "E5.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "guild": {
+          "$ref": "#/$defs/QuestPartyCond",
+          "description": "E13."
+        },
+        "items": {
+          "description": "E15.",
+          "items": {
+            "$ref": "#/$defs/QuestItemCond"
+          },
+          "type": "array"
+        },
+        "kill": {
+          "description": "E3: 2 slots.",
+          "items": {
+            "$ref": "#/$defs/QuestKill"
+          },
+          "type": "array"
+        },
+        "level": {
+          "description": "E6.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "limit_time_min": {
+          "description": "E1.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "multi_characters": {
+          "description": "`SetEndCondMultiCharacter` (display only): `[npc, item]`.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "format": "uint32",
+                "minimum": 0,
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "one_items": {
+          "description": "E14.",
+          "items": {
+            "$ref": "#/$defs/QuestItemCond"
+          },
+          "type": "array"
+        },
+        "party": {
+          "$ref": "#/$defs/QuestPartyCond",
+          "description": "E12."
+        },
+        "patrol": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/QuestPatrol"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "E2."
+        },
+        "pet_exp": {
+          "description": "E8.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "pet_level": {
+          "description": "E8.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "skill": {
+          "description": "E4: `[skill, level]`.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "state": {
+          "description": "E10: 0 = the last defined state.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "tsp": {
+          "description": "E16.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "limit_time_min",
+        "patrol",
+        "kill",
+        "skill",
+        "gold",
+        "level",
+        "exp_percent",
+        "pet_exp",
+        "pet_level",
+        "disguise",
+        "state",
+        "complete_quest",
+        "party",
+        "guild",
+        "one_items",
+        "items",
+        "tsp",
+        "character",
+        "multi_characters",
+        "dialog"
+      ],
+      "type": "object"
+    },
+    "QuestEndCharacter": {
+      "description": "The end character (the NPC that completes the quest).",
+      "properties": {
+        "goal": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/QuestGoalData"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The goal marker."
+        },
+        "npc": {
+          "description": "The NPC key, `\"\"` = never completable through dialogs.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "npc",
+        "goal"
+      ],
+      "type": "object"
+    },
+    "QuestEndDialog": {
+      "description": "The end dialog condition.",
+      "properties": {
+        "goal": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/QuestGoalData"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The goal marker."
+        },
+        "key": {
+          "description": "The dialog key (case-sensitive).",
+          "type": "string"
+        },
+        "npc": {
+          "description": "The NPC key.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "npc",
+        "key",
+        "goal"
+      ],
+      "type": "object"
+    },
+    "QuestGoalData": {
+      "description": "The goal marker of a quest condition (`QuestGoalData`).",
+      "properties": {
+        "index": {
+          "description": "The global running goal counter.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "text_id": {
+          "description": "`atoi` of the last four characters of `GOAL_TEXT_ID_nnnn`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "x": {
+          "description": "World x.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "z": {
+          "description": "World z.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "index",
+        "x",
+        "z",
+        "text_id"
+      ],
+      "type": "object"
+    },
+    "QuestItemCond": {
+      "description": "An item condition (`QuestItemCond`).",
+      "properties": {
+        "ability_option": {
+          "description": "The ability option.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "flag": {
+          "description": "Flags.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "goal": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/QuestGoalData"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The goal marker."
+        },
+        "item": {
+          "description": "The item.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "job_or_item": {
+          "description": "A job or an item, see `type`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "num": {
+          "description": "The count.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "sex": {
+          "description": "-1 any, 0 male, 1 female.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "type": {
+          "description": "0: `job_or_item` is a job (-1 any); 1: the item the player must own (-1 any).",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "sex",
+        "type",
+        "job_or_item",
+        "item",
+        "num",
+        "ability_option",
+        "flag",
+        "goal"
+      ],
+      "type": "object"
+    },
+    "QuestKill": {
+      "description": "A kill condition (E3).",
+      "properties": {
+        "goal": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/QuestGoalData"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The goal marker."
+        },
+        "mover": {
+          "description": "The mover (0 = unused slot).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "num": {
+          "description": "The count.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "mover",
+        "num",
+        "goal"
+      ],
+      "type": "object"
+    },
+    "QuestPartyCond": {
+      "description": "A party or guild condition (raw directive values).",
+      "properties": {
+        "comp": {
+          "description": "0 `==`, 1 `>=`, -1 `<=`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "leader": {
+          "description": "Leader only.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "mode": {
+          "description": "The mode.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "num": {
+          "description": "The number.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "mode",
+        "comp",
+        "num",
+        "leader"
+      ],
+      "type": "object"
+    },
+    "QuestPatrol": {
+      "description": "The patrol end condition (E2).",
+      "properties": {
+        "destination": {
+          "description": "`PATROL_DESTINATION_ID_nnnn` key into `patrol_destinations`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "goal": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/QuestGoalData"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The goal marker."
+        },
+        "name": {
+          "description": "`SetPatrolZoneName`.",
+          "type": "string"
+        },
+        "rect": {
+          "description": "The normalised rectangle.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "type": "array"
+        },
+        "world": {
+          "description": "The world.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "world",
+        "rect",
+        "name",
+        "destination",
+        "goal"
+      ],
+      "type": "object"
+    },
+    "QuestPrevious": {
+      "description": "The previous-quest condition (B1).",
+      "properties": {
+        "quests": {
+          "description": "6 slots, 0 = unused.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "type": {
+          "description": "The type.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "type",
+        "quests"
+      ],
+      "type": "object"
+    },
+    "QuestRewardItem": {
+      "description": "One reward item.",
+      "properties": {
+        "ability_option": {
+          "description": "The ability option.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "bind": {
+          "description": "The bind flag.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "item": {
+          "description": "The item.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "job_or_item": {
+          "description": "A job or an item.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "num": {
+          "description": "The count.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "sex": {
+          "description": "-1 any, 0 male, 1 female.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "type": {
+          "description": "The type.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "sex",
+        "type",
+        "job_or_item",
+        "item",
+        "num",
+        "ability_option",
+        "bind"
+      ],
+      "type": "object"
+    },
+    "QuestRewards": {
+      "description": "The rewards (`null` when hidden by `SetEndRewardHide(1)`).",
+      "properties": {
+        "exp": {
+          "description": "`[min, max]` exp.",
+          "items": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "gold": {
+          "description": "`[min, max]` gold.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "items": {
+          "description": "The items.",
+          "items": {
+            "$ref": "#/$defs/QuestRewardItem"
+          },
+          "type": "array"
+        },
+        "pet_levelup": {
+          "description": "Raises the pet level.",
+          "type": "boolean"
+        },
+        "pk_value": {
+          "description": "`[min, max]` PK value.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "skill_point": {
+          "description": "Skill points.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "teleport": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/QuestTeleport"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The teleport."
+        },
+        "tsp": {
+          "description": "TSP.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "gold",
+        "exp",
+        "skill_point",
+        "pk_value",
+        "teleport",
+        "pet_levelup",
+        "tsp"
+      ],
+      "type": "object"
+    },
+    "QuestStateDesc": {
+      "description": "One described state.",
+      "properties": {
+        "desc": {
+          "description": "The `SetDesc` text.",
+          "type": "string"
+        },
+        "state": {
+          "description": "0..=15.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "state",
+        "desc"
+      ],
+      "type": "object"
+    },
+    "QuestTeleport": {
+      "description": "A teleport reward.",
+      "properties": {
+        "pos": {
+          "description": "The position.",
+          "items": {
+            "format": "float",
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "type": "array"
+        },
+        "world": {
+          "description": "The world.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "world",
+        "pos"
+      ],
+      "type": "object"
+    },
+    "QuestsBundle": {
+      "description": "`quests` (lazy): the quest definitions, the NPC links and the destination names.",
+      "properties": {
+        "patrol_destinations": {
+          "additionalProperties": false,
+          "description": "`PatrolDestination.txt.txt`.",
+          "patternProperties": {
+            "^\\d+$": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "quest_destinations": {
+          "additionalProperties": false,
+          "description": "`QuestDestination.txt.txt`.",
+          "patternProperties": {
+            "^\\d+$": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "quest_dst": {
+          "additionalProperties": {
+            "items": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "description": "NPC key (lower case) to the quests it completes.",
+          "type": "object"
+        },
+        "quest_src": {
+          "additionalProperties": {
+            "items": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "description": "NPC key (lower case) to the quests it gives, file order.",
+          "type": "object"
+        },
+        "quests": {
+          "description": "The quests in ascending id order (empty in this data set).",
+          "items": {
+            "$ref": "#/$defs/QuestClientDef"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "quests",
+        "quest_src",
+        "quest_dst",
+        "quest_destinations",
+        "patrol_destinations"
+      ],
+      "title": "QuestsBundle",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`quests.<h16>.json`: the envelope of the `quests` bundle (schema version 1).",
+  "properties": {
+    "bundle": {
+      "const": "quests"
+    },
+    "data": {
+      "$ref": "#/$defs/QuestsBundle"
+    },
+    "schema": {
+      "const": 1
+    }
+  },
+  "required": [
+    "bundle",
+    "schema",
+    "data"
+  ],
+  "title": "QuestsBundleEnvelope",
+  "type": "object"
+}

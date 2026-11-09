@@ -1,0 +1,58 @@
+/* The server pages (Plan/25 section 9.3 - 9.9): the log box, the console output, small helpers. */
+.adm-h3 {
+  margin: var(--s-4) 0 var(--s-2);
+  font-size: var(--fs-lg);
+}
+
+.adm-small {
+  font-size: var(--fs-sm);
+}
+
+.adm-mono {
+  font-family: var(--mono);
+}
+
+.adm-logbox {
+  min-height: 240px;
+  max-height: 60vh;
+  overflow: auto;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-family: var(--mono);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.adm-logline--error {
+  color: var(--danger);
+}
+
+.adm-logline--warn {
+  color: var(--warn);
+}
+
+.adm-logline--debug,
+.adm-logline--trace {
+  color: var(--text-muted);
+}
+
+.adm-console__out {
+  min-height: 320px;
+}
+
+.adm-console__row--in {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.adm-console__row--err {
+  color: var(--danger);
+}
+
+.adm-console__row--note {
+  color: var(--text-muted);
+}

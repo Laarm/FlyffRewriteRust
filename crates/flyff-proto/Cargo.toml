@@ -1,0 +1,20 @@
+[package]
+name = "flyff-proto"
+description = "prost messages, legacy-id table, PROTO_HASH, batch framing and encode-once fan-out (Plan/11; tier N, wasm-compatible)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+# No build script and no protoc: the generated code is committed under src/gen/ (`cargo xtask gen-proto`).
+[dependencies]
+flyff-common = { workspace = true }
+prost = { workspace = true }
+bytes = { workspace = true }
+smallvec = { workspace = true }
+thiserror = { workspace = true }
+

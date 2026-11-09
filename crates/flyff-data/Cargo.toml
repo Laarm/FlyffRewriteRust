@@ -1,0 +1,47 @@
+[package]
+name = "flyff-data"
+description = "GameData types (wasm-safe) and typed loaders under feature load (Plan/14; tier S, G for load)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+default = []
+# Native-only typed loaders in the original load order (flyff-vfs, flyff-formats, mlua for config-only scripts, X6).
+load = ["dep:flyff-vfs", "dep:flyff-formats", "dep:mlua", "dep:serde_json"]
+# Client data bundle exporter (Plan/14 §10): envelope, manifest, projections, gzip, cache store. The DTO types
+# (`bundle::types`) are always compiled.
+bundle = ["dep:serde_json", "dep:flate2", "dep:xxhash-rust"]
+# schemars derives for the generated JSON Schemas (`schemas/data/*.schema.json`).
+schema = ["dep:schemars", "dep:serde_json"]
+# TypeScript types in web/src/gen/bundles: generated from the schemars schemas by `bundle::tsgen` (one derive
+# source, so schema and types cannot drift); this feature only names that generator. `ts-rs` is not used.
+ts = ["schema"]
+
+[[example]]
+name = "gen-bundle-types"
+required-features = ["bundle", "schema"]
+
+[[example]]
+name = "dump-bundles"
+required-features = ["load", "bundle"]
+
+[dependencies]
+flyff-common = { workspace = true }
+flyff-script = { workspace = true }
+serde = { workspace = true }
+indexmap = { workspace = true, features = ["serde"] }
+serde_json = { workspace = true, optional = true }
+flate2 = { workspace = true, optional = true }
+xxhash-rust = { workspace = true, optional = true }
+flyff-vfs = { workspace = true, optional = true }
+flyff-formats = { workspace = true, optional = true }
+mlua = { workspace = true, optional = true, features = ["serde"] }
+schemars = { workspace = true, optional = true }
+thiserror = { workspace = true }
+

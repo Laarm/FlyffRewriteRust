@@ -1,0 +1,52 @@
+{
+  "$defs": {
+    "DefinesBundle": {
+      "description": "`defines` (lazy): every define in file order, for the dev surfaces and the GM UI.",
+      "properties": {
+        "defines": {
+          "description": "`[name, value]` pairs.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "format": "int64",
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "defines"
+      ],
+      "title": "DefinesBundle",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`defines.<h16>.json`: the envelope of the `defines` bundle (schema version 1).",
+  "properties": {
+    "bundle": {
+      "const": "defines"
+    },
+    "data": {
+      "$ref": "#/$defs/DefinesBundle"
+    },
+    "schema": {
+      "const": 1
+    }
+  },
+  "required": [
+    "bundle",
+    "schema",
+    "data"
+  ],
+  "title": "DefinesBundleEnvelope",
+  "type": "object"
+}

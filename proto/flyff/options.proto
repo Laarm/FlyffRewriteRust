@@ -1,0 +1,58 @@
+// Custom options of the Flyff V15 wire protocol (Plan/11 section 6).
+//
+// prost ignores custom options in generated code. They are read only from the descriptor set by
+// `cargo xtask gen-proto` (legacy_ids.rs, limits.rs, js_safe.ts) and by tools/proto-coverage.
+// Extension numbers 51001-51199 are reserved for this project.
+syntax = "proto3";
+
+package flyff;
+
+import "google/protobuf/descriptor.proto";
+
+enum LegacyNamespace {
+  LEGACY_NAMESPACE_UNSPECIFIED = 0;
+  // _Network/MsgHdr.h PACKETTYPE_* (u32 on the legacy wire)
+  LEGACY_NAMESPACE_PACKETTYPE = 1;
+  // _Network/MsgHdr.h SNAPSHOTTYPE_* (u16 sub-message id)
+  LEGACY_NAMESPACE_SNAPSHOTTYPE = 2;
+}
+
+message LegacyId {
+  LegacyNamespace ns = 1;
+  // numeric id, e.g. 0x00CA
+  uint32 value = 2;
+  // define name without prefix, original spelling: "MOVERMOVED", "ITEMTRANSY"
+  string name = 3;
+  // nested sub-type messages only: "GC_WINGUILD"
+  string sub = 4;
+}
+
+enum Direction {
+  DIRECTION_UNSPECIFIED = 0;
+  DIRECTION_C2S = 1;
+  DIRECTION_S2C = 2;
+}
+
+extend google.protobuf.MessageOptions {
+  // legacy origin(s); several = merge
+  repeated LegacyId legacy_id = 51001;
+  // extension messages: 0xFE000000..0xFEFFFFFF (D3)
+  uint32 ext_id = 51002;
+  // scaffold placeholder, body not transcribed yet (Plan/11 section 11 C6)
+  bool stub = 51003;
+  // envelope messages: direction (checked against envelope membership)
+  Direction dir = 51004;
+  // owning plan doc number, e.g. "18"
+  string doc = 51005;
+  // "M2"
+  string milestone = 51006;
+}
+
+extend google.protobuf.FieldOptions {
+  // original CAr type for traceability: "u16", "raw(QUEST)", "str<=31"
+  string legacy_type = 51101;
+  // C2S: max UTF-8 bytes (string/bytes) or max entries (repeated)
+  uint32 max_len = 51102;
+  // 64-bit field whose values stay within +-(2^53 - 1); TS converts with n64()/b64() (Plan/11 section 4.3)
+  bool js_safe_number = 51103;
+}

@@ -1,0 +1,1007 @@
+{
+  "$defs": {
+    "CoupleSection": {
+      "description": "The couple tables.",
+      "properties": {
+        "level_exp": {
+          "description": "EXP per couple level (divided by the couple rate).",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "skill_kinds": {
+          "description": "The couple skill items.",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "skill_levels": {
+          "description": "`(level, level of each kind)` rows.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "format": "int32",
+                "type": "integer"
+              },
+              {
+                "items": {
+                  "format": "int32",
+                  "type": "integer"
+                },
+                "type": "array"
+              }
+            ],
+            "type": "array"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "level_exp",
+        "skill_kinds",
+        "skill_levels"
+      ],
+      "type": "object"
+    },
+    "ExpSection": {
+      "description": "The experience tables.",
+      "properties": {
+        "character": {
+          "description": "`expCharacter` rows `[exp1, exp2, lp, limit]` (row index = file row).",
+          "items": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "maxItems": 4,
+            "minItems": 4,
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "party": {
+          "description": "`expParty` rows `[exp, point]`.",
+          "items": {
+            "items": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "party_skill": {
+          "description": "`expPartySkill` rows `[exp, level]`.",
+          "items": {
+            "items": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "set_item_avail": {
+          "description": "The set-item bonus per number of equipped pieces.",
+          "items": {
+            "$ref": "#/$defs/SetItemAvail"
+          },
+          "type": "array"
+        },
+        "upitem": {
+          "description": "`expUpitem` by column (weapon, helmet, suit, gauntlet, boots, shield) then row `+0..=+10`.",
+          "items": {
+            "items": {
+              "format": "int32",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "character",
+        "party",
+        "party_skill",
+        "upitem",
+        "set_item_avail"
+      ],
+      "type": "object"
+    },
+    "GenericEventRow": {
+      "description": "One generic event (`propEvent.inc`).",
+      "properties": {
+        "begin": {
+          "description": "`[year, month, day, hour]` of the begin.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "end": {
+          "description": "`[year, month, day, hour]` of the end.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "id": {
+          "description": "The event id (500+).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "title": {
+          "description": "The English title.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "begin",
+        "end"
+      ],
+      "type": "object"
+    },
+    "GuildBuffDef": {
+      "description": "One guild buff (`GUILD_BUFF_INFO`): the buff item the guild gets when the constraints hold.",
+      "properties": {
+        "item": {
+          "description": "`dwBuffID`: the buff item.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "member_count": {
+          "description": "`nMemCountConstraint`: the member count needed.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "member_online": {
+          "description": "`nMemOnlineConstraint`: the members that must be online.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "min_level": {
+          "description": "`dwLvConstraint`: the minimum guild level.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "item",
+        "min_level",
+        "member_count",
+        "member_online"
+      ],
+      "type": "object"
+    },
+    "GuildSection": {
+      "description": "The guild tables.",
+      "properties": {
+        "buffs": {
+          "description": "The guild buffs (`guildbuff.inc`).",
+          "items": {
+            "$ref": "#/$defs/GuildBuffDef"
+          },
+          "type": "array"
+        },
+        "levels": {
+          "description": "`[pxp, penya, max_member]` per guild level.",
+          "items": {
+            "items": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "maxItems": 3,
+            "minItems": 3,
+            "type": "array"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "levels",
+        "buffs"
+      ],
+      "type": "object"
+    },
+    "JobItemsRow": {
+      "description": "The starting equipment of one job: `equip[slot] = [male, female]`, `NULL_ID` = empty.",
+      "properties": {
+        "equip": {
+          "description": "At most 10 `[male, female]` pairs by position.",
+          "items": {
+            "items": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "job": {
+          "description": "`JOB_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "job",
+        "equip"
+      ],
+      "type": "object"
+    },
+    "JobProp": {
+      "description": "The 18 float factors of one job, in file-column order.",
+      "properties": {
+        "attack_speed": {
+          "description": "\"ATK. Speed\".",
+          "format": "float",
+          "type": "number"
+        },
+        "blocking": {
+          "description": "\"BLOCK\".",
+          "format": "float",
+          "type": "number"
+        },
+        "critical": {
+          "description": "\"CRITICAL\".",
+          "format": "float",
+          "type": "number"
+        },
+        "factor_def": {
+          "description": "\"Def\".",
+          "format": "float",
+          "type": "number"
+        },
+        "factor_fp_recovery": {
+          "description": "\"FP Regen\".",
+          "format": "float",
+          "type": "number"
+        },
+        "factor_hp_recovery": {
+          "description": "\"HP Regen\".",
+          "format": "float",
+          "type": "number"
+        },
+        "factor_max_fp": {
+          "description": "\"MaxFP\".",
+          "format": "float",
+          "type": "number"
+        },
+        "factor_max_hp": {
+          "description": "\"MaxHP\".",
+          "format": "float",
+          "type": "number"
+        },
+        "factor_max_mp": {
+          "description": "\"MaxMP\".",
+          "format": "float",
+          "type": "number"
+        },
+        "factor_mp_recovery": {
+          "description": "\"MP Regen\".",
+          "format": "float",
+          "type": "number"
+        },
+        "magic_wand": {
+          "description": "\"WAND\".",
+          "format": "float",
+          "type": "number"
+        },
+        "melee_axe": {
+          "description": "\"AXE\".",
+          "format": "float",
+          "type": "number"
+        },
+        "melee_bow": {
+          "description": "\"BOW\" (custom column).",
+          "format": "float",
+          "type": "number"
+        },
+        "melee_knuckle": {
+          "description": "\"KNUCKLE\".",
+          "format": "float",
+          "type": "number"
+        },
+        "melee_staff": {
+          "description": "\"STAFF\".",
+          "format": "float",
+          "type": "number"
+        },
+        "melee_stick": {
+          "description": "\"STICK\".",
+          "format": "float",
+          "type": "number"
+        },
+        "melee_swd": {
+          "description": "\"SWD\".",
+          "format": "float",
+          "type": "number"
+        },
+        "melee_yoyo": {
+          "description": "\"YOYO\".",
+          "format": "float",
+          "type": "number"
+        }
+      },
+      "required": [
+        "attack_speed",
+        "factor_max_hp",
+        "factor_max_mp",
+        "factor_max_fp",
+        "factor_def",
+        "factor_hp_recovery",
+        "factor_mp_recovery",
+        "factor_fp_recovery",
+        "melee_swd",
+        "melee_axe",
+        "melee_staff",
+        "melee_stick",
+        "melee_knuckle",
+        "magic_wand",
+        "melee_yoyo",
+        "melee_bow",
+        "blocking",
+        "critical"
+      ],
+      "type": "object"
+    },
+    "JobRow": {
+      "description": "One job (`etc.inc` + `propJob.inc`).",
+      "properties": {
+        "base": {
+          "description": "The job this one advances from.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "id": {
+          "description": "`JOB_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "name": {
+          "description": "The job name.",
+          "type": "string"
+        },
+        "prop": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/JobProp"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The stat factors of `propJob.inc`, `null` when the job has no row."
+        },
+        "type": {
+          "description": "`JTYPE_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "base",
+        "type",
+        "prop"
+      ],
+      "type": "object"
+    },
+    "LordEventRate": {
+      "description": "One row of `lordevent.inc` (`m_vEFactor` / `m_vIFactor`): the bonus factor of a lord event and its price.",
+      "properties": {
+        "cost": {
+          "description": "The price in penya of this row alone (`ILordEvent::GetCost` adds the exp and the item price); row 0 is 0.",
+          "format": "int64",
+          "type": "integer"
+        },
+        "factor": {
+          "description": "The bonus (0.05 = 5 %); row 0 is 0.",
+          "format": "float",
+          "type": "number"
+        }
+      },
+      "required": [
+        "factor",
+        "cost"
+      ],
+      "type": "object"
+    },
+    "LordEventTables": {
+      "description": "`lordevent.inc`: the two rate lists the lord's event window steps through (the original client read the file itself and\nthe `Lord` message carries no table).",
+      "properties": {
+        "exp": {
+          "description": "The experience rows (`exp { ... }`, 11 here).",
+          "items": {
+            "$ref": "#/$defs/LordEventRate"
+          },
+          "type": "array"
+        },
+        "item": {
+          "description": "The item drop rows (`item { ... }`, 11 here).",
+          "items": {
+            "$ref": "#/$defs/LordEventRate"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "exp",
+        "item"
+      ],
+      "type": "object"
+    },
+    "LordSkill": {
+      "description": "One lord skill (`CLordSkillComponent`).",
+      "properties": {
+        "cooltime": {
+          "description": "The cool time in MINUTES (one lord-minute tick of P4 each; `CTLordSkill::OnTimer` decrements per run).",
+          "format": "int32",
+          "type": "integer"
+        },
+        "desc": {
+          "description": "The description.",
+          "type": "string"
+        },
+        "dst_sfx": {
+          "description": "The destination effect.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "icon": {
+          "description": "The icon file (a bare file name under `icon/`).",
+          "type": "string"
+        },
+        "id": {
+          "description": "`LI_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "item": {
+          "description": "The buff item (`NULL_ID` for `=`).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "kind": {
+          "description": "`LT_*`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "name": {
+          "description": "The name.",
+          "type": "string"
+        },
+        "passive": {
+          "description": "Passive skill (1) or not (0).",
+          "format": "int32",
+          "type": "integer"
+        },
+        "range": {
+          "description": "The range in metres.",
+          "format": "float",
+          "type": "number"
+        },
+        "src_sfx": {
+          "description": "The source effect (`NULL_ID` for `=`).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "target": {
+          "description": "`LTT_*` target type.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "name",
+        "desc",
+        "target",
+        "item",
+        "cooltime",
+        "icon",
+        "passive",
+        "src_sfx",
+        "dst_sfx",
+        "range"
+      ],
+      "type": "object"
+    },
+    "MotionProp": {
+      "description": "One row of `propMotion.txt`.",
+      "properties": {
+        "desc": {
+          "description": "word 6: description (IDS key resolved).",
+          "type": "string"
+        },
+        "icon": {
+          "description": "word 3: `\"\"\"mot_baseSit.dds\"\"\"` (three tokens, the middle one is kept).",
+          "type": "string"
+        },
+        "id": {
+          "description": "word 1: `MOT_*` (`id <= 0` is an Error and aborts the file).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "motion": {
+          "description": "word 2: `MTI_*` animation id.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "name": {
+          "description": "word 5: name (IDS key resolved).",
+          "type": "string"
+        },
+        "play": {
+          "description": "word 4: 0 = play once, 1 = continue, 2 = loop.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "ver": {
+          "description": "word 0: version (rows with `ver <= 15` are kept).",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "ver",
+        "id",
+        "motion",
+        "icon",
+        "play",
+        "name",
+        "desc"
+      ],
+      "type": "object"
+    },
+    "PkSection": {
+      "description": "The PK colours and penalty steps.",
+      "properties": {
+        "chao_color": {
+          "description": "`CHAO_COLOR`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "general_color": {
+          "description": "`GENERAL_COLOR`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "limit_level": {
+          "description": "`LIMITE_LEVEL`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "penalties": {
+          "description": "The `ADDPENALTY` steps.",
+          "items": {
+            "$ref": "#/$defs/PropensityPenalty"
+          },
+          "type": "array"
+        },
+        "ready_color": {
+          "description": "`READY_COLOR`.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "general_color",
+        "ready_color",
+        "chao_color",
+        "limit_level",
+        "penalties"
+      ],
+      "type": "object"
+    },
+    "PropensityPenalty": {
+      "description": "One `ADDPENALTY` step (`CHAO_PROPENSITY`). `min`/`max` are `DWORD` in C; they fit `i32` here.",
+      "properties": {
+        "bank": {
+          "description": "`nBank`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "equip_drop_max": {
+          "description": "`nEquipDorpMax`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "equip_drop_min": {
+          "description": "`nEquipDorpMin`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "fly": {
+          "description": "`nFly`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "guard_attack": {
+          "description": "`nGuardAttack`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "inven_drop_max": {
+          "description": "`nInvenDorpMax`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "inven_drop_min": {
+          "description": "`nInvenDorpMin`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "max": {
+          "description": "`dwPropensityMax`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "min": {
+          "description": "`dwPropensityMin`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "shop": {
+          "description": "`nShop`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "step": {
+          "description": "The step (map key).",
+          "format": "int32",
+          "type": "integer"
+        },
+        "vendor": {
+          "description": "`nVendor`.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "step",
+        "min",
+        "max",
+        "equip_drop_min",
+        "equip_drop_max",
+        "inven_drop_min",
+        "inven_drop_max",
+        "shop",
+        "bank",
+        "fly",
+        "guard_attack",
+        "vendor"
+      ],
+      "type": "object"
+    },
+    "SetItemAvail": {
+      "description": "One row of `Setitem`: `Acc Block HPRate AtkRate Stats` for `+1 ..= +10`.",
+      "properties": {
+        "added": {
+          "description": "`nAdded`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "attack_power_rate": {
+          "description": "`nAttackPowerRate` (custom 4th column, `__BETTER_ARMOR_BONUS`).",
+          "format": "int32",
+          "type": "integer"
+        },
+        "block": {
+          "description": "`nBlock`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "hit_rate": {
+          "description": "`nHitRate`.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "max_hit_point_rate": {
+          "description": "`nMaxHitPointRate`.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "hit_rate",
+        "block",
+        "max_hit_point_rate",
+        "attack_power_rate",
+        "added"
+      ],
+      "type": "object"
+    },
+    "SkillPointCosts": {
+      "description": "The skill-point costs of `Constant.inc` per skill kind.",
+      "properties": {
+        "expert_sp": {
+          "description": "`JTYPE_EXPERT` (default 2).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "pro_sp": {
+          "description": "Every other job type (default 3).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "vag_sp": {
+          "description": "`JTYPE_BASE` (default 1).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "vag_sp",
+        "expert_sp",
+        "pro_sp"
+      ],
+      "type": "object"
+    },
+    "TablesBundle": {
+      "description": "`tables`: the small rule tables the client needs.",
+      "properties": {
+        "constants": {
+          "$ref": "#/$defs/SkillPointCosts",
+          "description": "The skill-point costs."
+        },
+        "couple": {
+          "$ref": "#/$defs/CoupleSection",
+          "description": "The couple tables."
+        },
+        "emotes": {
+          "description": "The emote icons (`propMotion.txt`).",
+          "items": {
+            "$ref": "#/$defs/MotionProp"
+          },
+          "type": "array"
+        },
+        "exp": {
+          "$ref": "#/$defs/ExpSection",
+          "description": "The experience tables."
+        },
+        "generic_events": {
+          "description": "The generic event titles and times.",
+          "items": {
+            "$ref": "#/$defs/GenericEventRow"
+          },
+          "type": "array"
+        },
+        "guild": {
+          "$ref": "#/$defs/GuildSection",
+          "description": "The guild tables."
+        },
+        "guild_appellations": {
+          "additionalProperties": false,
+          "description": "`GUD_*` to the guild rank name.",
+          "patternProperties": {
+            "^\\d+$": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "job_items": {
+          "description": "The starting equipment (`jobItem.inc`; the begin items stay server-only).",
+          "items": {
+            "$ref": "#/$defs/JobItemsRow"
+          },
+          "type": "array"
+        },
+        "jobs": {
+          "description": "The jobs.",
+          "items": {
+            "$ref": "#/$defs/JobRow"
+          },
+          "type": "array"
+        },
+        "lord_events": {
+          "$ref": "#/$defs/LordEventTables",
+          "default": {
+            "exp": [],
+            "item": []
+          },
+          "description": "`lordevent.inc`: the rate lists of the lord's event window (older fixtures lack the field)."
+        },
+        "lord_skills": {
+          "description": "The lord skills.",
+          "items": {
+            "$ref": "#/$defs/LordSkill"
+          },
+          "type": "array"
+        },
+        "pk": {
+          "$ref": "#/$defs/PkSection",
+          "description": "The PK settings."
+        },
+        "structures": {
+          "additionalProperties": false,
+          "description": "`SRT_*` to the structure name.",
+          "patternProperties": {
+            "^\\d+$": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "teleports16": {
+          "description": "`teleport16.inc`.",
+          "items": {
+            "$ref": "#/$defs/Teleport16Row"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "jobs",
+        "job_items",
+        "constants",
+        "exp",
+        "guild",
+        "couple",
+        "pk",
+        "emotes",
+        "structures",
+        "guild_appellations",
+        "teleports16",
+        "lord_skills",
+        "generic_events",
+        "lord_events"
+      ],
+      "title": "TablesBundle",
+      "type": "object"
+    },
+    "Teleport16Row": {
+      "description": "One entry of `teleport16.inc` (the 16-level teleporter window).",
+      "properties": {
+        "boss": {
+          "description": "The boss mover (0 = none).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "boss_drops": {
+          "description": "The boss drops the window shows (empty until `propMoverEx` is loaded).",
+          "items": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "class": {
+          "description": "The class column.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "cooldown": {
+          "description": "The cooldown.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "desc": {
+          "description": "The description.",
+          "type": "string"
+        },
+        "image": {
+          "description": "The preview image (a bare file name).",
+          "type": "string"
+        },
+        "max_level": {
+          "description": "Maximum level (`max < min` is `MAX_LEGEND_LEVEL` = 129 on the client).",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "min_level": {
+          "description": "Minimum level.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "name": {
+          "description": "The name.",
+          "type": "string"
+        },
+        "pos": {
+          "description": "The destination position.",
+          "items": {
+            "format": "float",
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "type": "array"
+        },
+        "world": {
+          "description": "The destination world.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "world",
+        "pos",
+        "name",
+        "desc",
+        "image",
+        "boss",
+        "min_level",
+        "max_level",
+        "class",
+        "cooldown",
+        "boss_drops"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`tables.<h16>.json`: the envelope of the `tables` bundle (schema version 1).",
+  "properties": {
+    "bundle": {
+      "const": "tables"
+    },
+    "data": {
+      "$ref": "#/$defs/TablesBundle"
+    },
+    "schema": {
+      "const": 1
+    }
+  },
+  "required": [
+    "bundle",
+    "schema",
+    "data"
+  ],
+  "title": "TablesBundleEnvelope",
+  "type": "object"
+}

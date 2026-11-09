@@ -1,0 +1,92 @@
+/* The audit pages (Plan/25 section 10.2): the filter form, the record detail panel and the raw JSON. Tokens of styles/tokens.css. */
+.adm-h3 {
+  margin: var(--s-4) 0 var(--s-2);
+  font-size: var(--fs-lg);
+}
+
+.adm-h4 {
+  margin: 0;
+  font-size: var(--fs-table);
+}
+
+.adm-audit__filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--s-3);
+  align-items: end;
+}
+
+.adm-audit__wide {
+  grid-column: 1 / -1;
+}
+
+.adm-audit__groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-4);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.adm-audit__groups legend {
+  padding: 0;
+  margin-bottom: var(--s-1);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.adm-audit__subjects {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-2);
+}
+
+.adm-audit__detail {
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.adm-audit__facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--s-1) var(--s-3);
+  margin: var(--s-2) 0;
+  font-size: var(--fs-table);
+}
+
+.adm-audit__facts dt {
+  color: var(--text-muted);
+}
+
+.adm-audit__facts dd {
+  margin: 0;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.adm-audit__json {
+  margin-top: var(--s-2);
+}
+
+.adm-audit__pre {
+  max-height: 340px;
+  margin: var(--s-1) 0 0;
+  padding: var(--s-2) var(--s-3);
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  font-family: var(--mono);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.adm-audit__ev {
+  font-family: var(--mono);
+  font-size: var(--fs-sm);
+}

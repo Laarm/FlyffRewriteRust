@@ -1,0 +1,152 @@
+/* The Communication tabs (Plan/25 section 8): the send-now card, the schedule list, the notice dialog, the mail history. */
+.comm-tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.comm-intro {
+  max-width: 78ch;
+  margin: 0;
+}
+
+.comm-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  max-width: 880px;
+  padding: var(--s-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.comm-h {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+.comm-card p,
+.comm-head p {
+  margin: 0;
+}
+
+.comm-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+}
+
+.comm-filter {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s-3);
+}
+
+.comm-fields,
+.comm-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.comm-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--s-3);
+}
+
+.comm-row .adm-field {
+  min-width: 190px;
+}
+
+.comm-actions {
+  display: flex;
+  gap: var(--s-3);
+}
+
+.comm-finder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  max-width: 420px;
+}
+
+.comm-hits,
+.comm-chosen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.comm-hits {
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.comm-hit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--s-2) var(--s-3);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.comm-hit:hover,
+.comm-hit:focus-visible {
+  background: var(--surface-2);
+}
+
+.comm-chosen li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  padding: 2px var(--s-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.comm-preview {
+  margin: var(--s-2) 0 0;
+  padding: var(--s-2) var(--s-3);
+  border-left: 3px solid var(--accent);
+  background: var(--surface-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.comm-preview--caption {
+  text-align: center;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+.comm-text {
+  display: inline-block;
+  max-width: 46ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comm-rowactions {
+  display: inline-flex;
+  gap: var(--s-1);
+}

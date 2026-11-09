@@ -1,0 +1,98 @@
+{
+  "$defs": {
+    "TerrainBundle": {
+      "description": "`terrain`: the terrain texture table in file order.",
+      "properties": {
+        "textures": {
+          "description": "The rows.",
+          "items": {
+            "$ref": "#/$defs/TerrainTexture"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "textures"
+      ],
+      "title": "TerrainBundle",
+      "type": "object"
+    },
+    "TerrainTexture": {
+      "description": "One `Terrain.inc` row.",
+      "properties": {
+        "file": {
+          "description": "The texture: a bare file name under `world/texture/`.",
+          "type": "string"
+        },
+        "folder": {
+          "description": "The innermost group name, `\"\"` outside any group.",
+          "type": "string"
+        },
+        "frames": {
+          "description": "The second number of the row.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "group_path": {
+          "description": "The enclosing `\"name\" N` group headers, outermost first; the water frame sets are rebuilt from them.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "format": "uint32",
+                "minimum": 0,
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "type": "array"
+        },
+        "id": {
+          "description": "The texture id the `.lnd` layers use.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "sound": {
+          "description": "The last string of the row (unused).",
+          "type": "string"
+        }
+      },
+      "required": [
+        "folder",
+        "id",
+        "frames",
+        "file",
+        "sound",
+        "group_path"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`terrain.<h16>.json`: the envelope of the `terrain` bundle (schema version 1).",
+  "properties": {
+    "bundle": {
+      "const": "terrain"
+    },
+    "data": {
+      "$ref": "#/$defs/TerrainBundle"
+    },
+    "schema": {
+      "const": 1
+    }
+  },
+  "required": [
+    "bundle",
+    "schema",
+    "data"
+  ],
+  "title": "TerrainBundleEnvelope",
+  "type": "object"
+}
